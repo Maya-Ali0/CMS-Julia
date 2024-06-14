@@ -12,27 +12,27 @@ module Pixel_GPU_Details
     const MAX_SIZE_BYTE_BOOL::UInt32 = MAX_SIZE * sizeof(UInt8)
 end # module Pixel_GPU_Details
 
-
 # TODO: since this has more information than just cabling map, maybe we should invent a better name?
-# TODO: check memory alignment efficiency and neccessity as well as the need for a constructor
+# TODO: check memory alignment efficiency and necessity as well as the need for a constructor
+# TODO: ntuples or vectors?
 struct SiPixelFedCablingMapGPU
-    fed::NTuple{Pixel_GPU_Details.MAX_SIZE, UInt32}
-    link::NTuple{Pixel_GPU_Details.MAX_SIZE, UInt32}
-    roc::NTuple{Pixel_GPU_Details.MAX_SIZE, UInt32}
-    RawId::NTuple{Pixel_GPU_Details.MAX_SIZE, UInt32}
-    rocInDet::NTuple{Pixel_GPU_Details.MAX_SIZE, UInt32}
-    moduleId::NTuple{Pixel_GPU_Details.MAX_SIZE, UInt32}
-    badRocs::NTuple{Pixel_GPU_Details.MAX_SIZE, UInt8}
+    fed::Array{UInt32, 1}
+    link::Array{UInt32, 1}
+    roc::Array{UInt32, 1}
+    RawId::Array{UInt32, 1}
+    rocInDet::Array{UInt32, 1}
+    moduleId::Array{UInt32, 1}
+    badRocs::Array{UInt8, 1}
     size::UInt32
 
     function SiPixelFedCablingMapGPU()
-        fed = ntuple(i -> UInt32(0), Pixel_GPU_Details.MAX_SIZE)
-        link = ntuple(i -> UInt32(0), Pixel_GPU_Details.MAX_SIZE)
-        roc = ntuple(i -> UInt32(0), Pixel_GPU_Details.MAX_SIZE)
-        RawId = ntuple(i -> UInt32(0), Pixel_GPU_Details.MAX_SIZE)
-        rocInDet = ntuple(i -> UInt32(0), Pixel_GPU_Details.MAX_SIZE)
-        moduleId = ntuple(i -> UInt32(0), Pixel_GPU_Details.MAX_SIZE)
-        badRocs = ntuple(i -> UInt8(0), Pixel_GPU_Details.MAX_SIZE)
+        fed = fill(UInt32(0), Pixel_GPU_Details.MAX_SIZE)
+        link = fill(UInt32(0), Pixel_GPU_Details.MAX_SIZE)
+        roc = fill(UInt32(0), Pixel_GPU_Details.MAX_SIZE)
+        RawId = fill(UInt32(0), Pixel_GPU_Details.MAX_SIZE)
+        rocInDet = fill(UInt32(0), Pixel_GPU_Details.MAX_SIZE)
+        moduleId = fill(UInt32(0), Pixel_GPU_Details.MAX_SIZE)
+        badRocs = fill(UInt8(0), Pixel_GPU_Details.MAX_SIZE)
         size = UInt32(0)
         new(fed, link, roc, RawId, rocInDet, moduleId, badRocs, size)
     end
