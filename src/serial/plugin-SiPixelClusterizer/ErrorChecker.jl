@@ -51,7 +51,7 @@ function checkHeader(self::ErrorChecker, errorsInEvent::Bool, fedId::Int, traile
             if haskey(errors, dummyDetId)
                 push!(errors[dummyDetId], error)
             else
-                return "exception" #will fic later
+                return "exception" #will fix later
         end 
     end
     return fedHeader.moreHeaders()
