@@ -29,7 +29,7 @@ function checkCRC(self::ErrorChecker, errorsInEvent::Bool, fedId::Int, trailer::
         if haskey(errors, dummyDetId)
             push!(errors[dummyDetId], error)
         else
-            return "exception" #will fic later
+            return "exception" #will fix later
     end 
     return false
 end
