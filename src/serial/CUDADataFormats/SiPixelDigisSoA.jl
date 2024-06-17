@@ -32,7 +32,7 @@ struct SiPixelDigisSoA
         new(xx_d, yy_d, adc_d, moduleInd_d, clus_d, pdigi_d, rawIdArr_d, view, 0, 0)
      
 
-    #move constructor
+    #move constructor is built by default
 end
 
 struct DeviceConstView

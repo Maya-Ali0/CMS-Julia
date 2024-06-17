@@ -1,9 +1,6 @@
 module CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA_h
 
 struct SiPixelDigiErrorsSoA
-#     std::unique_ptr<PixelErrorCompact[]> data_d;
-#   std::unique_ptr<cms::cuda::SimpleVector<PixelErrorCompact>> error_d;
-#   PixelFormatterErrors formatterErrors_h;
     _data_d::ptr(Vector{PixelErrorCompact})
     _error_d::ptr(Vector{PixelErrorCompact})
     _formatterErrors_h:: PixelFormatterErrors
