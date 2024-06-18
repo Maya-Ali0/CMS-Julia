@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 include("CUDADataFormats/SiPixelClusterSoA.jl")
 using .CUDADataFormats_SiPixelCluster_interface_SiPixelClustersSoA_h
 
@@ -207,3 +208,7 @@ end
 
 
 end # module SiPixelRawToClusterCUDA
+=======
+struct EDProducer
+end
+>>>>>>> 661e8a5acdebc0a40ec826b16d35549fe02ee08e
