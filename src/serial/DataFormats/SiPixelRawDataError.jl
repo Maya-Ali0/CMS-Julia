@@ -1,31 +1,61 @@
 module DataFormats_SiPixelRawDataError_h
 
-    struct SiPixelRawDataError
-        _errorWord32_:: UInt32
-        _errorWord64_:: UInt64
-        _errorType_:: Int
-        _fedId_:: Int
-        _errorMessage_:: string
-        function SiPixelRawDataError(errorWord32::UInt32, errorType::Int, fedId::Int)
-            _errorWord32_= errorWord32
-            _errorType_ = errorType
-            _fedId_ = fedId
-            _errorMessage_ = setMessage(_errorType_)
-            
-            new(_errorWord32_, 0 ,_errorType_, _fedId_, _errorMessage_)
-        end
+    """
+    SiPixelRawDataError struct represents errors in SiPixel raw data processing.
 
-        function SiPixelRawDataError(errorWord64::UInt64, errorType::Int, fedId::Int)
-            _errorWord64_= errorWord64
-            _errorType_ = errorType
-            _fedId_ = fedId
-            _errorMessage_ = setMessage
-            
-            new(0, _errorWord64_ ,_errorType_, _fedId_, _errorMessage_)
+    Fields:
+      - errorWord32::UInt32: Error word (32-bit representation).
+      - errorWord64::UInt64: Error word (64-bit representation).
+      - errorType::Int: Type of error.
+      - fedId::Int: FED ID associated with the error.
+      - errorMessage::String: Human-readable error message.
+
+    Constructors:
+      - SiPixelRawDataError(errorWord32::UInt32, errorType::Int, fedId::Int): Creates an instance with 32-bit error word.
+      - SiPixelRawDataError(errorWord64::UInt64, errorType::Int, fedId::Int): Creates an instance with 64-bit error word.
+
+    """
+    struct SiPixelRawDataError
+        errorWord32::UInt32
+        errorWord64::UInt64
+        errorType::Int
+        fedId::Int
+        errorMessage::String
         
+        function SiPixelRawDataError(errorWord32::UInt32, errorType::Int, fedId::Int)
+            errorWord32 = errorWord32
+            errorWord64 = 0
+            errorType = errorType
+            fedId = fedId
+            errorMessage = setMessage(_errorType_)
+            
+            new(errorWord32, errorWord64, _errorType_, fedId, errorMessage)
+        end
+        
+        function SiPixelRawDataError(errorWord64::UInt64, errorType::Int, fedId::Int)
+            errorWord32 = 0
+            errorWord64 = errorWord64
+            errorType = errorType
+            fedId = fedId
+            errorMessage = setMessage(_errorType_)
+            
+            new(errorWord32, errorWord64, errorType, _fedId_, errorMessage)
         end
     end
-    function setMessage(errorType:: Int)
+
+    """
+    setMessage(errorType::Int) -> String
+
+    Returns a human-readable error message based on the error type.
+
+    Inputs:
+      - errorType::Int: Type of error.
+
+    Output:
+      - errorMessage::String: Error message corresponding to the error type.
+
+    """
+    function setMessage(errorType::Int)
         if errorType == 25
             return "Error: Disabled FED channel (ROC=25)"
         elseif errorType == 26
@@ -55,66 +85,168 @@ module DataFormats_SiPixelRawDataError_h
         else
             return "Error: Unknown error type"
         end
-    end 
-    function setWord32(self::SiPixelRawDataError, errorWord32::UInt32)
-        self._errorMessage32_ = errorWord32
-    end
-    function setWord64(self::SiPixelRawDataError, errorWord64::UInt64)
-        self._errorMessage64_ = errorWord64
-    end
-    function setType(self::SiPixelRawDataError, errorType::Int)
-        self._errorType_ = errorType
-        setMessage(self)
-    end
-    function setFedId(self::SiPixelRawDataError, fedId::Int)
-        self._fedId_ = fedId
-    end
-    function setMessage(self::SiPixelRawDataError)
-        if self._errorType == 25
-            return "Error: Disabled FED channel (ROC=25)"
-        elseif self._errorType == 26
-            return "Error: Gap word"
-        elseif self._errorType == 27
-            return "Error: Dummy word"
-        elseif self._errorType == 28
-            return "Error: FIFO nearly full"
-        elseif self._errorType == 29
-            return "Error: Timeout"
-        elseif self._errorType == 30
-            return "Error: Trailer"
-        elseif self._errorType == 31
-            return "Error: Event number mismatch"
-        elseif self._errorType == 32
-            return "Error: Invalid or missing header"
-        elseif self._errorType == 33
-            return "Error: Invalid or missing trailer"
-        elseif self._errorType == 34
-            return "Error: Size mismatch"
-        elseif self._errorType == 35
-            return "Error: Invalid channel"
-        elseif self._errorType == 36
-            return "Error: Invalid ROC number"
-        elseif self._errorType == 37
-            return "Error: Invalid dcol/pixel address"
-        else
-            return "Error: Unknown error type"
-        end
-    end
-    @inline function getWord32(self::SiPixelRawDataError):: UInt32
-        return self._errorWord32_
-    end
-    @inline function getWord64(self::SiPixelRawDataError):: UInt64
-        return self._errorWord64_
-    end
-    @inline function getType(self::SiPixelRawDataError):: Int
-        return self._errorType_
-    end
-    @inline function getFedId(self::SiPixelRawDataError)::Int
-        return self._fedId_
-    end
-    @inline function getMessage(self::SiPixelRawDataError):: string
-        return self._errorMessage_
     end
 
-    Base.<(one::SiPixelRawDataError, other::SiPixelRawDataError) = one.getFedId() < other.getFedId()
-end
+    """
+    setWord32(self::SiPixelRawDataError, errorWord32::UInt32) -> nothing
+
+    Sets the 32-bit error word in the SiPixelRawDataError struct.
+
+    Inputs:
+      - self::SiPixelRawDataError: Instance of SiPixelRawDataError.
+      - errorWord32::UInt32: 32-bit error word to set.
+
+    Output:
+      - Nothing.
+
+    """
+    function setWord32(self::SiPixelRawDataError, errorWord32::UInt32)
+        self.errorWord32 = errorWord32
+    end
+
+    """
+    setWord64(self::SiPixelRawDataError, errorWord64::UInt64) -> nothing
+
+    Sets the 64-bit error word in the SiPixelRawDataError struct.
+
+    Inputs:
+      - self::SiPixelRawDataError: Instance of SiPixelRawDataError.
+      - errorWord64::UInt64: 64-bit error word to set.
+
+    Output:
+      - Nothing.
+    """
+    function setWord64(self::SiPixelRawDataError, errorWord64::UInt64)
+        self.errorWord64 = errorWord64
+    end
+
+    """
+    setType(self::SiPixelRawDataError, errorType::Int) -> nothing
+
+    Sets the error type and updates the error message in the SiPixelRawDataError struct.
+
+    Inputs:
+      - self::SiPixelRawDataError: Instance of SiPixelRawDataError.
+      - errorType::Int: Error type to set.
+
+    Output:
+      - Nothing.
+    """
+    function setType(self::SiPixelRawDataError, errorType::Int)
+        self.errorType = errorType
+        self.errorMessage = setMessage(errorType)
+    end
+
+    """
+    setFedId(self::SiPixelRawDataError, fedId::Int) -> nothing
+
+    Sets the FED ID in the SiPixelRawDataError struct.
+
+    Inputs:
+      - self::SiPixelRawDataError: Instance of SiPixelRawDataError.
+      - fedId::Int: FED ID to set.
+
+    Output:
+      - Nothing.
+
+    """
+    function setFedId(self::SiPixelRawDataError, fedId::Int)
+        self.fedId = fedId
+    end
+
+    """
+    getMessage(self::SiPixelRawDataError) -> String
+
+    Returns the error message associated with the SiPixelRawDataError instance.
+
+    Inputs:
+      - self::SiPixelRawDataError: Instance of SiPixelRawDataError.
+
+    Output:
+      - errorMessage::String: Error message associated with the instance.
+
+    """
+    function getMessage(self::SiPixelRawDataError)
+        return self.errorMessage
+    end
+
+    """
+    getWord32(self::SiPixelRawDataError) -> UInt32
+
+    Returns the 32-bit error word from the SiPixelRawDataError instance.
+
+    Inputs:
+      - self::SiPixelRawDataError: Instance of SiPixelRawDataError.
+
+    Output:
+      - errorWord32::UInt32: 32-bit error word.
+
+    """
+    @inline function getWord32(self::SiPixelRawDataError)::UInt32
+        return self.errorWord32
+    end
+
+    """
+    getWord64(self::SiPixelRawDataError) -> UInt64
+
+    Returns the 64-bit error word from the SiPixelRawDataError instance.
+
+    Inputs:
+      - self::SiPixelRawDataError: Instance of SiPixelRawDataError.
+
+    Output:
+      - errorWord64::UInt64: 64-bit error word.
+
+    """
+    @inline function getWord64(self::SiPixelRawDataError)::UInt64
+        return self.errorWord64
+    end
+
+    """
+    getType(self::SiPixelRawDataError) -> Int
+
+    Returns the error type from the SiPixelRawDataError instance.
+
+    Inputs:
+      - self::SiPixelRawDataError: Instance of SiPixelRawDataError.
+
+    Output:
+      - errorType::Int: Error type.
+
+    """
+    @inline function getType(self::SiPixelRawDataError)::Int
+        return self.errorType
+    end
+
+    """
+    getFedId(self::SiPixelRawDataError) -> Int
+
+    Returns the FED ID from the SiPixelRawDataError instance.
+
+    Inputs:
+      - self::SiPixelRawDataError: Instance of SiPixelRawDataError.
+
+    Output:
+      - fedId::Int: FED ID.
+
+    """
+    @inline function getFedId(self::SiPixelRawDataError)::Int
+        return self.fedId
+    end
+
+    """
+    Custom comparison function for SiPixelRawDataError instances.
+
+    Inputs:
+      - one::SiPixelRawDataError: First instance for comparison.
+      - other::SiPixelRawDataError: Second instance for comparison.
+
+    Output:
+      - Bool: Returns true if the FED ID of `one` is less than `other`.
+    """
+    
+    import Base: isless
+
+    isless(one::SiPixelRawDataError, other::SiPixelRawDataError) = one.getFedId() < other.getFedId()
+
+end # module

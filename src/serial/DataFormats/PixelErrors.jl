@@ -1,13 +1,31 @@
+include("SiPixelRawDataError.jl")
+using .Main.DataFormats_SiPixelRawDataError_h
+
 module DataFormats_SiPixelDigi_interface_PixelErrors_h
 
-struct PixelErrorCompact
-    rawId:: UInt32
-    word::UInt32
-    errorType::UInt8
-    fedId:: UInt8
-end 
+    """
+    Definition of PixelErrorCompact struct representing compact pixel error information.
 
-# using PixelFormatterErrors = std::map<uint32_t, std::vector<SiPixelRawDataError>>;
-const PixelFormatterErrors = Dict{UInt32, Vector{SiPixelRawDataError}}
+    Fields:
+      - rawId::UInt32: Raw ID associated with the error.
+      - word::UInt32: Word representing error details.
+      - errorType::UInt8: Type of error.
+      - fedId::UInt8: FED ID associated with the error.
+    """
+    struct PixelErrorCompact
+        rawId::UInt32
+        word::UInt32
+        errorType::UInt8
+        fedId::UInt8
+    end
 
-end
+    """
+    PixelFormatterErrors is a dictionary storing pixel formatter errors.
+
+    Key Type: UInt32
+    Value Type: Vector{Main.DataFormats_SiPixelRawDataError_h.SiPixelRawDataError}
+
+    """
+    PixelFormatterErrors = Dict{UInt32, Vector{(Main.DataFormats_SiPixelRawDataError_h).SiPixelRawDataError}}
+
+end # module
