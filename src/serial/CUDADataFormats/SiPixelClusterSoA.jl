@@ -1,74 +1,171 @@
-module  CUDADataFormats_SiPixelCluster_interface_SiPixelClustersSoA_h
+module CUDADataFormats_SiPixelCluster_interface_SiPixelClustersSoA
 
-struct SiPixelClustersSoA
-   
-    _moduleStart_d::pointer(Vector{UInt32})        # module id of each module
-    _clusInModule_d::pointer(Vector{UInt32})    # number of clusters found in each module
-    _moduleId_d::pointer(Vector{UInt32})        # index of the first pixel of each module
-    _clusModuleStart_d::pointer(Vector{UInt32}) # index of the first cluster of each module
+    """
+    Struct to represent a constant view of the device data.
+    """
+    struct DeviceConstView
+        moduleStart::Vector{UInt32}       # Pointer to module start data
+        clusInModule::Vector{UInt32}      # Pointer to clusters in module data
+        moduleId::Vector{UInt32}          # Pointer to module ID data
+        clusModuleStart::Vector{UInt32}   # Pointer to clusters module start data
+    end
+
+    """
+    Function to get the start of a module from the view.
+    Inputs:
+    - view::DeviceConstView: The device view containing the data pointers.
+    - i::Int: Index of the module.
+    Outputs:
+    - UInt32: The start index of the specified module.
+    """
+    @inline function moduleStart(view::DeviceConstView, i::Int)::UInt32
+        return view.moduleStart[i]
+    end
+
+    """
+    Function to get the number of clusters in a module from the view.
+    Inputs:
+    - view::DeviceConstView: The device view containing the data pointers.
+    - i::Int: Index of the module.
+    Outputs:
+    - UInt32: The number of clusters in the specified module.
+    """
+    @inline function clusInModule(view::DeviceConstView, i::Int)::UInt32
+        return view.clusInModule[i]
+    end
+
+    """
+    Function to get the module id from the view.
+    Inputs:
+    - view::DeviceConstView: The device view containing the data pointers.
+    - i::Int: Index of the module.
+    Outputs:
+    - UInt32: The module ID of the specified module.
+    """
+    @inline function moduleId(view::DeviceConstView, i::Int)::UInt32
+        return view.moduleId[i]
+    end
+
+    """
+    Function to get the start of a cluster module from the view.
+    Inputs:
+    - view::DeviceConstView: The device view containing the data pointers.
+    - i::Int: Index of the cluster module.
+    Outputs:
+    - UInt32: The start index of the specified cluster module.
+    """
+    @inline function clusModuleStart(view::DeviceConstView, i::Int)::UInt32
+        return view.clusModuleStart[i]
+    end
+
+    """
+    Struct to hold the cluster data in a CUDA-compatible structure.
+    """
+    struct SiPixelClustersSoA
+        moduleStart_d::Vector{UInt32}       # Pointer to the module start data
+        clusInModule_d::Vector{UInt32}      # Pointer to the number of clusters in each module
+        moduleId_d::Vector{UInt32}          # Pointer to the module ID data
+        clusModuleStart_d::Vector{UInt32}   # Pointer to the start index of clusters in each module
+        
+        view_d::DeviceConstView             # Device view containing the data pointers
+        nClusters_h::UInt32                 # Number of clusters (stored on host)
+    end
+
+    """
+    Constructor for SiPixelClustersSoA.
+    Inputs:
+    - maxClusters::Int: Maximum number of clusters.
+    Outputs:
+    - SiPixelClustersSoA: A new instance with allocated data arrays and initialized device view.
+    """
+    function SiPixelClustersSoA(maxClusters::Int)
+        # Allocate memory for the data arrays.
+        moduleStart_d = zeros(UInt32, maxClusters + 1)
+        clusInModule_d = zeros(UInt32, maxClusters)
+        moduleId_d = zeros(UInt32, maxClusters)
+        clusModuleStart_d = zeros(UInt32, maxClusters + 1)
+
+        view_d = DeviceConstView(moduleStart_d, clusInModule_d, moduleId_d, clusModuleStart_d)
     
-    _view_d::pointer(DeviceConstView)           # "me" pointer
-    _nClusters_h::UInt32
+        return SiPixelClustersSoA(moduleStart_d, clusInModule_d, moduleId_d, clusModuleStart_d, view_d, 0)
+    end
 
-    SiPixelClustersSoA(maxClusters::size_t)
-        moduleStart_d = Vector{UInt32}(undef, maxClusters + 1)
-        clusInModule_d = Vector{UInt32}(undef, maxClusters) 
-        moduleId_d = Vector{UInt32}(undef, maxClusters)
-        clusModuleStart_d = Vector{UInt32}(undef, maxClusters + 1)
+    """
+    Function to get the device view pointer from a SiPixelClustersSoA instance.
+    Inputs:
+    - self::SiPixelClustersSoA: The instance of SiPixelClustersSoA.
+    Outputs:
+    - DeviceConstView: The pointer to the device view.
+    """
+    function view(self::SiPixelClustersSoA)::DeviceConstView
+        return self.view_d  
+    end
 
-        view = DeviceConstView(
-            pointer(moduleStart_d),
-            pointer(clusInModule_d),
-            pointer(moduleId_d),
-            pointer(clusModuleStart_d),
-        )
+    """
+    Function to get the module start pointer from a SiPixelClustersSoA instance.
+    Inputs:
+    - self::SiPixelClustersSoA: The instance of SiPixelClustersSoA.
+    Outputs:
+    - pointer(UInt32): The pointer to the module start data.
+    """
+    function moduleStart(self::SiPixelClustersSoA)::Vector{UInt32}
+        return self.moduleStart_d
+    end
 
-        new(moduleStart_d, clusInModule_d, moduleId_d, clusModuleStart_d, view, maxClusters)     
-end
+    """
+    Function to get the clusters in module pointer from a SiPixelClustersSoA instance.
+    Inputs:
+    - self::SiPixelClustersSoA: The instance of SiPixelClustersSoA.
+    Outputs:
+    - pointer(UInt32): The pointer to the clusters in module data.
+    """
+    function clusInModule(self::SiPixelClustersSoA)::Vector{UInt32}
+        return self.clusInModule_d
+    end
 
-struct DeviceConstView
-    const _moduleStart::pointer(UInt32)
-    const _clusInModule::pointer(UInt32)
-    const _moduleId::pointer(UInt32)
-    const _clusModuleStart::pointer(UInt32)
-end
+    """
+    Function to get the module id pointer from a SiPixelClustersSoA instance.
+    Inputs:
+    - self::SiPixelClustersSoA: The instance of SiPixelClustersSoA.
+    Outputs:
+    - pointer(UInt32): The pointer to the module id data.
+    """
+    function moduleId(self::SiPixelClustersSoA)::Vector{UInt32}
+        return self.moduleId_d
+    end
 
-@inline function moduleStart(view::DeviceConstView, i::Int)::UInt32
-    return unsafe_load(view._moduleStart + i - 1)
-end
-@inline function clusInModule(view::DeviceConstView, i::Int)::UInt32
-    return unsafe_load(view._clusInModule + i - 1)
-end
-@inline function moduleId(view::DeviceConstView, i::Int)::UInt32
-    return unsafe_load(view._moduleId + i - 1)
-end
-@inline function clusModuleStart(view::DeviceConstView, i::Int)::UInt32
-    return unsafe_load(view._clusModuleStart + i - 1)
-end
+    """
+    Function to get the clusters module start pointer from a SiPixelClustersSoA instance.
+    Inputs:
+    - self::SiPixelClustersSoA: The instance of SiPixelClustersSoA.
+    Outputs:
+    - pointer(UInt32): The pointer to the clusters module start data.
+    """
+    function clusModuleStart(self::SiPixelClustersSoA)::Vector{UInt32}
+        return self.clusModuleStart_d
+    end
 
-function view(self::SiPixelDigisSoA)::Ptr{DeviceConstView}
-    return pointer(self._view_d)
-end
+    """
+    Function to set the number of clusters in a SiPixelClustersSoA instance.
+    Inputs:
+    - self::SiPixelClustersSoA: The instance of SiPixelClustersSoA.
+    - nClusters::UInt32: The number of clusters to set.
+    Outputs:
+    - None
+    """
+    function setNClusters!(self::SiPixelClustersSoA, nClusters::UInt32)
+        self.nClusters_h = nClusters  # Set the number of clusters.
+    end
 
-function moduleStart(self::SiPixelClustersSoA):: pointer(UInt32)
-    return self._moduleStart_d
-end
+    """
+    Function to get the number of clusters from a SiPixelClustersSoA instance.
+    Inputs:
+    - self::SiPixelClustersSoA: The instance of SiPixelClustersSoA.
+    Outputs:
+    - UInt32: The number of clusters.
+    """
+    function nClusters(self::SiPixelClustersSoA)::UInt32
+        return self.nClusters_h 
+    end
 
-function clusInModule(self::SiPixelClustersSoA):: pointer(UInt32)
-    return self._clusInModule_d
-end
-function moduleId(self::SiPixelClustersSoA):: pointer(UInt32)
-    return self._moduleId_d
-end
-function clusModuleStart(self::SiPixelClustersSoA):: pointer(UInt32)
-    return self.clusModuleStart_d
-end
-
-function setNClusters(self::SiPixelClustersSoA, nClusters::UInte32)
-    self.nClusters = _nClusters_h
-end
-
-function nClusters(self::SiPixelClustersSoA)
-    return self._nClusters_h
-end
-end
+end # module
