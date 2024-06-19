@@ -1,5 +1,5 @@
 include("../DataFormats/PixelErrors.jl")
-using .DataFormats_SiPixelDigi_interface_PixelErrors_h
+using .Main.DataFormats_SiPixelDigi_interface_PixelErrors_h
 
 module CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA_h
 
@@ -9,9 +9,9 @@ module CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA_h
     to manage and access the error data.
     """
     struct SiPixelDigiErrorsSoA
-        error_d = Vector{DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelErrorCompact}(undef)             # Pointer to the error data
-        data_d = Vector{DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelErrorCompact}(undef)             # Pointer to the array of size maxFedWords    
-        _formatterErrors_h::DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelFormatterErrors         # Pixel formatter errors 
+        error_d::Vector{Main.DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelErrorCompact}    # Pointer to the error data
+        data_d::Vector{Main.DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelErrorCompact}     # Pointer to the array of size maxFedWords    
+        _formatterErrors_h::Main.DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelFormatterErrors         # Pixel formatter errors 
         
         """
         Constructor for SiPixelDigiErrorsSoA
@@ -21,19 +21,19 @@ module CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA_h
         Outputs:
           - A new instance of SiPixelDigiErrorsSoA with allocated data arrays and initialized pointers
         """
-        function SiPixelDigiErrorsSoA(maxFedWords::size_t, errors::PixelFormatterErrors)
+        function SiPixelDigiErrorsSoA(maxFedWords::UInt64, errors::Main.DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelFormatterErrors)
             # Allocate memory for the data arrays.
-            data_d = Vector{DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelErrorCompact}(undef, maxFedWords)
+            data_d = Vector{Main.DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelErrorCompact}(undef, maxFedWords)
             fill!(data_d, PixelErrorCompact())  # Zero-initialize
 
-            error_d = Vector{DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelErrorCompact}(undef, maxFedWords)
+            error_d = Vector{Main.DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelErrorCompact}(undef, maxFedWords)
             fill!(error_d, PixelErrorCompact())
 
             @assert isempty(data_d)
             @assert length(data_d) == maxFedWords
 
             # Return a new instance of SiPixelDigiErrorsSoA
-            return new(data_d, error_d, errors)
+            new(data_d, error_d, errors)
         end
     end
 
@@ -44,7 +44,7 @@ module CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA_h
     Outputs:
       - PixelFormatterErrors: The pixel formatter errors
     """
-    function formatterErrors(self::SiPixelDigiErrorsSoA)::DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelFormatterErrors
+    function formatterErrors(self::SiPixelDigiErrorsSoA)::Main.DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelFormatterErrors
         return self._formatterErrors_h
     end
 
@@ -55,8 +55,8 @@ module CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA_h
     Outputs:
       - ptr(Vector{PixelErrorCompact}): The pointer to the error data
     """
-    function error(self::SiPixelDigiErrorsSoA)::Vector{DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelErrorCompact}
-        return self._error_d
+    function error(self::SiPixelDigiErrorsSoA)::Vector{Main.DataFormats_SiPixelDigi_interface_PixelErrors_h.PixelErrorCompact}
+        return self.error_d
     end
 
 end

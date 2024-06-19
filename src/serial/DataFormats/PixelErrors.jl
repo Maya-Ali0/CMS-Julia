@@ -1,5 +1,5 @@
 include("SiPixelRawDataError.jl")
-using .DataFormats_SiPixelRawDataError_h
+using .Main.DataFormats_SiPixelRawDataError_h
 
 module DataFormats_SiPixelDigi_interface_PixelErrors_h
 
@@ -10,6 +10,6 @@ module DataFormats_SiPixelDigi_interface_PixelErrors_h
         fedId::UInt8
     end
 
-    PixelFormatterErrors = Dict{UInt32, Vector{DataFormats_SiPixelRawDataError_h.SiPixelRawDataError}}
+    PixelFormatterErrors = Dict{UInt32, Vector{Main.DataFormats_SiPixelRawDataError_h.SiPixelRawDataError}}
 
 end # module
