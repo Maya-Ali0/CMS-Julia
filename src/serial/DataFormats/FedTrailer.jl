@@ -28,7 +28,7 @@ module fed_trailer
     [16 bits |    1 bit     |   1 bit      |   2 bits      |    4 bits     |   4 bits          |  1 bits       |    1 bit    |  2 bits ]
     """
 
-    const FED_SLINK_END_MARKER = 0xa # A const to indicate the end of a data frame or block in the FED system.
+    const FED_SLINK_END_MARKER = 0xa # A const to indicate the end of a data frame or block in the FED system. Compared with TCTRLID
     
     
 
@@ -181,7 +181,7 @@ module fed_trailer
         theTrailer::fedt_struct
         length::UInt32
     end
-    function FEDTrailer(trailer::Vector{UInt8})
+    function FedTrailer(trailer::Vector{UInt8})
         consCheck::UInt32 = reinterpret(UInt32, trailer[1:4])
         eventSize::UInt32 = reinterpret(UInt32, trailer[5:8])
         trailer_t = fedt_struct(consCheck,eventSize)
@@ -190,26 +190,26 @@ module fed_trailer
     """
     Functions for extracting fields
     """
-    trailer_length(self::FEDTrailer)::UInt32 = FED_EVSZ_EXTRACT(self.theTrailer.eventsize)
+    fragment_length(self::FedTrailer)::UInt32 = FED_EVSZ_EXTRACT(self.theTrailer.eventsize)
 
-    crc(self::FEDTrailer)::UInt16 = FED_CRCS_EXTRACT(self.theTrailer.conscheck)
+    crc(self::FedTrailer)::UInt16 = FED_CRCS_EXTRACT(self.theTrailer.conscheck)
 
-    evtStatus(self::FEDTrailer)::UInt8 = FED_STAT_EXTRACT(self.theTrailer.conscheck)
+    evtStatus(self::FedTrailer)::UInt8 = FED_STAT_EXTRACT(self.theTrailer.conscheck)
 
-    ttsBits(self::FEDTrailer)::UInt8 = FED_TTSI_EXTRACT(self.theTrailer.conscheck)
+    ttsBits(self::FedTrailer)::UInt8 = FED_TTSI_EXTRACT(self.theTrailer.conscheck)
 
-    moreTrailers(self::FEDTrailer)::Bool = FED_MORE_TRAILERS_EXTRACT(self.theTrailer.conscheck) != 0
+    moreTrailers(self::FedTrailer)::Bool = FED_MORE_TRAILERS_EXTRACT(self.theTrailer.conscheck) != 0
 
-    crcModified(self::FEDTrailer)::Bool = FED_CRC_MODIFIED_EXTRACT(self.theTrailer.conscheck) != 0
+    crcModified(self::FedTrailer)::Bool = FED_CRC_MODIFIED_EXTRACT(self.theTrailer.conscheck) != 0
 
-    slinkError(self::FEDTrailer)::Bool = FED_SLINK_ERROR_EXTRACT(self.theTrailer.conscheck) != 0
+    slinkError(self::FedTrailer)::Bool = FED_SLINK_ERROR_EXTRACT(self.theTrailer.conscheck) != 0
 
-    wrongFedId(self::FEDTrailer)::Bool = FED_WRONG_FEDID_EXTRACT(self.theTrailer.conscheck) != 0
+    wrongFedId(self::FedTrailer)::Bool = FED_WRONG_FEDID_EXTRACT(self.theTrailer.conscheck) != 0
 
-    conscheck(self::FEDTrailer)::UInt32 = self.theTrailer.conscheck
+    conscheck(self::FedTrailer)::UInt32 = self.theTrailer.conscheck
 
     """
     Checker to check whether it is a trailer or not
     """
-    check(self::FEDTrailer)::Bool = FED_TCTRLID_EXTRACT(self.theTrailer.eventsize) == FED_SLINK_END_MARKER
+    check(self::FedTrailer)::Bool = FED_TCTRLID_EXTRACT(self.theTrailer.eventsize) == FED_SLINK_END_MARKER
 end # module
