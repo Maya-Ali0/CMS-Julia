@@ -1,26 +1,30 @@
+<<<<<<< HEAD
 module CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
+=======
+module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
+>>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 
     # Structure to hold a constant view of device data
     struct DeviceConstView
         xx::Vector{UInt16}         # X-coordinates of pixels
         yy::Vector{UInt16}         # Y-coordinates of pixels
         adc::Vector{UInt16}        # ADC values of pixels
-        moduleInd::Vector{UInt16}  # Module indices of pixels
+        module_ind::Vector{UInt16}  # Module indices of pixels
         clus::Vector{UInt32}       # Cluster indices of pixels
     end
 
     # Structure to hold SiPixel digis data
     struct SiPixelDigisSoA
         pdigi_d::Vector{UInt32}      # Digis data
-        rawIdArr_d::Vector{UInt32}   # Raw ID array
+        raw_id_arr_d::Vector{UInt32}   # Raw ID array
         xx_d::Vector{UInt16}         # Local X-coordinates of each pixel
         yy_d::Vector{UInt16}         # Local Y-coordinates of each pixel
         adc_d::Vector{UInt16}        # ADC values of each pixel
-        moduleInd_d::Vector{UInt16}  # Module IDs of each pixel
+        module_ind_d::Vector{UInt16}  # Module IDs of each pixel
         clus_d::Vector{UInt32}       # Cluster IDs of each pixel
         view_d::DeviceConstView      # "Me" pointer, a constant view of the device data
-        nModules_h::UInt32           # Number of modules
-        nDigis_h::UInt32             # Number of digis
+        n_modules_h::UInt32           # Number of modules
+        n_digis_h::UInt32             # Number of digis
 
         """
         Constructor for SiPixelDigisSoA
@@ -34,15 +38,15 @@ module CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
             xx_d = Vector{UInt16}(undef, maxFedWords)
             yy_d = Vector{UInt16}(undef, maxFedWords)
             adc_d = Vector{UInt16}(undef, maxFedWords)
-            moduleInd_d = Vector{UInt16}(undef, maxFedWords)
+            module_ind_d = Vector{UInt16}(undef, maxFedWords)
             clus_d = Vector{UInt32}(undef, maxFedWords)
             pdigi_d = Vector{UInt32}(undef, maxFedWords)
-            rawIdArr_d = Vector{UInt32}(undef, maxFedWords)
+            raw_id_arr_d = Vector{UInt32}(undef, maxFedWords)
 
             # Create a DeviceConstView with the above arrays
-            view_d = DeviceConstView(xx_d, yy_d, adc_d, moduleInd_d, clus_d)
+            view_d = DeviceConstView(xx_d, yy_d, adc_d, module_ind_d, clus_d)
             # Return a new instance of SiPixelDigisSoA with initialized values
-            new(pdigi_d, rawIdArr_d, xx_d, yy_d, adc_d, moduleInd_d, clus_d, view_d, 0, 0)
+            new(pdigi_d, raw_id_arr_d, xx_d, yy_d, adc_d, module_ind_d, clus_d, view_d, 0, 0)
         end
     end
 
@@ -92,8 +96,8 @@ module CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
     Outputs:
       - UInt16: The module ID at the specified index
     """
-    @inline function moduleInd(view::DeviceConstView, i::Int)::UInt16
-        return unsafe_load(view.moduleInd + i - 1)  # Memory is zero-indexed
+    @inline function module_ind(view::DeviceConstView, i::Int)::UInt16
+        return unsafe_load(view.module_ind + i - 1)  # Memory is zero-indexed
     end
 
     """
@@ -128,9 +132,9 @@ module CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
     Outputs:
       - None (modifies the instance in-place)
     """
-    function setNModulesDigis(self::SiPixelDigisSoA, nModules::UInt32, nDigis::UInt32)
-        self.nModules_h = nModules
-        self.nDigis_h = nDigis
+    function set_n_modules_digis(self::SiPixelDigisSoA, n_modules::UInt32, n_digis::UInt32)
+        self.n_modules_h = n_modules
+        self.n_digis_h = n_digis
     end
 
     """
@@ -140,8 +144,8 @@ module CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
     Outputs:
       - UInt32: The number of modules
     """
-    function nModules(self::SiPixelDigisSoA)::UInt32
-        return self.nModules_h
+    function n_modules(self::SiPixelDigisSoA)::UInt32
+        return self.n_modules_h
     end
 
     """
@@ -151,8 +155,8 @@ module CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
     Outputs:
       - UInt32: The number of digis
     """
-    function nDigis(self::SiPixelDigisSoA)::UInt32
-        return self.nDigis_h
+    function n_digis(self::SiPixelDigisSoA)::UInt32
+        return self.n_digis_h
     end
 
     # Functions to get the vectors from SiPixelDigisSoA
@@ -197,8 +201,8 @@ module CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
     Outputs:
       - Vector{UInt16}: The vector of module IDs
     """
-    function moduleInd(self::SiPixelDigisSoA)::Vector{UInt16}
-        return self.moduleInd_d
+    function module_ind(self::SiPixelDigisSoA)::Vector{UInt16}
+        return self.module_ind_d
     end
 
     """
@@ -230,8 +234,8 @@ module CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
     Outputs:
       - Vector{UInt32}: The vector of raw ID array
     """
-    function rawIdArr(self::SiPixelDigisSoA)::Vector{UInt32}
-        return self.rawIdArr_d
+    function raw_id_arr(self::SiPixelDigisSoA)::Vector{UInt32}
+        return self.raw_id_arr_d
     end
     
 end

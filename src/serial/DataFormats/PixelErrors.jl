@@ -1,7 +1,7 @@
 include("SiPixelRawDataError.jl")
-using .Main.DataFormats_SiPixelRawDataError_h
+using .Main.DataFormatsSiPixelRawDataError
 
-module DataFormats_SiPixelDigi_interface_PixelErrors_h
+module DataFormatsSiPixelDigiInterfacePixelErrors
 
     """
     Definition of PixelErrorCompact struct representing compact pixel error information.
@@ -13,10 +13,10 @@ module DataFormats_SiPixelDigi_interface_PixelErrors_h
       - fedId::UInt8: FED ID associated with the error.
     """
     struct PixelErrorCompact
-        rawId::UInt32
+        raw_id::UInt32
         word::UInt32
-        errorType::UInt8
-        fedId::UInt8
+        erro_type::UInt8
+        fed_id::UInt8
     end
 
     """
@@ -26,6 +26,6 @@ module DataFormats_SiPixelDigi_interface_PixelErrors_h
     Value Type: Vector{Main.DataFormats_SiPixelRawDataError_h.SiPixelRawDataError}
 
     """
-    PixelFormatterErrors = Dict{UInt32, Vector{(Main.DataFormats_SiPixelRawDataError_h).SiPixelRawDataError}}
+    PixelFormatterErrors = Dict{UInt32, Vector{(Main.DataFormatsSiPixelRawDataError).SiPixelRawDataError}}
 
 end # module

@@ -1,4 +1,5 @@
 include("../CUDADataFormats/SiPixelClusterSoA.jl")
+<<<<<<< HEAD
 using .CUDADataFormats_SiPixelCluster_interface_SiPixelClustersSoA
 
 include("../CUDADataFormats/SiPixelDigisSoA.jl")
@@ -6,25 +7,56 @@ using .CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
 
 include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
 using .CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA
+=======
+using .CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
+
+include("../CUDADataFormats/SiPixelDigisSoA.jl")
+using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
+
+include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
+using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
+>>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 
 include("../CondFormats/SiPixelGainCalibrationForHLTGPU.jl")
 using .CalibTracker_SiPixelESProducers_interface_SiPixelGainCalibrationForHLTGPU_h
 
 include("../CondFormats/SiPixelFedCablingMapGPUWrapper.jl")
+<<<<<<< HEAD
 using .RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPUWrapper
 
 include("../CondFormats/SiPixelFedIds.jl")
 using .CondFormats_SiPixelFedIds
+=======
+using .RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPUWrapper_h
+
+include("../CondFormats/SiPixelFedIds.jl")
+using .CondFormats_SiPixelFedIds_h
+>>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 
 include("../DataFormats/PixelErrors.jl")
 using .DataFormats_SiPixelDigi_interface_PixelErrors_h
 
+<<<<<<< HEAD
 include("../DataFormats/data_formats.jl")
 
 
 include("../Framework/EventSetup.jl")
 using .edm
 
+=======
+include("../DataFormats/FEDNumbering.jl")
+using .DataFormats_FEDNumbering_h
+
+include("../DataFormats/FEDRawData.jl")
+using .DataFormats_FEDRawData_h
+
+include("../DataFormats/FEDRawDataCollection.jl")
+using .DataFormats_FEDRawDataCollection_h
+
+include("../Framework/EventSetup.jl")
+using .Framework_EventSetup_h
+
+>>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 include("../Framework/Event.jl")
 using .Framework_Event_h
 
@@ -39,6 +71,7 @@ using .ErrorChecker_H
 
 include("SiPixelRawToClusterGPUKernel.jl")
 
+<<<<<<< HEAD
 module si_pixel_raw_to_cluster_cuda
 
 # Define the necessary modules and types
@@ -76,35 +109,42 @@ struct SiPixelRawToClusterCUDA <: edm.EDProducer
     _digi_put_token::edm.EDPutTokenT{SiPixelDigisSoA}
     _digi_error_put_token::Union{Nothing, edm.EDPutTokenT{SiPixelDigiErrorsSoA}}
     _clusterPutToken::edm.EDPutTokenT{SiPixelClustersSoA}
+=======
+struct SiPixelRawToClusterCUDA <: edm.EDProducer
+    raw_get_token::edm.EDGetTokenT{FedRawDataCollection}
+    digi_put_token::edm.EDPutTokenT{SiPixelDigisSoA}
+    digi_error_put_token::Union{Nothing, edm.EDPutTokenT{SiPixelDigiErrorsSoA}}
+    cluster_put_token::edm.EDPutTokenT{SiPixelClustersSoA}
+>>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 
-    _gpuAlgo::pixelgpudetails.SiPixelRawToClusterGPUKernel
-    _wordFedAppender::Union{Nothing, Ref{pixelgpudetails.WordFedAppender}}
-    _errors::PixelFormatterErrors
+    gpu_algo::pixelgpudetails.SiPixelRawToClusterGPUKernel
+    word_fed_appender::Union{Nothing, Ref{pixelgpudetails.word_fed_appender}}
+    errors::PixelFormatterErrors
 
-    _isRun2::Bool
-    _includeErrors::Bool
-    _useQuality::Bool
+    is_run2::Bool
+    include_errors::Bool
+    use_quality::Bool
 
     function SiPixelRawToClusterCUDA(reg::edm.ProductRegistry)
-        _rawGetToken = reg.consumes{FedRawDataCollection}()
-        _digiPutToken = reg.produces{SiPixelDigisSoA}()
-        _clusterPutToken = reg.produces{SiPixelClustersSoA}()
-        _isRun2 = true
-        _includeErrors = true
-        _useQuality = true
-        _digiErrorPutToken = _includeErrors ? reg.produces{SiPixelDigiErrorsSoA}() : nothing
-        _wordFedAppender = Ref(pixelgpudetails.WordFedAppender())
-        new(_rawGetToken, _digiPutToken, _digiErrorPutToken, _clusterPutToken,
-            pixelgpudetails.SiPixelRawToClusterGPUKernel(), _wordFedAppender,
-            PixelFormatterErrors(), _isRun2, _includeErrors, _useQuality)
+        raw_get_token = reg.consumes{FedRawDataCollection}()
+        digi_put_token = reg.produces{SiPixelDigisSoA}()
+        cluster_put_token = reg.produces{SiPixelClustersSoA}()
+        is_run2 = true
+        include_errors = true
+        use_quality = true
+        digi_error_put_token = _include_errors ? reg.produces{SiPixelDigiErrorsSoA}() : nothing
+        word_fed_appender = Ref(pixelgpudetails.word_fed_appender())
+        new(raw_get_token, digi_put_token, digi_error_put_token, cluster_put_token,
+            pixelgpudetails.SiPixelRawToClusterGPUKernel(), word_fed_appender,
+            PixelFormatterErrors(), is_run2, include_errors, use_quality)
     end
 end
 
 
 function produce(self:: SiPixelRawToClusterCUDA, iEvent::edm.Event, iSetup::edm.EventSetup)
     hgpuMap = iSetup.get{SiPixelFedCablingMapGPUWrapper}()
-    if(hgpuMap.hasQuality() != self._useQuality)
-        error_message = "UseQuality of the module ($_useQuality) differs from SiPixelFedCablingMapGPUWrapper. Please fix your configuration."
+    if(hgpuMap.hasQuality() != self._use_quality)
+        error_message = "use_quality of the module ($_use_quality) differs from SiPixelFedCablingMapGPUWrapper. Please fix your configuration."
         throw(RuntimeError(error_message))
     end
     hgains = hgpuMap.getCPUProduct()
@@ -113,7 +153,7 @@ function produce(self:: SiPixelRawToClusterCUDA, iEvent::edm.Event, iSetup::edm.
 
     hgains = iSetup.get{SiPixelGainCalibrationForHLTGPU}()
     gpuGains = hgain.getCPUProduct()
-    fedIds = iSetup.get(self._rawGetToken)
+    fedIds = iSetup.get(self.raw_get_token)
     self._errors.clear()
 
     wordCounterGPU :: Int
@@ -169,29 +209,26 @@ function produce(self:: SiPixelRawToClusterCUDA, iEvent::edm.Event, iSetup::edm.
         ew = trailer
 
         @assert (0 == (ew - bw)% 2)
-        self._wordFedAppender -> intializeWordFed(fedId, wordCounterGPU, bw, (ew - bw))
+        self._word_fed_appender -> intializeWordFed(fedId, wordCounterGPU, bw, (ew - bw))
         wordCounterGPU += ew - bw
     end
-    _gpuAlgo.makeClusters(_isRun2,
+    _gpuAlgo.makeClusters(is_run2,
                         gpuMap, 
                         gpuModulesToUnpack, 
                         gpuGains, 
-                        ptr(self._wordFedAppender), 
+                        ptr(self._word_fed_appender), 
                         move(self._errors), 
                         wordCounterGPU, 
                         fedCounter, 
-                        self._useQuality, 
-                        self._includeErrors, 
+                        self._use_quality, 
+                        self.include_errors, 
                         false)
     tmp = self._gpuAlgo.getResults()
-    iEvent.emplace(self._digiPutToken, move(tmp.first))
-    iEvent.emplace(self._clusterPutToken, move(tmp.second))
-    if(self._includeErrors)    
-        iEvent.emplace(self._digiErrorPutToken, self._gpuAlgo.getErrors())
+    iEvent.emplace(self.digi_put_token, move(tmp.first))
+    iEvent.emplace(self.cluster_put_token, move(tmp.second))
+    if(self.include_errors)    
+        iEvent.emplace(self._digi_error_put_token, self._gpuAlgo.getErrors())
     end
 end
 
-end 
-
-
-end # module SiPixelRawToClusterCUDA
+end  # module SiPixelRawToClusterCUDA
