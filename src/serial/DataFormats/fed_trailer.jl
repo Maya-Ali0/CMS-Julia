@@ -178,7 +178,7 @@ module fedTrailer
     FED_WRONG_FEDID_EXTRACT(a::UInt32) = (a >> FED_WRONG_FEDID_SHIFT) & FED_WRONG_FEDID_WIDTH
 
     struct FedTrailer
-        theTrailer::fedt_struct
+        theTrailer::Fedt_t
         length::UInt32
     end
     function FedTrailer(trailer::Vector{UInt8})
