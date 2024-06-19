@@ -162,13 +162,6 @@ module dataFormats
             37 => "Error: Invalid dcol/pixel address",
         )[errorType, "Error: Unknown error type"]
     end
-
-    struct PixelErrorCompact
-        rawId::UInt32
-        word::UInt32
-        errorType::UInt8
-        FedId::UInt8
-    end
     """
         PixelFormatterErrors
     

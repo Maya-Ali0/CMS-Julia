@@ -1,7 +1,6 @@
-module RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPUWrapper_h
-
-using ..CondFormats.SiPixelFedCablingMapGPU
-import .RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPU_h: SiPixelFedCablingMapGPU
+module RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPUWrapper
+include("SiPixelFedCablingMapGPU.jl")
+using .RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPU_h
 
 mutable struct SiPixelFedCablingMapGPUWrapper
     _cablingMapHost::SiPixelFedCablingMapGPU
@@ -25,4 +24,4 @@ function getModToUnpAll(wrapper::SiPixelFedCablingMapGPUWrapper)::Vector{UInt8}
     return wrapper.modToUnpDefault
 end
 
-end # module RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPUWrapper_h
+end # module RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPUWrapper

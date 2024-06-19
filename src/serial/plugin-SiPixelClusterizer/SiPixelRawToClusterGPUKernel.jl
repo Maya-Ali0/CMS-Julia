@@ -29,6 +29,8 @@ module pixelgpudetails
     const ADC_bits::UInt32 = 8
 
     """
+    [  6 bits  | 5 bits | 5 bits |  8 bits  |8 bits  ]
+    [  Link    |  ROC   |  DCOL  |  PXID    |  ADC   ]
     Special For Layer 1
     """
     const LINK_bits_l1::UInt32 = 6
@@ -36,10 +38,13 @@ module pixelgpudetails
     const COL_bits_l1::UInt32 = 6
     const ROW_bits_l1::UInt32 = 7
     const OMIT_ERR_bits::UInt32 = 1 
-
-    const maxROCIndex::UInt32 = 8 # ?
-    const numRowsInRoc::UInt32 = 80 # 
-    const numColsInRoc::UInt32 = 52 # ?
+    """
+    Each ROC is an 80x52 pixel unit cell 
+    They are grouping columns by 2 : 26 DCOL
+    """
+    const maxROCIndex::UInt32 = 8 
+    const numRowsInRoc::UInt32 = 80 
+    const numColsInRoc::UInt32 = 52 
 
     const MAX_WORD::UInt32 = 2000 # maxword in what ?
 
@@ -47,7 +52,7 @@ module pixelgpudetails
     const PXID_shift::UInt32 = ADC_shift + ADC_bits
     const DCOL_shift::UInt32 = PXID_shift + PXID_bits
     const ROC_shift::UInt32 = DCOL_shift + DCOL_bits
-    const LINK_shift::UInt32 = ROC_shift + ROC_bits_l1
+    const LINK_shift::UInt32 = ROC_shift + ROC_bits
     """
     Special For Layer 1 ROC
     """
@@ -136,13 +141,11 @@ module pixelgpudetails
         _fedId::Vector{UInt8}
     end
 
-    function getWord(self::WordFedAppender)
-        return self._word
-    end
+    getWord(self::WordFedAppender) = return self._word
 
-    function getFedId(self::WordFedAppender)
-        return self._fedId
-    end
+    getFedId(self::WordFedAppender) = return self._fedId
+    
+    initializeWordFed
     
 
     struct SiPixelRawToClusterGPUKernel

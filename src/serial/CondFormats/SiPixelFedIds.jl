@@ -1,4 +1,4 @@
-module CondFormats_SiPixelFedIds_h
+module CondFormats_SiPixelFedIds
 
 mutable struct SiPixelFedIds
     _fedIDs::Vector{UInt32}

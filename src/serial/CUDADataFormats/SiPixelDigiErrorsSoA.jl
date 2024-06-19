@@ -1,7 +1,7 @@
 include("../DataFormats/PixelErrors.jl")
 using .Main.DataFormats_SiPixelDigi_interface_PixelErrors_h
 
-module CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA_h
+module CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA
 
     """
     This module defines the data structure for storing SiPixel digi error data in a 

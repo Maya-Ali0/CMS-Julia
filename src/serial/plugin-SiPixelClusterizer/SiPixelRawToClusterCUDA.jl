@@ -1,58 +1,51 @@
-include("CUDADataFormats/SiPixelClusterSoA.jl")
-using .CUDADataFormats_SiPixelCluster_interface_SiPixelClustersSoA_h
+include("../CUDADataFormats/SiPixelClusterSoA.jl")
+using .CUDADataFormats_SiPixelCluster_interface_SiPixelClustersSoA
 
-include("CUDADataFormats/SiPixelDigisSoA.jl")
-using .CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA_h
+include("../CUDADataFormats/SiPixelDigisSoA.jl")
+using .CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
 
-include("CUDADataFormats/SiPixelDigiErrorsSoA.jl")
-using .CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA_h
+include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
+using .CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA
 
-include("CondFormats/SiPixelGainCalibrationForHLTGPU.jl")
+include("../CondFormats/SiPixelGainCalibrationForHLTGPU.jl")
 using .CalibTracker_SiPixelESProducers_interface_SiPixelGainCalibrationForHLTGPU_h
 
-include("CondFormats/SiPixelFedCablingMapGPUWrapper.jl")
-using .RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPUWrapper_h
+include("../CondFormats/SiPixelFedCablingMapGPUWrapper.jl")
+using .RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPUWrapper
 
-include("CondFormats/SiPixelFedIds.jl")
-using .CondFormats_SiPixelFedIds_h
+include("../CondFormats/SiPixelFedIds.jl")
+using .CondFormats_SiPixelFedIds
 
-include("DataFormats/PixelErrors.jl")
+include("../DataFormats/PixelErrors.jl")
 using .DataFormats_SiPixelDigi_interface_PixelErrors_h
 
-include("DataFormats/FEDNumbering.jl")
-using .DataFormats_FEDNumbering_h
+include("../DataFormats/data_formats.jl")
 
-include("DataFormats/FEDRawData.jl")
-using .DataFormats_FEDRawData_h
 
-include("DataFormats/FEDRawDataCollection.jl")
-using .DataFormats_FEDRawDataCollection_h
+include("../Framework/EventSetup.jl")
+using .edm
 
-include("Framework/EventSetup.jl")
-using .Framework_EventSetup_h
-
-include("Framework/Event.jl")
+include("../Framework/Event.jl")
 using .Framework_Event_h
 
-include("Framework/PluginFactory.jl")
+include("../Framework/PluginFactory.jl")
 using .Framework_PluginFactory_h
 
-include("Framework/EDProducer.jl")
+include("../Framework/EDProducer.jl")
 using .Framework_EDProducer_h
 
 include("ErrorChecker.jl")
 using .ErrorChecker_H
 
 include("SiPixelRawToClusterGPUKernel.jl")
-using .SiPixelRawToClusterGPUKernel_h
 
-module SiPixelRawToClusterCUDA
+module si_pixel_raw_to_cluster_cuda
 
 # Define the necessary modules and types
 module edm
-    abstract type EDProducer end
+    abstract type EDProducer  end
 
-    struct EDGetTokenT{T}
+    mutable struct EDGetTokenT{T}
         data::T
     end
 
@@ -72,21 +65,16 @@ end
 
 module pixelgpudetails
     struct SiPixelRawToClusterGPUKernel end
-
     struct WordFedAppender end
 end
 
-struct PixelFormatterErrors end
 
-struct FedRawDataCollection end
-struct SiPixelDigisSoA end
-struct SiPixelDigiErrorsSoA end
-struct SiPixelClustersSoA end
+
 
 struct SiPixelRawToClusterCUDA <: edm.EDProducer
-    _rawGetToken::edm.EDGetTokenT{FedRawDataCollection}
-    _digiPutToken::edm.EDPutTokenT{SiPixelDigisSoA}
-    _digiErrorPutToken::Union{Nothing, edm.EDPutTokenT{SiPixelDigiErrorsSoA}}
+    _raw_get_token::edm.EDGetTokenT{FedRawDataCollection}
+    _digi_put_token::edm.EDPutTokenT{SiPixelDigisSoA}
+    _digi_error_put_token::Union{Nothing, edm.EDPutTokenT{SiPixelDigiErrorsSoA}}
     _clusterPutToken::edm.EDPutTokenT{SiPixelClustersSoA}
 
     _gpuAlgo::pixelgpudetails.SiPixelRawToClusterGPUKernel
