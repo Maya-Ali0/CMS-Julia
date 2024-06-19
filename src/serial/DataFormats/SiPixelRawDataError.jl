@@ -1,4 +1,4 @@
-module DataFormats_SiPixelRawDataError_h
+module DataFormatsSiPixelRawDataError
 
     """
     SiPixelRawDataError struct represents errors in SiPixel raw data processing.
