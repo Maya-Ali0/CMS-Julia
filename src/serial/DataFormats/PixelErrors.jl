@@ -13,10 +13,10 @@ module DataFormatsSiPixelDigiInterfacePixelErrors
       - fedId::UInt8: FED ID associated with the error.
     """
     struct PixelErrorCompact
-        rawId::UInt32
+        raw_id::UInt32
         word::UInt32
-        errorType::UInt8
-        fedId::UInt8
+        erro_type::UInt8
+        fed_id::UInt8
     end
 
     """

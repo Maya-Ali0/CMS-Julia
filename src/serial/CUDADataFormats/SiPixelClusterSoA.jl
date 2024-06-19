@@ -4,10 +4,10 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     Struct to represent a constant view of the device data.
     """
     struct DeviceConstView
-        moduleStart::Vector{UInt32}       # Pointer to module start data
-        clusInModule::Vector{UInt32}      # Pointer to clusters in module data
-        moduleId::Vector{UInt32}          # Pointer to module ID data
-        clusModuleStart::Vector{UInt32}   # Pointer to clusters module start data
+        module_start::Vector{UInt32}       # Pointer to module start data
+        clus_in_module::Vector{UInt32}      # Pointer to clusters in module data
+        module_id::Vector{UInt32}          # Pointer to module ID data
+        clus_module_star::Vector{UInt32}   # Pointer to clusters module start data
     end
 
     """
@@ -18,8 +18,8 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     Outputs:
     - UInt32: The start index of the specified module.
     """
-    @inline function moduleStart(view::DeviceConstView, i::Int)::UInt32
-        return view.moduleStart[i]
+    @inline function module_start(view::DeviceConstView, i::Int)::UInt32
+        return view.module_start[i]
     end
 
     """
@@ -30,8 +30,8 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     Outputs:
     - UInt32: The number of clusters in the specified module.
     """
-    @inline function clusInModule(view::DeviceConstView, i::Int)::UInt32
-        return view.clusInModule[i]
+    @inline function clus_in_module(view::DeviceConstView, i::Int)::UInt32
+        return view.clus_in_module[i]
     end
 
     """
@@ -42,8 +42,8 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     Outputs:
     - UInt32: The module ID of the specified module.
     """
-    @inline function moduleId(view::DeviceConstView, i::Int)::UInt32
-        return view.moduleId[i]
+    @inline function module_id(view::DeviceConstView, i::Int)::UInt32
+        return view.module_id[i]
     end
 
     """
@@ -54,18 +54,18 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     Outputs:
     - UInt32: The start index of the specified cluster module.
     """
-    @inline function clusModuleStart(view::DeviceConstView, i::Int)::UInt32
-        return view.clusModuleStart[i]
+    @inline function clus_module_star(view::DeviceConstView, i::Int)::UInt32
+        return view.clus_module_star[i]
     end
 
     """
     Struct to hold the cluster data in a CUDA-compatible structure.
     """
     struct SiPixelClustersSoA
-        moduleStart_d::Vector{UInt32}       # Pointer to the module start data
-        clusInModule_d::Vector{UInt32}      # Pointer to the number of clusters in each module
-        moduleId_d::Vector{UInt32}          # Pointer to the module ID data
-        clusModuleStart_d::Vector{UInt32}   # Pointer to the start index of clusters in each module
+        module_start_d::Vector{UInt32}       # Pointer to the module start data
+        clus_in_module_d::Vector{UInt32}      # Pointer to the number of clusters in each module
+        module_id_d::Vector{UInt32}          # Pointer to the module ID data
+        clus_module_star_d::Vector{UInt32}   # Pointer to the start index of clusters in each module
         
         view_d::DeviceConstView             # Device view containing the data pointers
         nClusters_h::UInt32                 # Number of clusters (stored on host)
@@ -80,14 +80,14 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     """
     function SiPixelClustersSoA(maxClusters::Int)
         # Allocate memory for the data arrays.
-        moduleStart_d = zeros(UInt32, maxClusters + 1)
-        clusInModule_d = zeros(UInt32, maxClusters)
-        moduleId_d = zeros(UInt32, maxClusters)
-        clusModuleStart_d = zeros(UInt32, maxClusters + 1)
+        module_start_d = zeros(UInt32, maxClusters + 1)
+        clus_in_module_d = zeros(UInt32, maxClusters)
+        module_id_d = zeros(UInt32, maxClusters)
+        clus_module_star_d = zeros(UInt32, maxClusters + 1)
 
-        view_d = DeviceConstView(moduleStart_d, clusInModule_d, moduleId_d, clusModuleStart_d)
+        view_d = DeviceConstView(module_start_d, clus_in_module_d, module_id_d, clus_module_star_d)
     
-        return SiPixelClustersSoA(moduleStart_d, clusInModule_d, moduleId_d, clusModuleStart_d, view_d, 0)
+        return SiPixelClustersSoA(module_start_d, clus_in_module_d, module_id_d, clus_module_star_d, view_d, 0)
     end
 
     """
@@ -108,8 +108,8 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     Outputs:
     - pointer(UInt32): The pointer to the module start data.
     """
-    function moduleStart(self::SiPixelClustersSoA)::Vector{UInt32}
-        return self.moduleStart_d
+    function module_start(self::SiPixelClustersSoA)::Vector{UInt32}
+        return self.module_start_d
     end
 
     """
@@ -119,8 +119,8 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     Outputs:
     - pointer(UInt32): The pointer to the clusters in module data.
     """
-    function clusInModule(self::SiPixelClustersSoA)::Vector{UInt32}
-        return self.clusInModule_d
+    function clus_in_module(self::SiPixelClustersSoA)::Vector{UInt32}
+        return self.clus_in_module_d
     end
 
     """
@@ -130,8 +130,8 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     Outputs:
     - pointer(UInt32): The pointer to the module id data.
     """
-    function moduleId(self::SiPixelClustersSoA)::Vector{UInt32}
-        return self.moduleId_d
+    function module_id(self::SiPixelClustersSoA)::Vector{UInt32}
+        return self.module_id_d
     end
 
     """
@@ -141,8 +141,8 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     Outputs:
     - pointer(UInt32): The pointer to the clusters module start data.
     """
-    function clusModuleStart(self::SiPixelClustersSoA)::Vector{UInt32}
-        return self.clusModuleStart_d
+    function clus_module_star(self::SiPixelClustersSoA)::Vector{UInt32}
+        return self.clus_module_star_d
     end
 
     """
