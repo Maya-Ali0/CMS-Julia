@@ -10,19 +10,19 @@ In a typical FED system, data is organized into frames or blocks, each beginning
 This module provides constants and functions to extract various fields from the FED header.
 """
 
-module fed_header
+module fedHeader
    
 
-    struct fedh_t
-        sourceid::UInt32 # The Source Identifier
-        eventid::UInt32 # The event Identifier
+    struct Fedh_t
+        source_id::UInt32 # The Source Identifier
+        event_id::UInt32 # The event Identifier
     end
     """
-    eventid
+    event_id
     [ Control ID | Event Type |          Level 1 ID           ]
     [  4 bits    |  4 bits    |           24 bits             ]
 
-    sourceid
+    source_id
     [  BXID  | Source ID | Version | More Headers | Reserved ]
     [ 12 bits | 12 bits  |  4 bits |    1 bit     |  3 bits  ]
 
@@ -155,29 +155,29 @@ module fed_header
     const FED_MORE_HEADERS_SHIFT = 3
     FED_MORE_HEADERS_EXTRACT(a::UInt32) = (a >> FED_MORE_HEADERS_SHIFT) & FED_MORE_HEADERS_WIDTH
 
-    struct FEDHeader
-        theHeader::fedh_t
+    struct FedHeader
+        theHeader::Fedh_t
         length::UInt32
     end
-    function FEDHeader(header::vector{UInt8}) 
-        sourceid::UInt32 = reinterpret(UInt32,header[1:4]) 
-        eventid::UInt32 =  reinterpret(UInt32,header[5:8])
+    function FedHeader(header::Vector{UInt8}) 
+        source_id::UInt32 = reinterpret(UInt32,header[1:4]) 
+        event_id::UInt32 =  reinterpret(UInt32,header[5:8])
         header = fedh_t(sourceid,eventid)
-        FEDHeader(header,8) # The size of a FEDHeader is 8 bytes
+        FedHeader(header,8) # The size of a FEDHeader is 8 bytes
     end
     """
     Functions for extracting fields
     """
-    triggertype(self::FEDHeader)::UInt8 = FED_EVTY_EXTRACT(self.theHeader.eventid)
-    lvl1ID(self::FEDHeader)::UInt32 = FED_LVL1_EXTRACT(self.theHeader.eventid)
-    bxID(self::FEDHeader)::UInt16 = FED_BXID_EXTRACT(self.theHeader.sourceid)
-    sourceID(self::FEDHeader)::UInt16 = FED_SOID_EXTRACT(self.theHeader.sourceid)
-    version(self::FEDHeader)::Uint8 = FED_VERSION_EXTRACT(self.theHeader.sourceid)
-    moreHeaders(self::FEDHeader)::Bool = FED_MORE_HEADERS_EXTRACT(self.theHeader.sourceid) != 0
+    trigger_type(self::FedHeader)::UInt8 = FED_EVTY_EXTRACT(self.theHeader.eventid)
+    lvl1_id(self::FedHeader)::UInt32 = FED_LVL1_EXTRACT(self.theHeader.eventid)
+    bx_id(self::FedHeader)::UInt16 = FED_BXID_EXTRACT(self.theHeader.sourceid)
+    source_id(self::FedHeader)::UInt16 = FED_SOID_EXTRACT(self.theHeader.sourceid)
+    version(self::FedHeader)::Uint8 = FED_VERSION_EXTRACT(self.theHeader.sourceid)
+    more_headers(self::FedHeader)::Bool = FED_MORE_HEADERS_EXTRACT(self.theHeader.sourceid) != 0
     
     """
     Checker to check whether it is a header or not
     """
-    check(self::FEDHeader)::Bool = FED_HCTRLID_EXTRACT(self.theHeader.eventid) == FED_SLINK_START_MARKER
+    check(self::FedHeader)::Bool = FED_HCTRLID_EXTRACT(self.theHeader.eventid) == FED_SLINK_START_MARKER
     
 end
