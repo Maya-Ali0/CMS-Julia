@@ -1,113 +1,133 @@
 module ErrorChecker_H
-include("DataFormats\SiPixelRawDataError.jl")
-include("Constants.jl")
+    # Including necessary modules and files
+    include("../DataFormats/SiPixelRawDataError.jl")
+    include("Constants.jl")
+    include("../DataFormats/FedTrailer.jl")
+    include("../DataFormats/FedHeader.jl")
+    using .DataFormats_SiPixelRawDataError_h: SiPixelRawDataError
+    using .constants
 
-using .DataFormats_SiPixelRawDataError_h: SiPixelRawDataError
-using .constants
-
-
-struct ErrorChecker 
+    # Type aliases for convenience
     const Word32 = UInt32
     const Word64 =  UInt64
-    const DetErrors = vector{SiPixelRawDataError}
+    const DetErrors = Vector{SiPixelRawDataError}
     const Errors = Dict{UInt32, DetErrors}()
-    _includeErrors::Bool
 
-    function ErrorChecker()
-        _includeErrors = false
+    """
+    ErrorChecker struct
+
+    Represents an error checker object for validating FED data integrity.
+
+    Fields:
+    - _includeErrors::Bool: Flag indicating whether to include errors in analysis.
+
+    Constructor:
+    - ErrorChecker(): Constructs an ErrorChecker object with _includeErrors set to false.
+    """
+
+    struct ErrorChecker 
+        _includeErrors::Bool
+        function ErrorChecker()
+            _includeErrors = false
+        end
     end
-end
 
-function checkCRC(self::ErrorChecker, errorsInEvent::Bool, fedId::Int, trailer::ptr(Word64), errors::Errors)::Bool
-    CRC_BIT::Int 
-    CRC_BIT = (Word64 >> CRC_shift) & CRC_mask
-    if (CRC_BIT == 0)
-        return true
-    errorsInEvent = true
-    if(_includeErrors)
-        error = SiPixelRawDataError(trailer, 39, fedId)
-        if haskey(errors, dummyDetId)
+    """
+    check_crc function
+
+    Checks CRC validity in a FED trailer.
+
+    Arguments:
+    - self::ErrorChecker: The ErrorChecker object.
+    - errors_in_event::Bool: Indicates if errors are present in the event.
+    - fed_id::Int: FED identifier.
+    - trailer::Vector{UInt8}: Trailer data.
+    - errors::Errors: Dictionary to store errors.
+
+    Returns:
+    - Bool: True if CRC is valid, false otherwise.
+    """
+    function check_crc(self::ErrorChecker, errors_in_event::Bool, fed_id::Int, trailer::Vector{UInt8}, errors::Errors)::Bool
+        the_trailer = fedTrailer::FedTrailer(trailer)
+        crc_bit::bool = fedTrailer::crc_modified(the_trailer)
+        if (crc_bit == false)
+            return true
+        end
+        errors_in_event = true
+        if(self._includeErrors)
+            error = SiPixelRawDataError(trailer, 39, fed_id)
             push!(errors[dummyDetId], error)
-        else
-            return "exception" #will fix later
-    end 
-    return false
-end
-
-
-end
-
-function checkHeader(self::ErrorChecker, errorsInEvent::Bool, fedId::Int, trailer::ptr(Word64), errors::Errors)::Bool
-    header_ptr = reinterpret(Ptr{UInt8}, header)
-    fedHeader = createFEDHeader(header_ptr)
-    if(!fedHeader.check())
-        return false
-    end 
-    if(fedHeader.sourceID() != fedId)
-        println("PixelDataFormatter::interpretRawData, fedHeader.sourceID() != fedId, sourceID = $(fedHeader.sourceID()), fedId = $fedId, errorType = 32")
-        errorsInEvent = true
-        if(_includeErrors)
-            error = SiPixelRawDataError(trailer, 39, fedId)
-            if haskey(errors, dummyDetId)
-                push!(errors[dummyDetId], error)
-            else
-                return "exception" #will fix later
         end 
-    end
-    return fedHeader.moreHeaders()
-end 
-
-
-function createFEDHeader(header::Ptr{UInt8})
-    data = Vector{UInt8}()
-    ptr = header
-    while ptr[]
-        push!(data, ptr[])
-        ptr += 1
-    end
-    return FEDHeader(data)
-end
-function checkTrailer(self::ErrorChecker, errorsInEvent::Bool, fedId::Int, nWords::UInt, trailer::ptr(Word64), errors::Errors)::Bool
-    trailer_ptr = reinterpret(Ptr{UInt8}, trailer)
-    fedTrailer = createFEDHeader(trailer_ptr)
-    if (!fedTrailer.check())
-        if(_includeErrors)
-            error = SiPixelRawDataError(trailer, 39, fedId)
-            if haskey(errors, dummyDetId)
-                push!(errors[dummyDetId], error)
-            else
-                return "exception" #will fix later
-            end
-        end
-        errorsInEvent = true
-        println("fedTrailer.check failed, Fed: $fedId , errorType = 33")
         return false
     end
-    if (fedTrailer.fragmentLength() != nWords)
-        println("fedTrailer.fragmentLength()!= nWords !! Fed: $fedId  errorType = 34")
-        errorsInEvent = true
-        if (_includeErrors)
-            error = SiPixelRawDataError(trailer, 39, fedId)
-            if haskey(errors, dummyDetId)
+
+    """
+    check_header function
+
+    Checks header validity in a FED header.
+
+    Arguments:
+    - self::ErrorChecker: The ErrorChecker object.
+    - errors_in_event::Bool: Indicates if errors are present in the event.
+    - fed_id::Int: FED identifier.
+    - header::Vector{UInt8}: Header data.
+    - errors::Errors: Dictionary to store errors.
+
+    Returns:
+    - Bool: True if more headers follow, false otherwise.
+    """
+    function check_header(self::ErrorChecker, errors_in_event::Bool, fed_id::Int, header::Vector{UInt8}, errors::Errors)::Bool
+        the_header = fedHeader::FedHeader(header)
+        if(!fedHeader::check(theHeader))
+            return false
+        end 
+        source_id::UInt16 = fedHeader::source_id(theHeader)
+        if( source_id != fed_id)
+            println("PixelDataFormatter::interpretRawData, fedHeader.sourceID() != fedId, sourceID = ",sourceID, " fedId = ",fedId, "errorType = ",32)
+            errorsInEvent = true
+            if(self._includeErrors)
+                error = SiPixelRawDataError(trailer, 39, fedId)
                 push!(errors[dummyDetId], error)
-            else
-                return "exception" #will fix later
-            end
+            end 
         end
-        return fedTrailer.moreTrailers();
-    end
-end
-function createFEDTrailer(trailer::Ptr{UInt8})
-    data = Vector{UInt8}()
-    ptr = trailer
-    while ptr[]
-        push!(data, ptr[])
-        ptr += 1
-    end
-    return FEDTrailer(data)
-end
+        return fedHeader::more_headers(the_header)
+    end 
+    
+    """
+    check_trailer function
 
+    Checks trailer validity in a FED trailer.
 
-end
-end
+    Arguments:
+    - self::ErrorChecker: The ErrorChecker object.
+    - errors_in_event::Bool: Indicates if errors are present in the event.
+    - fed_id::Int: FED identifier.
+    - num_words::UInt: Number of words.
+    - trailer::Vector{UInt8}: Trailer data.
+    - errors::Errors: Dictionary to store errors.
+
+    Returns:
+    - Bool: True if more trailers follow, false otherwise.
+    """
+    function check_trailer(self::ErrorChecker, errors_in_event::Bool, fed_id::Int, num_words::UInt, trailer::Vector{UInt8}, errors::Errors)::Bool
+        the_trailer = fedTrailer::FedTrailer(trailer)
+        if (!fedTrailer::check(the_trailer))
+            if(self._includeErrors)
+                error = SiPixelRawDataError(trailer, 39, fed_id)
+                push!(errors[dummyDetId], error)
+            end
+            errors_in_event = true
+            println("fedTrailer.check failed, Fed:",fedId," errorType = ",33)
+            return false
+        end
+        if (fedTrailer::fragment_length(the_trailer) != nWords)
+            println("fedTrailer.fragmentLength()!= nWords !! Fed: ",fedId, " errorType = ",34)
+            errors_in_event = true
+            if (_includeErrors)
+                error = SiPixelRawDataError(trailer, 39, fedId)
+                push!(errors[dummyDetId], error)
+            end
+            return fedTrailer::more_trailers(the_trailer)
+        end
+    end
 end

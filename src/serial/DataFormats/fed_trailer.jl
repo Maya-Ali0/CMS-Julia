@@ -7,23 +7,23 @@ In a typical FED system, each block of data ends with a trailer containing metad
 # Constants and Extraction Functions
 This module provides constants and functions to extract various fields from the FED trailer.
 """
-module fed_trailer
+module fedTrailer
 
 
 
     export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT, FED_EVSZ_EXTRACT, FED_CRCS_EXTRACT, FED_STAT_EXTRACT, FED_TTSI_EXTRACT, FED_MORE_TRAILERS_EXTRACT, FED_CRC_MODIFIED_EXTRACT, FED_SLINK_ERROR_EXTRACT, FED_WRONG_FEDID_EXTRACT
 
 
-    struct fedt_struct
-        conscheck::UInt32 # Consistensy Check to ensure data meets expected standards and rules
-        eventsize::UInt32 # Size of event data blocks
+    struct Fedt_t
+        cons_check::UInt32 # Consistensy Check to ensure data meets expected standards and rules
+        event_size::UInt32 # Size of event data blocks
     end
     """
-    eventsize
+    event_size
     [ Control ID | length     |          Event Size           ]
     [  4 bits    |  4 bits    |           24 bits             ]
 
-    conscheck
+    cons_check
     [  CRC   | Wrong FED ID | S-Link Error |   Reserved   |    Status     |   TTS Info        | More Trailers | CRC Modified | Reserved]
     [16 bits |    1 bit     |   1 bit      |   2 bits      |    4 bits     |   4 bits          |  1 bits       |    1 bit    |  2 bits ]
     """
@@ -182,10 +182,10 @@ module fed_trailer
         length::UInt32
     end
     function FedTrailer(trailer::Vector{UInt8})
-        consCheck::UInt32 = reinterpret(UInt32, trailer[1:4])
-        eventSize::UInt32 = reinterpret(UInt32, trailer[5:8])
-        trailer_t = fedt_struct(consCheck,eventSize)
-        FEDTrailer(trailer_t,8)
+        cons_check::UInt32 = reinterpret(UInt32, trailer[1:4])
+        event_size::UInt32 = reinterpret(UInt32, trailer[5:8])
+        trailer_t = Fedt_t(consCheck,eventSize)
+        FedTrailer(trailer_t,8)
     end
     """
     Functions for extracting fields
@@ -194,19 +194,19 @@ module fed_trailer
 
     crc(self::FedTrailer)::UInt16 = FED_CRCS_EXTRACT(self.theTrailer.conscheck)
 
-    evtStatus(self::FedTrailer)::UInt8 = FED_STAT_EXTRACT(self.theTrailer.conscheck)
+    evt_status(self::FedTrailer)::UInt8 = FED_STAT_EXTRACT(self.theTrailer.conscheck)
 
-    ttsBits(self::FedTrailer)::UInt8 = FED_TTSI_EXTRACT(self.theTrailer.conscheck)
+    tts_bits(self::FedTrailer)::UInt8 = FED_TTSI_EXTRACT(self.theTrailer.conscheck)
 
-    moreTrailers(self::FedTrailer)::Bool = FED_MORE_TRAILERS_EXTRACT(self.theTrailer.conscheck) != 0
+    more_trailers(self::FedTrailer)::Bool = FED_MORE_TRAILERS_EXTRACT(self.theTrailer.conscheck) != 0
 
-    crcModified(self::FedTrailer)::Bool = FED_CRC_MODIFIED_EXTRACT(self.theTrailer.conscheck) != 0
+    crc_modified(self::FedTrailer)::Bool = FED_CRC_MODIFIED_EXTRACT(self.theTrailer.conscheck) != 0
 
-    slinkError(self::FedTrailer)::Bool = FED_SLINK_ERROR_EXTRACT(self.theTrailer.conscheck) != 0
+    slink_error(self::FedTrailer)::Bool = FED_SLINK_ERROR_EXTRACT(self.theTrailer.conscheck) != 0
 
-    wrongFedId(self::FedTrailer)::Bool = FED_WRONG_FEDID_EXTRACT(self.theTrailer.conscheck) != 0
+    wrong_fedid(self::FedTrailer)::Bool = FED_WRONG_FEDID_EXTRACT(self.theTrailer.conscheck) != 0
 
-    conscheck(self::FedTrailer)::UInt32 = self.theTrailer.conscheck
+    cons_check(self::FedTrailer)::UInt32 = self.theTrailer.conscheck
 
     """
     Checker to check whether it is a trailer or not
