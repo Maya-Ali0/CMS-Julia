@@ -2,8 +2,8 @@ module ErrorChecker_H
     # Including necessary modules and files
     include("../DataFormats/SiPixelRawDataError.jl")
     include("Constants.jl")
-    include("../DataFormats/FedTrailer.jl")
-    include("../DataFormats/FedHeader.jl")
+    include("../DataFormats/fed_trailer.jl")
+    include("../DataFormats/fed_header.jl")
     using .DataFormats_SiPixelRawDataError_h: SiPixelRawDataError
     using .constants
 
@@ -11,7 +11,7 @@ module ErrorChecker_H
     const Word32 = UInt32
     const Word64 =  UInt64
     const DetErrors = Vector{SiPixelRawDataError}
-    const Errors = Dict{UInt32, DetErrors}()
+    const Errors = Dict{UInt32, DetErrors}
 
     """
     ErrorChecker struct
@@ -50,12 +50,13 @@ module ErrorChecker_H
     function check_crc(self::ErrorChecker, errors_in_event::Bool, fed_id::Int, trailer::Vector{UInt8}, errors::Errors)::Bool
         the_trailer = fedTrailer::FedTrailer(trailer)
         crc_bit::bool = fedTrailer::crc_modified(the_trailer)
+        error_word::UInt64 = reinterpret(UInt64,trailer[1:8])
         if (crc_bit == false)
             return true
         end
         errors_in_event = true
         if(self._includeErrors)
-            error = SiPixelRawDataError(trailer, 39, fed_id)
+            error = SiPixelRawDataError(error_word, 39, fed_id)
             push!(errors[dummyDetId], error)
         end 
         return false
@@ -78,6 +79,7 @@ module ErrorChecker_H
     """
     function check_header(self::ErrorChecker, errors_in_event::Bool, fed_id::Int, header::Vector{UInt8}, errors::Errors)::Bool
         the_header = fedHeader::FedHeader(header)
+        error_word::UInt64 = reinterpret(UInt64,header[1:8])
         if(!fedHeader::check(theHeader))
             return false
         end 
@@ -86,13 +88,13 @@ module ErrorChecker_H
             println("PixelDataFormatter::interpretRawData, fedHeader.sourceID() != fedId, sourceID = ",sourceID, " fedId = ",fedId, "errorType = ",32)
             errorsInEvent = true
             if(self._includeErrors)
-                error = SiPixelRawDataError(trailer, 39, fedId)
+                error = SiPixelRawDataError(error_word, 39, fedId)
                 push!(errors[dummyDetId], error)
             end 
         end
         return fedHeader::more_headers(the_header)
     end 
-    
+
     """
     check_trailer function
 
@@ -111,6 +113,7 @@ module ErrorChecker_H
     """
     function check_trailer(self::ErrorChecker, errors_in_event::Bool, fed_id::Int, num_words::UInt, trailer::Vector{UInt8}, errors::Errors)::Bool
         the_trailer = fedTrailer::FedTrailer(trailer)
+        error_word::UInt64 = reinterpret(UInt64,header[1:8])
         if (!fedTrailer::check(the_trailer))
             if(self._includeErrors)
                 error = SiPixelRawDataError(trailer, 39, fed_id)
@@ -124,7 +127,7 @@ module ErrorChecker_H
             println("fedTrailer.fragmentLength()!= nWords !! Fed: ",fedId, " errorType = ",34)
             errors_in_event = true
             if (_includeErrors)
-                error = SiPixelRawDataError(trailer, 39, fedId)
+                error = SiPixelRawDataError(error_word, 39, fedId)
                 push!(errors[dummyDetId], error)
             end
             return fedTrailer::more_trailers(the_trailer)
