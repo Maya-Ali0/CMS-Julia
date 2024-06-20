@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 module CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
+=======
+module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
+>>>>>>> d2db8abe62ce432f347d9356342e00670a055a11
 
     # Structure to hold a constant view of device data
     struct DeviceConstView
