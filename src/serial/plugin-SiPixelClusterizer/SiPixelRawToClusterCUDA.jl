@@ -1,13 +1,4 @@
 include("../CUDADataFormats/SiPixelClusterSoA.jl")
-<<<<<<< HEAD
-using .CUDADataFormats_SiPixelCluster_interface_SiPixelClustersSoA
-
-include("../CUDADataFormats/SiPixelDigisSoA.jl")
-using .CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
-
-include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
-using .CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA
-=======
 using .CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 
 include("../CUDADataFormats/SiPixelDigisSoA.jl")
@@ -15,48 +6,25 @@ using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 
 include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
 using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 
 include("../CondFormats/SiPixelGainCalibrationForHLTGPU.jl")
 using .CalibTracker_SiPixelESProducers_interface_SiPixelGainCalibrationForHLTGPU_h
 
 include("../CondFormats/SiPixelFedCablingMapGPUWrapper.jl")
-<<<<<<< HEAD
-using .RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPUWrapper
-
-include("../CondFormats/SiPixelFedIds.jl")
-using .CondFormats_SiPixelFedIds
-=======
 using .RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPUWrapper_h
 
 include("../CondFormats/SiPixelFedIds.jl")
 using .CondFormats_SiPixelFedIds_h
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 
 include("../DataFormats/PixelErrors.jl")
 using .DataFormats_SiPixelDigi_interface_PixelErrors_h
 
-<<<<<<< HEAD
 include("../DataFormats/data_formats.jl")
-
+using .dataFormats
 
 include("../Framework/EventSetup.jl")
 using .edm
 
-=======
-include("../DataFormats/FEDNumbering.jl")
-using .DataFormats_FEDNumbering_h
-
-include("../DataFormats/FEDRawData.jl")
-using .DataFormats_FEDRawData_h
-
-include("../DataFormats/FEDRawDataCollection.jl")
-using .DataFormats_FEDRawDataCollection_h
-
-include("../Framework/EventSetup.jl")
-using .Framework_EventSetup_h
-
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 include("../Framework/Event.jl")
 using .Framework_Event_h
 
@@ -67,55 +35,15 @@ include("../Framework/EDProducer.jl")
 using .Framework_EDProducer_h
 
 include("ErrorChecker.jl")
-using .ErrorChecker_H
+using .errorChecker
 
 include("SiPixelRawToClusterGPUKernel.jl")
 
-<<<<<<< HEAD
-module si_pixel_raw_to_cluster_cuda
-
-# Define the necessary modules and types
-module edm
-    abstract type EDProducer  end
-
-    mutable struct EDGetTokenT{T}
-        data::T
-    end
-
-    struct EDPutTokenT{T}
-        data::T
-    end
-
-    struct ProductRegistry
-        function consumes{T}()::EDGetTokenT{T}
-            return EDGetTokenT{T}(nothing)
-        end
-        function produces{T}()::EDPutTokenT{T}
-            return EDPutTokenT{T}(nothing)
-        end
-    end
-end
-
-module pixelgpudetails
-    struct SiPixelRawToClusterGPUKernel end
-    struct WordFedAppender end
-end
-
-
-
-
-struct SiPixelRawToClusterCUDA <: edm.EDProducer
-    _raw_get_token::edm.EDGetTokenT{FedRawDataCollection}
-    _digi_put_token::edm.EDPutTokenT{SiPixelDigisSoA}
-    _digi_error_put_token::Union{Nothing, edm.EDPutTokenT{SiPixelDigiErrorsSoA}}
-    _clusterPutToken::edm.EDPutTokenT{SiPixelClustersSoA}
-=======
 struct SiPixelRawToClusterCUDA <: edm.EDProducer
     raw_get_token::edm.EDGetTokenT{FedRawDataCollection}
     digi_put_token::edm.EDPutTokenT{SiPixelDigisSoA}
     digi_error_put_token::Union{Nothing, edm.EDPutTokenT{SiPixelDigiErrorsSoA}}
     cluster_put_token::edm.EDPutTokenT{SiPixelClustersSoA}
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 
     gpu_algo::pixelgpudetails.SiPixelRawToClusterGPUKernel
     word_fed_appender::Union{Nothing, Ref{pixelgpudetails.word_fed_appender}}
@@ -126,108 +54,109 @@ struct SiPixelRawToClusterCUDA <: edm.EDProducer
     use_quality::Bool
 
     function SiPixelRawToClusterCUDA(reg::edm.ProductRegistry)
-        raw_get_token = reg.consumes{FedRawDataCollection}()
-        digi_put_token = reg.produces{SiPixelDigisSoA}()
-        cluster_put_token = reg.produces{SiPixelClustersSoA}()
+        raw_get_token = consumes{FedRawDataCollection}(reg)
+        digi_put_token = produces{SiPixelDigisSoA}(reg)
+        cluster_put_token = produces{SiPixelClustersSoA}(reg)
         is_run2 = true
         include_errors = true
         use_quality = true
-        digi_error_put_token = _include_errors ? reg.produces{SiPixelDigiErrorsSoA}() : nothing
-        word_fed_appender = Ref(pixelgpudetails.word_fed_appender())
+        digi_error_put_token = include_errors ? produces{SiPixelDigiErrorsSoA}(reg) : nothing
+        word_fed_appender = pixelgpudetails.word_fed_appender()
         new(raw_get_token, digi_put_token, digi_error_put_token, cluster_put_token,
             pixelgpudetails.SiPixelRawToClusterGPUKernel(), word_fed_appender,
-            PixelFormatterErrors(), is_run2, include_errors, use_quality)
+            dataFormats.PixelFormatterErrors(), is_run2, include_errors, use_quality)
     end
 end
 
 
 function produce(self:: SiPixelRawToClusterCUDA, iEvent::edm.Event, iSetup::edm.EventSetup)
-    hgpuMap = iSetup.get{SiPixelFedCablingMapGPUWrapper}()
-    if(hgpuMap.hasQuality() != self._use_quality)
+    hgpu_map = edm.get(iSetup,SiPixelFedCablingMapGPUWrapper)
+    if(hasQuality(hgpuMap) != self._use_quality)
         error_message = "use_quality of the module ($_use_quality) differs from SiPixelFedCablingMapGPUWrapper. Please fix your configuration."
         throw(RuntimeError(error_message))
     end
-    hgains = hgpuMap.getCPUProduct()
-    gpuModulesToUnpack::ptr(Char)
-    gpuModulesToUnpack = hgpuMap.getModToUnpAll()
+    gpu_map = getCPUProduct(hgpu_map)
+    gpu_modules_to_unpack::Vector{UInt8} = getModToUnpAll(hgpu_map)
 
-    hgains = iSetup.get{SiPixelGainCalibrationForHLTGPU}()
-    gpuGains = hgain.getCPUProduct()
-    fedIds = iSetup.get(self.raw_get_token)
-    self._errors.clear()
+    hgains = get(iSetup,SiPixelGainCalibrationForHLTGPU)
+    gpu_gains = getCPUProduct(hgains)
+    fed_ids::Vector{UInt} = fedIds(get(iSetup,SiPixelFedIds)) #fedIds
+    buffers::FedRawDataCollection = get(iEvent,self.raw_get_token) #fedData
+    clear(self.errors)
 
-    wordCounterGPU :: Int
-    fedCounter:: Int
-    errorsInEvent:: Bool
+    # Data Extraction for Raw to Digi
+    word_counter_gpu :: Int = 0 
+    fed_counter:: Int = 0 
+    errors_in_event:: Bool = false 
+    error_check::errorChecker = ErrorChecker()
 
-    wordCounterGPU = 0
-    fedCounter = 0
-    errorsInEvent = false
+    for fed_id ∈ fed_ids
 
-    errorcheck::ErrorChecker
-    for fedId in fedIds
-       if(fedId == 40)
+       if(fed_id == 40) # Skipping Pilot Blade Data
         continue
 
-        @assert(fedId >= 1200)
-        fedCounter++
+        @assert(fed_id >= 1200)
+        fed_counter++
         
-        rawData:: FEDRawData 
-        rawData = buffers.FEDData(fedId)
-
-        nWords = rawData.size()/ sizeof(Int64)
-        if(nWords == 0)
+        # get event data for the following feds
+        # Im using the fedId in fedIds to get the rawData of that fedId which is in buffers the FedRawDataCollection
+        raw_data::FedRawData = FedData(buffers,fed_id) 
+        n_words = size(raw_data)/ sizeof(Int64)
+        if(n_words == 0)
             continue
         end
-
-        trailer = rawData.data() + (nWords - 1)
-        if (! errorcheck.checkCRC(errorsInEvent, fedId, trailer, self._errors))
+        trailer_byte_start = size(raw_data) - 7
+        trailer::Vector{UInt8} = data(rawData)[trailer_byte_start:trailer_byte_start+7] # The last 8 bytes
+        if (!checkCRC(error_check,errors_in_event, fed_id, trailer, self.errors))
             continue
         end 
-
-        header = rawData.data()
-        header = header - 1
+        header_byte_start = 1 
+        header::Vector{UInt8} = data(rawData)[header_byte_start:header_byte_start+7]
 
         moreHeaders = true
-        while (moreHeaders){
-            header++
-            headerStatus =  errorcheck.checkHeader(errorsInEvent, fedId, header, self._errors)
+        while moreHeaders
+            headerStatus =  checkHeader(error_check,errors_in_event, fed_id, header, self.errors)
             moreHeaders = headerStatus
-        }
+            if moreHeaders
+                header_byte_start += 8
+                header = data(rawData)[header_byte_start:header_byte_start+7]
+            end
         end
 
         moreTrailer = true
-        trailer++
-        
         while (moreTrailer)
-            trailer = trailer - 1
             trailerStatus = errorcheck.checkTrailer(errorsInEvent, fedId, nWords, trailer, _errors)
             moreTrailer = trailerStatus
+            if moreTrailer
+                trailer_byte_start -= 8
+                trailer = data(rawData)[trailer_byte_start:trailer_byte_start+7]
+            end
         end 
         
-        bw = header + 1
-        ew = trailer
-
-        @assert (0 == (ew - bw)% 2)
-        self._word_fed_appender -> intializeWordFed(fedId, wordCounterGPU, bw, (ew - bw))
-        wordCounterGPU += ew - bw
+        begin_word32_index = header_byte_start + 8
+        end_word32_index = trailer_byte_start - 1 
+        @assert((end_word32_index - begin_word32_index + 1) % 4 == 0)
+        num_word32 = (end_word32_index - begin_word32_index + 1) ÷ sizeof(UInt32)
+        @assert (0 == (ew - bw) % 2) # Number of 32 bit words should be a multiple of 2
+        intializeWordFed(word_fed_appender,fed_id, word_counter_gpu, begin_word32_index, num_word32)
+        wordCounterGPU += num_word32
     end
-    _gpuAlgo.makeClusters(is_run2,
+    makeClusters(gpu_algo,is_run2,
                         gpuMap, 
                         gpuModulesToUnpack, 
-                        gpuGains, 
-                        ptr(self._word_fed_appender), 
-                        move(self._errors), 
-                        wordCounterGPU, 
-                        fedCounter, 
+                        gpu_gains, 
+                        self._word_fed_appender, 
+                        self._errors, 
+                        word_counter_gpu, 
+                        fed_counter, 
                         self._use_quality, 
                         self.include_errors, 
                         false)
-    tmp = self._gpuAlgo.getResults()
-    iEvent.emplace(self.digi_put_token, move(tmp.first))
-    iEvent.emplace(self.cluster_put_token, move(tmp.second))
+    tmp = getResults(self.gpu_algo)
+    emplace(iEvent,self.digi_put_token, tmp.first)
+    emplace(iEvent,self.cluster_put_token, tmp.second)
     if(self.include_errors)    
-        iEvent.emplace(self._digi_error_put_token, self._gpuAlgo.getErrors())
+        emplace(iEvent,self._digi_error_put_token, self.gpu_algo.getErrors())
     end
 end
 
