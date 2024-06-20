@@ -1,79 +1,83 @@
-struct SiPixelFedCablingMapGPU
-end
-struct SiPixelGainForHLTonGPU
-end
+include("../CUDADataFormats/SiPixelClusterSoA.jl")
+using .CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
+
+include("../CUDADataFormats/SiPixelDigisSoA.jl")
+using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
+
+include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
+using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
 """
 Phase 1 Geometry Constants
 """
 module pixelgpudetails
-    const layerStartBit::UInt32 = 20 # 4 layers
-    const ladderStartBit::UInt32 = 12 # 148 ladders
-    const moduleStartBit::UInt32 = 2 # 1856 silicon modules each with 160 x 416 pixels connected to 16 ReadOut Chips (ROC)
+    const LAYER_START_BIT::UInt32 = 20 # 4 layers
+    const LADDER_START_BIT::UInt32 = 12 # 148 ladders
+    const MODULE_START_BIT::UInt32 = 2 # 1856 silicon modules each with 160 x 416 pixels connected to 16 ReadOut Chips (ROC)
 
-    const panelStartBit::UInt32 = 10 # Group of ladders
-    const diskStartBit::UInt32 = 18  
-    const bladeStartBit::UInt32 = 12 # For FPIX, One half disk has 28 Blades (11 inner) and (17 outer). One module mounts each side of a blade
+    const PANEL_START_BIT::UInt32 = 10 # Group of ladders
+    const DISK_START_BIT::UInt32 = 18  
+    const BLADE_START_BIT::UInt32 = 12 # For FPIX, One half disk has 28 Blades (11 inner) and (17 outer). One module mounts each side of a blade
 
-    const layerMask::UInt32 = 0xF # 4 bits
-    const ladderMask::UInt32 = 0xFF # 8 bits
-    const moduleMask::UInt32 = 0x3FF # 11 bits
-    const panelMask::UInt32 = 0x3 # 3 bits
-    const diskMask::UInt32 = 0xF # 4 bits
-    const bladeMask::UInt32 = 0x3F # 7 bits
+    const LAYER_MASK::UInt32 = 0xF # 4 bits
+    const LADDER_MASK::UInt32 = 0xFF # 8 bits
+    const MODULE_MASK::UInt32 = 0x3FF # 11 bits
+    const PANEL_MASK::UInt32 = 0x3 # 3 bits
+    const DISK_MASK::UInt32 = 0xF # 4 bits
+    const BLADE_MASK::UInt32 = 0x3F # 7 bits
 
 
-    const LINK_bits::UInt32 = 6 
-    const ROC_bits::UInt32 = 5  
-    const DCOL_bits::UInt32 = 5 
-    const PXID_bits::UInt32 = 8
-    const ADC_bits::UInt32 = 8
+    const LINK_BITS::UInt32 = 6 
+    const ROC_BITS::UInt32 = 5  
+    const DCOL_BITS::UInt32 = 5 
+    const PXID_BITS::UInt32 = 8
+    const ADC_BITS::UInt32 = 8
 
     """
     [  6 bits  | 5 bits | 5 bits |  8 bits  |8 bits  ]
     [  Link    |  ROC   |  DCOL  |  PXID    |  ADC   ]
     Special For Layer 1
     """
-    const LINK_bits_l1::UInt32 = 6
-    const ROC_bits_l1::UInt32 = 5
-    const COL_bits_l1::UInt32 = 6
-    const ROW_bits_l1::UInt32 = 7
-    const OMIT_ERR_bits::UInt32 = 1 
+    const LINK_BITS_L1::UInt32 = 6
+    const ROC_BITS_L1::UInt32 = 5
+    const COL_BITS_L1::UInt32 = 6
+    const ROW_BITS_L1::UInt32 = 7
+    const OMIT_ERR_BITS::UInt32 = 1 
     """
     Each ROC is an 80x52 pixel unit cell 
     They are grouping columns by 2 : 26 DCOL
     """
-    const maxROCIndex::UInt32 = 8 
-    const numRowsInRoc::UInt32 = 80 
-    const numColsInRoc::UInt32 = 52 
+    const MAX_ROC_INDEX::UInt32 = 8 
+    const NUM_ROWS_IN_ROC::UInt32 = 80 
+    const NUM_COL_IN_ROC::UInt32 = 52 
 
     const MAX_WORD::UInt32 = 2000 # maxword in what ?
 
-    const ADC_shift::UInt32 = 0
-    const PXID_shift::UInt32 = ADC_shift + ADC_bits
-    const DCOL_shift::UInt32 = PXID_shift + PXID_bits
-    const ROC_shift::UInt32 = DCOL_shift + DCOL_bits
-    const LINK_shift::UInt32 = ROC_shift + ROC_bits
+    const ADC_SHIFT::UInt32 = 0
+    const PXID_SHIFT::UInt32 = ADC_SHIFT + ADC_BITS
+    const DCOL_SHIFT::UInt32 = PXID_SHIFT + PXID_BITS
+    const ROC_SHIFT::UInt32 = DCOL_SHIFT + DCOL_BITS
+    const LINK_SHIFT::UInt32 = ROC_SHIFT + ROC_BITS
     """
     Special For Layer 1 ROC
     """
-    const ROW_shift::UInt32 = ADC_shift + ADC_bits
-    const COL_shift::UInt32 = ROW_shift + ROW_bits_l1
+    const ROW_SHIFT::UInt32 = ADC_SHIFT + ADC_BITS
+    const COL_shift::UInt32 = ROW_SHIFT + ROW_BITS_L1
     const OMIT_ERR_shift::UInt32 = 20 # ?
 
-    const LINK_mask::UInt32 = ~(~UInt32(0) << LINK_bits_l1)
-    const ROC_mask::UInt32 = ~(~UInt32(0) << ROC_bits_l1)
-    const COL_mask::UInt32 = ~(~UInt32(0) << COL_bits_l1)
-    const ROW_mask::UInt32 = ~(~UInt32(0) << ROW_bits_l1)
-    const DCOL_mask::UInt32 = ~(~UInt32(0) << DCOL_bits) # ?
-    const PXID_mask::UInt32 = ~(~UInt32(0) << PXID_bits) # ?
-    const ADC_mask::UInt32 = ~(~UInt32(0) << ADC_bits)
-    const ERROR_mask::UInt32 = ~(~UInt32(0) << ROC_bits_l1) # ?
-    const OMIT_ERR_mask::UInt32 = ~(~UInt32(0) << OMIT_ERR_bits) # ?
+    const LINK_MASK::UInt32 = ~(~UInt32(0) << LINK_BITS_L1)
+    const ROC_MASK::UInt32 = ~(~UInt32(0) << ROC_BITS_L1)
+    const COL_MASK::UInt32 = ~(~UInt32(0) << COL_BITS_L1)
+    const ROW_MASK::UInt32 = ~(~UInt32(0) << ROW_BITS_L1)
+    const DCOL_MASK::UInt32 = ~(~UInt32(0) << DCOL_BITS) # ?
+    const PXID_MASK::UInt32 = ~(~UInt32(0) << PXID_BITS) # ?
+    const ADC_MASK::UInt32 = ~(~UInt32(0) << ADC_BITS)
+    const ERROR_MASK::UInt32 = ~(~UInt32(0) << ROC_BITS_L1) # ?
+    const OMIT_ERR_MASK::UInt32 = ~(~UInt32(0) << OMIT_ERR_BITS) # ?
 
     struct DetIdGPU
-        RawId::UInt32
-        rocInDet::UInt32
-        moduleId::UInt32
+        raw_id::UInt32
+        roc_in_det::UInt32
+        module_id::UInt32
     end
     struct Pixel
         row::UInt32
@@ -126,29 +130,52 @@ module pixelgpudetails
 
 
     @inline function pack(row::UInt32,col::UInt32,adc::UInt32)::UInt32
-        thePacking::Packing = Packing()
-        adc = min(adc,thePacking.max_adc)
-        return (row << thePacking.row_shift) | (col << thePacking.column_shift) | (adc << thePacking.adc_shift);
+        the_packing::Packing = Packing()
+        adc = min(adc,the_packing.max_adc)
+        return (row << the_packing.ROW_SHIFT) | (col << the_packing.column_shift) | (adc << the_packing.ADC_SHIFT);
     end
 
     function pixelToChannel(row::UInt32,col::UInt32)::UInt32
-        thePacking::Packing = Packing()
-        return (row << thePacking.column_width) | col
+        the_packing::Packing = Packing()
+        return (row << the_packing.column_width) | col
     end
+
+    const MAX_FED_WORDS = MAX_FED * MAX_WORD
 
     struct WordFedAppender
-        _word::Vector{UInt32}
-        _fedId::Vector{UInt8}
+        words::Vector{UInt32}
+        fed_ids::Vector{UInt8}
     end
 
-    getWord(self::WordFedAppender) = return self._word
+    WordFedAppender() = WordFedAppender(Vector{UInt32}(undef,MAX_FED_WORDS),Vector{UInt8}(undef,MAX_FED_WORDS))
 
-    getFedId(self::WordFedAppender) = return self._fedId
+    get_word(self::WordFedAppender) = return self.words
+
+    get_fed_id(self::WordFedAppender) = return self.fed_ids
     
-    initializeWordFed
-    
+
+    function initialize_word_fed(word_fed_appender::WordFedAppender, fed_id::Int , word_counter_gpu::UInt , src::Vector{UInt8} , length::UInt)
+        for index ∈ word_counter_gpu+1:word_counter_gpu + length
+            counter = index-word_counter_gpu
+            start_index_byte = 4*(counter-1) + 1
+            word_32::Vector{UInt8} = src[start_index_byte:start_index_byte+3]
+            get_word(word_fed_appender)[index] = reinterpret(UInt32,word_32)[1]
+        end
+        get_fed_id(word_fed_appender)[(cld((word_counter_gpu+1),2):(word_counter_gpu + length) ÷ 2)] .= fed_id
+    end
 
     struct SiPixelRawToClusterGPUKernel
+        digis_d::SiPixelDigisSOA
+        clusters_d::SiPixelClustersSOA
+        digi_errors_d::SiPixelDigiErrorsSOA
+    end
+    @inline get_errors(self::SiPixelRawToClusterGPUKernel) = return self.digi_errors_d
+
+    @inlune get_results(self::SiPixelRawToClusterGPUKernel) = return Pair{SiPixelDigisSOA,SiPixelClustersSoA}(self.digis_d,self.clusters_d)
+
+    function make_clusters(self::SiPixelRawToClusterGPUKernel,is_run_2::Bool,cabling_map::SiPixelFedCablingMapGPU,
+        mod_to_unp::Vector{UInt8},gains::SiPixelGainForHLTonGPU,word_fed::WordFedAppender,errors::PixelFormatterErrors,
+        word_counter::UInt32,fed_counter::UInt32,use_quality_info::Bool,include_errors::Bool,debug::bool)
 
     end
 
