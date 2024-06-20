@@ -22,40 +22,22 @@ module DataFormatsSiPixelRawDataError
         fed_id::Int
         error_message::String
         
-<<<<<<< HEAD
-        function SiPixelRawDataError(errorWord32::UInt32, errorType::Int, fedId::Int)
-            errorWord32 = errorWord32
-            errorWord64 = 0
-            errorType = errorType
-            fedId = fedId
-            errorMessage = setMessage(errorType)
-=======
         function SiPixelRawDataError(error_word_32::UInt32, error_type::Int, fed_id::Int)
             error_word_32 = error_word_32
             error_word_64 = 0
             error_type = error_type
             fed_id = fed_id
             error_message = set_message(_error_type_)
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
             
             new(error_word_32, error_word_64, _error_type_, fed_id, error_message)
         end
         
-<<<<<<< HEAD
-        function SiPixelRawDataError(errorWord64::UInt64, errorType::Int, fedId::Int)
-            errorWord32 = 0
-            errorWord64 = errorWord64
-            errorType = errorType
-            fedId = fedId
-            errorMessage = setMessage(errorType)
-=======
         function SiPixelRawDataError(error_word_64::UInt64, error_type::Int, fed_id::Int)
             error_word_32 = 0
             error_word_64 = error_word_64
             error_type = error_type
             fed_id = fed_id
             error_message = set_message(_error_type_)
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
             
             new(error_word_32, error_word_64, error_type, _fed_id_, error_message)
         end
@@ -118,14 +100,9 @@ module DataFormatsSiPixelRawDataError
       - Nothing.
 
     """
-<<<<<<< HEAD
-    @inline setWord32(self::SiPixelRawDataError, errorWord32::UInt32) = self.errorWord32 = errorWord32
-    
-=======
     function set_word_32(self::SiPixelRawDataError, error_word_32::UInt32)
         self.error_word_32 = error_word_32
     end
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 
     """
     set_word_64(self::SiPixelRawDataError, error_word_64::UInt64) -> nothing
@@ -139,13 +116,9 @@ module DataFormatsSiPixelRawDataError
     Output:
       - Nothing.
     """
-<<<<<<< HEAD
-    @inline setWord64(self::SiPixelRawDataError, errorWord64::UInt64) = self.errorWord64 = errorWord64
-=======
     function set_word_64(self::SiPixelRawDataError, error_word_64::UInt64)
         self.error_word_64 = error_word_64
     end
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 
     """
     set_Type(self::SiPixelRawDataError, error_type::Int) -> nothing
@@ -159,15 +132,9 @@ module DataFormatsSiPixelRawDataError
     Output:
       - Nothing.
     """
-<<<<<<< HEAD
-    @inline function setType(self::SiPixelRawDataError, errorType::Int)
-        self.errorType = errorType
-        self.errorMessage = setMessage(errorType)
-=======
     function set_Type(self::SiPixelRawDataError, error_type::Int)
         self.error_type = error_type
         self.error_message = set_message(error_type)
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
     end
 
     """
@@ -183,14 +150,10 @@ module DataFormatsSiPixelRawDataError
       - Nothing.
 
     """
-<<<<<<< HEAD
-    @inline setFedId(self::SiPixelRawDataError, fedId::Int) = self.fedId = fedId
-=======
-    function set_fed_id(self::SiPixelRawDataError, fed_id::Int)
+    @inline function set_fed_id(self::SiPixelRawDataError, fed_id::Int)
         self.fed_id = fed_id
     end
 
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
     """
     get_message(self::SiPixelRawDataError) -> String
 
@@ -203,13 +166,9 @@ module DataFormatsSiPixelRawDataError
       - error_message::String: Error message associated with the instance.
 
     """
-<<<<<<< HEAD
-    getMessage(self::SiPixelRawDataError) = return self.errorMessage
-=======
-    function get_message(self::SiPixelRawDataError)
+    @inline function get_message(self::SiPixelRawDataError)
         return self.error_message
     end
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
 
     """
     get_word_32(self::SiPixelRawDataError) -> UInt32
@@ -288,10 +247,6 @@ module DataFormatsSiPixelRawDataError
     
     import Base: isless
 
-<<<<<<< HEAD
-    @inline isless(one::SiPixelRawDataError, other::SiPixelRawDataError) = one.getFedId() < other.getFedId()
-=======
-    isless(one::SiPixelRawDataError, other::SiPixelRawDataError) = one.get_fed_id() < other.get_fed_id()
->>>>>>> 29233f1f02ad7cdd8bfeebe7560960942aca78fc
+    @inline isless(one::SiPixelRawDataError, other::SiPixelRawDataError) = one.get_fed_id() < other.get_fed_id()
 
 end # module
