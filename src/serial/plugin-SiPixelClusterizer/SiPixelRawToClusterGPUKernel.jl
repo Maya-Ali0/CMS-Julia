@@ -179,19 +179,132 @@ module pixelgpudetails
 
     end
 
-    get_link(ww::UInt32) = (ww >> LINK_SHIFT) & LINK_MASK
-    get_roc(ww::UInt32) = ((ww >> ROC_SHIFT)) & ROC_MASK
-    get_adc(ww::UInt32) = (ww >> ADC_SHIFT) & ADC_MASK
-    isBarrel(raw_id::UInt32)::Bool = 1 == ((raw_id >> 25) & 0x7)
+    get_link(ww::UInt32)::UInt32 = (ww >> LINK_SHIFT) & LINK_MASK
 
+    get_roc(ww::UInt32)::UInt32 = (ww >> ROC_SHIFT) & ROC_MASK
 
-    function get_raw_id(cabling_map::SiPixelFedCablingMapGPU, fed::UInt8, link::UInt32, roc::UInt32)
-        index::UInt32 = fed*MAX_LINK*MAX_ROC + (link-1)*MAX_ROC + roc # fed*48*8 + (link-1)*8 + roc
-        DetIdGPU(cabling_map.raw_id[index],cabling_map.roc_in_det[index],cabling_map.module_id[index])
+    get_adc(ww::UInt32)::UInt32 = (ww >> ADC_SHIFT) & ADC_MASK
+
+    is_barrel(raw_id::UInt32)::Bool = 1 == ((raw_id >> 25) & 0x7)
+
+    function get_raw_id(cabling_map::SiPixelFedCablingMapGPU , fed::UInt8 , link::UInt32 , roc::UInt32)::DetIdGPU
+        index::UInt32 = fed*MAX_LINK*MAX_ROC + (link-1) * MAX_ROC + roc 
+        det_id = DetIdGPU(cabling_map.raw_id[index],cabling_map.roc_in_det[index],cabling_map.module_id[index])
     end
 
-    function frame_conversion::Pixel(bpix::Bool,side::Int,layer::UInt32,roc_id_in_det_unit::UInt32,local::Pixel)
+    function frame_conversion(bpix::bool,side::Int,layer::UInt32,roc_id_in_det_unit::UInt32,local_pixel::Pixel)
+        slope_row = slope_col = 0
+        row_offset = col_offset = 0
+
+        if bpix # if barrel pixel
+            if side == -1 && layer != 1 # -Z side: 4 non flipped modules oriented like 'dddd', except Layer 1
+                if roc_id_in_det_unit < 8 # upper 8 ROCs in 2x8 array
+                    slope_row = 1 
+                    slope_col = -1
+                    row_offset = 0 
+                    col_offset = (8 - roc_id_in_det_unit) * NUM_COL_IN_ROC - 1
+                else # lower 8 ROCs in 2x8 array
+                    slope_row = -1
+                    slope_col = 1
+                    row_offset = 2 * NUM_ROWS_IN_ROC - 1
+                    col_offset = (roc_id_in_det_unit - 8) * NUM_COL_IN_ROC
+                end
+            else # +Z side: 4 non flipped modules oriented like 'pppp', but all 8 in layer1
+                if roc_id_in_det_unit < 8
+                    slope_row = -1
+                    slope_col = 1
+                    row_offset = 2 * NUM_ROWS_IN_ROC - 1
+                    col_offset = roc_id_in_det_unit * NUM_COL_IN_ROC
+                else
+                    slope_row = 1
+                    slope_col = -1
+                    row_offset = 0 
+                    col_offset = (16 - roc_id_in_det_unit) * NUM_COL_IN_ROC - 1
+                end
+            end
+        else # if fpix pixel
+            if side == -1 # pannel 1
+                if roc_id_in_det_unit < 8
+                    slope_row = 1
+                    slope_col = -1
+                    row_offset = 0
+                    col_offset = (8 - roc_id_in_det_unit) * NUM_COL_IN_ROC - 1
+                else
+                    slope_row = -1
+                    slope_col = 1
+                    row_offset = 2 * NUM_ROWS_IN_ROC - 1
+                    col_offset = (roc_id_in_det_unit - 8) * NUM_COL_IN_ROC
+                end
+            else # pannel 2
+                if roc_id_in_det_unit < 8
+                    slope_row = 1
+                    slope_col = -1
+                    row_offset = 0 
+                    col_offset = (8 - roc_id_in_det_unit) * NUM_COL_IN_ROC - 1
+                else
+                    slope_row = -1
+                    slope_col = 1
+                    row_offset = 2 * NUM_ROWS_IN_ROC - 1
+                    col_offset = (roc_id_in_det_unit - 8) * NUM_COL_IN_ROC
+                end
+            end
+        end
+        g_row::UInt32 = slope_row * local_pixel.row + row_offset
+        g_col::UInt32 = slope_col * local_pixel.col + col_offset
+
+        global_pixel::Pixel = Pixel(g_row,g_col)
+        return global_pixel
+    end
+
+    function conversion_error(fed_id::UInt8, status::UInt8, debug::Bool = false)::UInt8
+        error_type::UInt8 = 0
+    
+        if debug
+            # Import the Printf package for formatted printing
+            using Printf
+        end
+    
+        # Switch statement equivalent using multiple if-else
+        if status == 1
+            if debug
+                @printf("Error in Fed: %i, invalid channel Id (error_type = 35)\n", fedId)
+            end
+            error_type = 35
+        elseif status == 2
+            if debug
+                @printf("Error in Fed: %i, invalid ROC Id (error_type = 36)\n", fedId)
+            end
+            error_type = 36
+        elseif status == 3
+            if debug
+                @printf("Error in Fed: %i, invalid dcol/pixel value (error_type = 37)\n", fedId)
+            end
+            error_type = 37
+        elseif status == 4
+            if debug
+                @printf("Error in Fed: %i, dcol/pixel read out of order (error_type = 38)\n", fedId)
+            end
+            error_type = 38
+        else
+            if debug
+                @printf("Cabling check returned unexpected result, status = %i\n", status)
+            end
+        end
+    
+        return error_type
+    end
+
+    row_col_is_valid(roc_row, roc_col)::Bool = (roc_row < NUM_ROWS_IN_ROC) & (roc_col < NUM_COL_IN_ROC)
+    dcol_is_valid(dcol::UInt32,px_id::UInt32) = (dcol < 26) & (2 <= pxid) & (pxid < 162)
+
+    function check_roc(error_word::UInt32, fed_id::UInt8, link::UInt32, cabling_map::SiPixelFedCablingMapGPU, debug::Bool = false)::UInt8
         
-        
+    
+
+
+
+
+            
+
 
 end
