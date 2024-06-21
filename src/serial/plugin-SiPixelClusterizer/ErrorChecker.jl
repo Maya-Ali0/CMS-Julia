@@ -1,4 +1,4 @@
-module ErrorChecker_H
+module errorChecker
     # Including necessary modules and files
     include("../DataFormats/SiPixelRawDataError.jl")
     include("Constants.jl")
@@ -50,7 +50,7 @@ module ErrorChecker_H
     function check_crc(self::ErrorChecker, errors_in_event::Bool, fed_id::Int, trailer::Vector{UInt8}, errors::Errors)::Bool
         the_trailer = fedTrailer::FedTrailer(trailer)
         crc_bit::bool = fedTrailer::crc_modified(the_trailer)
-        error_word::UInt64 = reinterpret(UInt64,trailer[1:8])
+        error_word::UInt64 = reinterpret(UInt64,trailer[1:8])[1]
         if (crc_bit == false)
             return true
         end
@@ -79,7 +79,7 @@ module ErrorChecker_H
     """
     function check_header(self::ErrorChecker, errors_in_event::Bool, fed_id::Int, header::Vector{UInt8}, errors::Errors)::Bool
         the_header = fedHeader::FedHeader(header)
-        error_word::UInt64 = reinterpret(UInt64,header[1:8])
+        error_word::UInt64 = reinterpret(UInt64,header[1:8])[1]
         if(!fedHeader::check(theHeader))
             return false
         end 
@@ -113,7 +113,7 @@ module ErrorChecker_H
     """
     function check_trailer(self::ErrorChecker, errors_in_event::Bool, fed_id::Int, num_words::UInt, trailer::Vector{UInt8}, errors::Errors)::Bool
         the_trailer = fedTrailer::FedTrailer(trailer)
-        error_word::UInt64 = reinterpret(UInt64,header[1:8])
+        error_word::UInt64 = reinterpret(UInt64,header[1:8])[1]
         if (!fedTrailer::check(the_trailer))
             if(self._includeErrors)
                 error = SiPixelRawDataError(trailer, 39, fed_id)

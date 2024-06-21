@@ -1,7 +1,7 @@
 module CondFormats_SiPixelFedIds
 
 mutable struct SiPixelFedIds
-    _fedIDs::Vector{UInt32}
+    _fedIDs::Vector{UInt}
 
     function SiPixelFedIds(fedIDs::Vector{UInt32})
         new(fedIDs)

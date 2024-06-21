@@ -138,7 +138,7 @@ function produce(self:: SiPixelRawToClusterCUDA, iEvent::edm.Event, iSetup::edm.
         @assert((end_word32_index - begin_word32_index + 1) % 4 == 0)
         num_word32 = (end_word32_index - begin_word32_index + 1) ÷ sizeof(UInt32)
         @assert (0 == (ew - bw) % 2) # Number of 32 bit words should be a multiple of 2
-        intializeWordFed(word_fed_appender,fed_id, word_counter_gpu, begin_word32_index, num_word32)
+        intializeWordFed(word_fed_appender,fed_id, word_counter_gpu, , num_word32)
         wordCounterGPU += num_word32
     end
     makeClusters(gpu_algo,is_run2,

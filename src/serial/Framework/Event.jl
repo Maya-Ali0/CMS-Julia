@@ -25,7 +25,7 @@ streamID(event::Event) = event.streamId
 eventID(event::Event) = event.eventId
 
 # Function to retrieve a product of type T from Event
-function get(event::Event, token::EDGetTokenT{T})
+function get(event::Event, token::EDGetTokenT{T})::T
     wrapper = event.products[token.index]
     return wrapper.obj 
 end

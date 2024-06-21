@@ -109,8 +109,8 @@ module dataFormats
     """ 
     function for getting FedRawData
     """
-    function FedData(Fedid :: Int)
-        return data[Fedid]
+    function FedData(self::FedRawDataCollection,Fedid :: Int)
+        return self.data[Fedid]
     end
 
     

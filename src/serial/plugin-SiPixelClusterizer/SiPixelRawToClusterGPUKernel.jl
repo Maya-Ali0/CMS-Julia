@@ -179,4 +179,19 @@ module pixelgpudetails
 
     end
 
+    get_link(ww::UInt32) = (ww >> LINK_SHIFT) & LINK_MASK
+    get_roc(ww::UInt32) = ((ww >> ROC_SHIFT)) & ROC_MASK
+    get_adc(ww::UInt32) = (ww >> ADC_SHIFT) & ADC_MASK
+    isBarrel(raw_id::UInt32)::Bool = 1 == ((raw_id >> 25) & 0x7)
+
+
+    function get_raw_id(cabling_map::SiPixelFedCablingMapGPU, fed::UInt8, link::UInt32, roc::UInt32)
+        index::UInt32 = fed*MAX_LINK*MAX_ROC + (link-1)*MAX_ROC + roc # fed*48*8 + (link-1)*8 + roc
+        DetIdGPU(cabling_map.raw_id[index],cabling_map.roc_in_det[index],cabling_map.module_id[index])
+    end
+
+    function frame_conversion::Pixel(bpix::Bool,side::Int,layer::UInt32,roc_id_in_det_unit::UInt32,local::Pixel)
+        
+        
+
 end

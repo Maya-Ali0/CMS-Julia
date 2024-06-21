@@ -1,12 +1,8 @@
-<<<<<<< HEAD
-module CUDADataFormats_SiPixelDigi_interface_SiPixelDigisSoA
-=======
 module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
->>>>>>> d2db8abe62ce432f347d9356342e00670a055a11
 
     # Structure to hold a constant view of device data
     struct DeviceConstView
-        xx::Vector{UInt16}         # X-coordinates of pixels
+        xx::Vector{UISnt16}         # X-coordinates of pixels
         yy::Vector{UInt16}         # Y-coordinates of pixels
         adc::Vector{UInt16}        # ADC values of pixels
         module_ind::Vector{UInt16}  # Module indices of pixels
