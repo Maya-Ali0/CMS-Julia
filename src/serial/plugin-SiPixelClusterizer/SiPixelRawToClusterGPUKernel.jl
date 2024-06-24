@@ -5,7 +5,7 @@ include("../CUDADataFormats/SiPixelDigisSoA.jl")
 using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 
 include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
-using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
+using .CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA
 """
 Phase 1 Geometry Constants
 """
@@ -299,7 +299,7 @@ module pixelgpudetails
         return error_type
     end
 
-    row_col_is_valid(roc_row, roc_col)::Bool = (roc_row < NUM_ROWS_IN_ROC) & (roc_col < NUM_COL_IN_ROC)
+    roc_row_col_is_valid(roc_row, roc_col)::Bool = (roc_row < NUM_ROWS_IN_ROC) & (roc_col < NUM_COL_IN_ROC)
     dcol_is_valid(dcol::UInt32,px_id::UInt32) = (dcol < 26) & (2 <= pxid) & (pxid < 162)
 
     function check_roc(error_word::UInt32, fed_id::UInt8, link::UInt32, cabling_map::SiPixelFedCablingMapGPU, debug::Bool = false)::UInt8
@@ -367,7 +367,7 @@ module pixelgpudetails
                 error_type = 40 # 1 = overflow , 8 = number of ROCs -> 30
             end
             error_found = true ; 
-        elseif error_found = 31
+        elseif error_found == 31
             if debug 
                 printf("Event number error (error_type = 31)\n")
             end
@@ -380,15 +380,175 @@ module pixelgpudetails
 
 
 
-    function get_err_raw_id
+    function get_err_raw_id(fed_id::UInt8 , err_word::UInt32 , error_type :: UInt32 , cabling_map :: SiPixelFedCablingMapGPU, debug::Bool = false)
+        r_id :: UInt32 = 0xffffffff
+
+        if(error_type == 40)
+            # set dummy values for cabling just to get det_id from link
+            # cabling.dcol = 0 
+            # cabling.px_id = 2
+            roc::UInt32 = 1
+            link::UInt32 = (err_word >> LINK_SHIFT) & LINK_MASK
+            r_id_temp = get_raw_id(cabling_map,fed_id,link,roc).raw_id
+            if(r_id_temp != 9999)
+                r_id = r_id_temp
+            end
+        elseif error_type == 29
+            chan_nmbr = 0 
+            db0_shift = 0 
+            db1_shift = db0_shift + 1
+            db2_shift = db1_shift + 1 
+            db3_shift = db2_shift + 1 
+            db4_shift = db3_shift + 1 
+            data_bit_mask::UInt32 = ~(~UInt32(0) << 1)
+            ch1 = (err_word >> db0_shift) & data_bit_mask
+            ch2 = (err_word >> db1_shift) & data_bit_mask
+            ch3 = (err_word >> db2_shift) & data_bit_mask
+            ch4 = (err_word >> db3_shift) & data_bit_mask
+            ch5 = (err_word >> db4_shift) & data_bit_mask
+            block_bits = 3 # length of block is 3 bits
+            block_shift = 8 # start bit is the 9th bit
+            block_mask::UInt32 = ~(~UInt32(0) << block_bits)
+            block = (err_word >> block_shift) & block_mask
+            local_ch = 1*ch1 + 2*ch2 + 3*ch3 + 4*ch4 + 5*ch5
+            if(block % 2 == 0 )
+                chan_nmbr = (block ÷ 2) * 9 + local_ch
+            else
+                chan_nmbr = ((block - 1) ÷ 2) * 9 + 4 + local_ch
+            end
+
+            if !(chan_nmbr < 1 || chan_nmr > 36) # if it were to be the case it would signify an unexpected result
+                # set dummy values for cabling just to get det_id from link if in barrel
+                # cabling.dcol = 0
+                # cabling.px_id = 2
+                roc::UInt32 = 1
+                link::UInt32 = chan_nmbr
+                r_id_temp::UInt32 = get_raw_id(cabling_map,fed_id,link,roc).raw_id
+                
+                if(r_id_temp != 9999)
+                    r_id = r_id_temp
+                end
+            end
+        elseif error_type == 38
+            #cabling.dcol = 0
+            #cabling.px_id = 2
+            roc::UInt32 = (err_word >> ROC_SHIFT) & ROC_MASK
+            link::UInt32 = (err_word >> LINK_SHIFT) * LINK_MASK
+            r_id_temp::UInt32 = get_raw_id(cabling_map,fed_id,link,roc).raw_id
+            if(r_id_temp != 9999)
+                r_id = r_id_temp
+            end
+        end
+        return r_id
+    end
 
 
-    
-
-
-
-
+    function raw_to_digi_kernal(cabling_map::SiPixelFedCablingMapGPU , mod_to_unp :: Vector{UInt8} , word_counter::UInt32 , 
+                                word::Vector{UInt32} , fed_ids::Vector{UInt8} , xx::Vector{UInt16} , yy::Vector{UInt16} ,
+                                adc::Vector{UInt16} , p_digi::Vector{UInt32} , raw_id_arr::Vector{UInt32} , module_id::Vector{Uint16},
+                                err::Vector{PixelErrorCompact} , use_quality_info::Bool , include_errors::Bool , debug::Bool)
+        first::UInt32 = 1
+        n_end = word_counter
+        
+        for i_loop ∈ first:n_end
+            g_index = i_loop
+            xx[g_index] = 0 
+            yy[g_index] = 0 
+            adc[g_index] = 0
+            skip_roc::Bool = false
+            fed_id::UInt8 = fed_ids[cld(g_index,2)] # make sure to add +1200
             
+            # initialize (too many continue below)
+            pdigi[g_index] = 0 
+            row_id_arr[g_index] = 0 
+            module_id[g_index] = 9999
+
+            ww::UInt32 = word[g_index]
+
+            if ww == 0 # indication of noise or dead channel, skip this pixel during clusterization
+                continue 
+            end
+
+            link::UInt32 = get_link(ww)
+            roc::UInt32 = get_roc(ww)
+
+            det_id::DetIdGPU = get_raw_id(cabling_map,fed_id,link,roc)
+
+            error_type::UInt8 = check_roc(ww,fed_id,link,cabling_map,debug)
+
+            skip_roc = (roc < MAX_ROC_INDEX) ? false : ( error_type != 0 )
+
+            if include_errors && skip_roc
+                r_id::UInt32 = get_err_raw_id(fed_id,ww,error_type,cabling_map,debug)
+                push!(err,PixelErrorCompact(r_id,ww,error_type,fed_id))
+                continue 
+            end
+
+            raw_id::UInt32 = det_id.raw_id
+            roc_in_det_unit = det_id.roc_in_det
+            barrel = is_barrel(raw_id)
+
+            index::UInt32 = fed_id * MAX_LINK * MAX_ROC + (link - 1) * MAX_ROC + roc
+
+            if(use_quality_info)
+                skip_roc = cabling_map.bad_rocs[index]
+                if skip_roc
+                    continue 
+                end
+            end
+            skip_roc = mod_to_unp[index]
+
+            if(skip_roc)
+                continue
+            end
+
+            layer::UInt32 = barrel ? ((raw_id >> LAYER_START_BIT) & LAYER_MASK) : 0 
+            the_module::UInt32 = barrel ? ((raw_id >> MODULE_START_BIT) & MODULE_MASK) : 0
+            side = barrel ? ((the_module < 5) ? -1 : 1) : ((panel == 1) ? -1 : 1)
+            panel = barrel ? 0 : (raw_id >> PANEL_START_BIT) & PANEL_MASK
+            local_pixel::Pixel
+            if layer == 1 
+                col:: UInt32 = (ww >> COL_SHIFT) & COL_MASK
+                row:: UInt32 = (ww >> ROW_SHIFT) & ROW_MASK
+                local_pixel.row = row 
+                local_pixel.col = col
+
+                if include_errors
+                    if ! roc_row_col_is_valid(row,col)
+                        error::UInt8 = conversion_error(fed_id,3,debug) # use the device function and fill the arrays
+                        push!(err,PixelErrorCompact(raw_id,ww,error,fed_id))
+                        if debug
+                            printf("BPIX1 Error Status: %i\n", error)
+                        end
+                        continue ; 
+                    end
+                end
+            else
+                # Conversion Rules for dcol and px_id
+                dcol::UInt32 = (ww >> DCOL_SHIFT) & DCOL_MASK
+                px_id::UInt32 = (ww >> PXID_SHIFT) & PXID_MASK
+                row::UInt32 = NUM_ROWS_IN_ROC - px_id ÷ 2 
+                col::UInt32 = dcol * 2 + px_id % 2
+                local_pixel.row = row 
+                local_pixel.col = col
+                if include_errors && !(dcol_is_valid(dcol,px_id))
+                    error::UInt8 = conversion_error(fed_id,3,debug)
+                    push!(err,PixelErrorCompact(raw_id,ww,error,fed_id))
+                    if debug
+                        printf("Error status: %i %d %d %d %d\n", error, dcol, px_id, fed_id, roc)
+                    end
+                    continue 
+                end
+            end
+                global_pix::Pixel = frame_conversion(barrel,side,layer,roc_id_in_det_unit, local_pix)
+                xx[g_index] = global_pix.row
+                yy[g_index] = global_pix.col
+                adc[g_index] = get_adc(ww)
+                p_digi[g_index] = pack(global_pix.row,global_pix.col,adc[g_index])
+                module_id[g_index] = det_id.module_id
+                raw_id_arr[g_index] = raw_id
+        end
+    end
 
 
 end
