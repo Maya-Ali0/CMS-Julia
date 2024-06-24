@@ -298,7 +298,86 @@ module pixelgpudetails
     dcol_is_valid(dcol::UInt32,px_id::UInt32) = (dcol < 26) & (2 <= pxid) & (pxid < 162)
 
     function check_roc(error_word::UInt32, fed_id::UInt8, link::UInt32, cabling_map::SiPixelFedCablingMapGPU, debug::Bool = false)::UInt8
+
+        error_type::UInt8 = (error_word >> ROC_SHIFT) & ERROR_MASK
         
+        if error_type < 25 
+            return 0 
+        end
+
+        error_found = false
+
+        if(error_type == 25)
+            error_found = true
+            index::UInt32 = fed_id * MAX_LINK * MAX_ROC + (link - 1) * MAX_ROC + 1
+
+            if(index > 1 && index <= cabling_map.size)
+                if(!(link == cabling_map.link[index] && 1 == cabling_map.roc[index]))
+                    error_found = false 
+                end
+            end
+            if debug && error_found
+                printf("Invalid ROC = 25 found (error_type = 25) \n")
+            end
+        elseif error_found == 26
+            if debug
+                printf("Gap word found (error_type = 26) \n")
+            end
+            error_found = true 
+        elseif error_found == 27
+            if debug
+                printf("Dummy word found (error_type = 27) \n")
+            end
+            error_found = true 
+        elseif error_found == 28
+            if debug
+                prinf("Error fifo nearly full (error_type = 28) \n")
+            end
+            error_found = true 
+        elseif error_found == 29
+            if debug
+                printf("Timeout on a channel (error_type = 29) \n")
+            end
+            if ((error_word >> OMIT_ERR_shift) & OMIT_ERR_MASK)
+                if debug 
+                    printf("...first error_type=29 error, this gets masked out \n")
+                end
+                error_found = true
+            end
+        elseif error_found == 30
+            if debug
+                printf("TBM error trailer (error_type 30) \n")
+            end
+            state_match_bits = 4  # Length is 4
+            state_match_shift = 8 # Starts at the 9th bit of the 32 bit word
+            state_match_mask = ~(~UInt32(0) << state_match_bits)
+            state_match = (error_word >> state_match_shift) & state_match_mask
+            
+            if state_match != 1 && state_match != 8
+                if debug
+                    printf("FED error 30 with unexpected state bits (error_type = 30) \n")
+                end
+            end
+            if state_match == 1
+                error_type = 40 # 1 = overflow , 8 = number of ROCs -> 30
+            end
+            error_found = true ; 
+        elseif error_found = 31
+            if debug 
+                printf("Event number error (error_type = 31)\n")
+            end
+            error_found = true
+        else
+            error_found = false
+        end
+        return error_found ? error_type : 0 
+    end
+
+
+
+    function get_err_raw_id
+
+
     
 
 
