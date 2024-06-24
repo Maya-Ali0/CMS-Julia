@@ -7,17 +7,17 @@ using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
 using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
 
-include("../CondFormats/SiPixelGainCalibrationForHLTGPU.jl")
-using .CalibTracker_SiPixelESProducers_interface_SiPixelGainCalibrationForHLTGPU_h
+include("../CondFormats/si_pixel_gain_calibration_for_hlt_gpu.jl")
+using .CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU
 
-include("../CondFormats/SiPixelFedCablingMapGPUWrapper.jl")
-using .RecoLocalTracker_SiPixelClusterizer_SiPixelFedCablingMapGPUWrapper_h
+include("../CondFormats/si_pixel_fed_cabling_map_gpu_wrapper.jl")
+using .RecoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper
 
-include("../CondFormats/SiPixelFedIds.jl")
-using .CondFormats_SiPixelFedIds_h
+include("../CondFormats/si_pixel_fed_ids.jl")
+using .CondFormatsSiPixelFedIds
 
 include("../DataFormats/PixelErrors.jl")
-using .DataFormats_SiPixelDigi_interface_PixelErrors_h
+using .DataFormatsSiPixelDigiInterfacePixelErrors
 
 include("../DataFormats/data_formats.jl")
 using .dataFormats
@@ -26,7 +26,7 @@ include("../Framework/EventSetup.jl")
 using .edm
 
 include("../Framework/Event.jl")
-using .Framework_Event_h
+using .edm
 
 include("../Framework/PluginFactory.jl")
 using .Framework_PluginFactory_h
@@ -38,33 +38,34 @@ include("ErrorChecker.jl")
 using .errorChecker
 
 include("SiPixelRawToClusterGPUKernel.jl")
-
-struct SiPixelRawToClusterCUDA <: edm.EDProducer
-    raw_get_token::edm.EDGetTokenT{FedRawDataCollection}
-    digi_put_token::edm.EDPutTokenT{SiPixelDigisSoA}
-    digi_error_put_token::Union{Nothing, edm.EDPutTokenT{SiPixelDigiErrorsSoA}}
-    cluster_put_token::edm.EDPutTokenT{SiPixelClustersSoA}
+mutable struct SiPixelRawToClusterCUDA <: EDM.EDProducer
+    raw_get_token::EDM.EDGetTokenT{FEDRawDataCollection}
+    digi_put_token::EDM.EDPutTokenT{SiPixelDigisSoA}
+    digi_error_put_token::Union{Nothing, EDM.EDPutTokenT{SiPixelDigiErrorsSoA}}
+    cluster_put_token::EDM.EDPutTokenT{SiPixelClustersSoA}
 
     gpu_algo::pixelgpudetails.SiPixelRawToClusterGPUKernel
-    word_fed_appender::Union{Nothing, Ref{pixelgpudetails.word_fed_appender}}
+    word_fed_appender::Union{Nothing, Ref{pixelgpudetails.SiPixelRawToClusterGPUKernel.WordFedAppender}}
     errors::PixelFormatterErrors
 
     is_run2::Bool
     include_errors::Bool
     use_quality::Bool
 
-    function SiPixelRawToClusterCUDA(reg::edm.ProductRegistry)
-        raw_get_token = consumes{FedRawDataCollection}(reg)
-        digi_put_token = produces{SiPixelDigisSoA}(reg)
-        cluster_put_token = produces{SiPixelClustersSoA}(reg)
+    function SiPixelRawToClusterCUDA(reg::EDM.ProductRegistry)
+        raw_get_token = consumes(FEDRawDataCollection, reg)
+        digi_put_token = produces(SiPixelDigisSoA, reg)
+        cluster_put_token = produces(SiPixelClustersSoA, reg)
         is_run2 = true
         include_errors = true
         use_quality = true
-        digi_error_put_token = include_errors ? produces{SiPixelDigiErrorsSoA}(reg) : nothing
-        word_fed_appender = pixelgpudetails.word_fed_appender()
+        digi_error_put_token = include_errors ? produces(SiPixelDigiErrorsSoA, reg) : nothing
+        word_fed_appender = Ref(pixelgpudetails.SiPixelRawToClusterGPUKernel.WordFedAppender())
+        errors = PixelFormatterErrors()
+        
         new(raw_get_token, digi_put_token, digi_error_put_token, cluster_put_token,
-            pixelgpudetails.SiPixelRawToClusterGPUKernel(), word_fed_appender,
-            dataFormats.PixelFormatterErrors(), is_run2, include_errors, use_quality)
+            pixelgpudetails.SiPixelRawToClusterGPUKernel(),
+            word_fed_appender, errors, is_run2, include_errors, use_quality)
     end
 end
 
@@ -78,10 +79,10 @@ function produce(self:: SiPixelRawToClusterCUDA, iEvent::edm.Event, iSetup::edm.
     gpu_map = getCPUProduct(hgpu_map)
     gpu_modules_to_unpack::Vector{UInt8} = getModToUnpAll(hgpu_map)
 
-    hgains = get(iSetup,SiPixelGainCalibrationForHLTGPU)
+    hgains = iSetup[SiPixelGainCalibrationForHLTGPU()]
     gpu_gains = getCPUProduct(hgains)
-    fed_ids::Vector{UInt} = fedIds(get(iSetup,SiPixelFedIds)) #fedIds
-    buffers::FedRawDataCollection = get(iEvent,self.raw_get_token) #fedData
+    fed_ids::Vector{UInt} = fedIds(iSetup[SiPixelFedIds]) #fedIds
+    buffers::FedRawDataCollection = iEvent[self.raw_get_token] #fedData
     clear(self.errors)
 
     # Data Extraction for Raw to Digi

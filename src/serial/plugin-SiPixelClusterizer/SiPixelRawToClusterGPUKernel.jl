@@ -168,7 +168,12 @@ module pixelgpudetails
         digis_d::SiPixelDigisSOA
         clusters_d::SiPixelClustersSOA
         digi_errors_d::SiPixelDigiErrorsSOA
+    
+        function SiPixelRawToClusterGPUKernel()
+            new(SiPixelDigisSOA(), SiPixelClustersSOA(), SiPixelDigiErrorsSOA())
+        end
     end
+    
     @inline get_errors(self::SiPixelRawToClusterGPUKernel) = return self.digi_errors_d
 
     @inlune get_results(self::SiPixelRawToClusterGPUKernel) = return Pair{SiPixelDigisSOA,SiPixelClustersSoA}(self.digis_d,self.clusters_d)
