@@ -1,0 +1,4 @@
+module RecoLocalTrackerSiPixelClusterizerPluginsGPUCalibPixel
+
+include("../CondFormats/si_pixel_gain_for_hlt_on_gpu.jl")
+end # module RecoLocalTrackerSiPixelClusterizerPluginsGPUCalibPixel
