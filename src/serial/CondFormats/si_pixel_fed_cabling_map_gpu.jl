@@ -23,7 +23,7 @@ Module containing constants related to Pixel GPU details.
 - MAX_SIZE: Total maximum size calculated as `MAX_FED * MAX_LINK * MAX_ROC`.
 - MAX_SIZE_BYTE_BOOL: Maximum size in bytes for boolean arrays.
 """
-module PixelGPUDetails
+module pixelGPUDetails
     # Maximum number of FEDs for phase 1; not all are necessarily used
     const MAX_FED::UInt32 = 150
     # Maximum number of links/channels for Phase 1
