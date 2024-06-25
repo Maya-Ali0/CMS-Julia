@@ -24,19 +24,19 @@ module GPU_DEBUG
 *
 * This function iterates through an array of pixel IDs (`id`) and identifies 
 * module boundaries. It utilizes an atomic operation to update an output array 
-* (`moduleStart`) that stores the starting index for each module within the `id` array.
+* (`module_start`) that stores the starting index for each module within the `id` array.
 *
 * @param id A constant array of type `UInt16` containing pixel IDs.
-* @param moduleStart An output array of type `UInt32` where the starting index of each module will be stored.
-* @param clusterId An output array of type `UInt32` where each element is initially set to its own index (potentially used for cluster identification later).
-* @param numElements The number of elements (pixels) in the `id` array.
+* @param module_start An output array of type `UInt32` where the starting index of each module will be stored.
+* @param cluster_id An output array of type `UInt32` where each element is initially set to its own index (potentially used for cluster identification later).
+* @param num_elements The number of elements (pixels) in the `id` array.
 * InvId refers to Invalid pixel 
 *
 """
-function countModules(id::UInt16, moduleStart::UInt32, clusterId::UInt32, numElements::Int)
+function count_modules(id::UInt16, module_start::UInt32, cluster_id::UInt32, num_elements::Int)
     first = 0
-    for i in first:numElements
-        clusterId[i] = i
+    for i in first:num_elements
+        cluster_id[i] = i
         if id[i] == InvId 
             continue
         end
@@ -45,8 +45,8 @@ function countModules(id::UInt16, moduleStart::UInt32, clusterId::UInt32, numEle
             j -= 1
         end
         if j < 0 || id[j] != id[i]
-            loc = atomicInc(moduleStart, MaxNumModules)
-            moduleStart[loc + 1] = i
+            loc = atomicInc(module_start, Max_num_modules)
+            module_start[loc + 1] = i
         end
     end
 end
@@ -56,62 +56,62 @@ end
 *
 * This function identifies clusters of pixels within a module by iterating through
 * pixel IDs (`id`), and coordinates (`x`, `y`). It uses atomic operations for concurrency
-* management to update `clusterId`, which stores the cluster ID for each pixel.
+* management to update `cluster_id`, which stores the cluster ID for each pixel.
 *
 * @param id Array of UInt16, representing pixel IDs.
 * @param x Array of UInt16, representing pixel x-coordinates.
 * @param y Array of UInt16, representing pixel y-coordinates.
-* @param moduleStart Array of UInt32, specifying start indices for modules and pixel boundaries.
-* @param nClustersInModule UInt32, output array to store the number of clusters found per module.
+* @param module_start Array of UInt32, specifying start indices for modules and pixel boundaries.
+* @param n_clusters_in_module UInt32, output array to store the number of clusters found per module.
 * @param moduleId UInt32, output array to store module IDs.
-* @param clusterId UInt32, array to store cluster IDs for each pixel.
-* @param numElements Int, the number of elements (pixels) in the `id` array.
+* @param cluster_id UInt32, array to store cluster IDs for each pixel.
+* @param num_elements Int, the number of elements (pixels) in the `id` array.
 *
 * @remarks InvId refers to an invalid pixel ID.
 """
-function findClus(id:: UInt16, x::UInt16, y::UInt16, moduleStart::UInt32, nClustersInModule:: UInt32, moduleId::UInt32, clusterId::UInt32, numElements::Int)
+function find_clus(id:: UInt16, x::UInt16, y::UInt16, module_start::UInt32, n_clusters_in_module:: UInt32, moduleId::UInt32, cluster_id::UInt32, num_elements::Int)
     
     # julia is 1 indexed
-    firstModule = 1
-    endModule = moduleStart[1]
-    for mod in firstModule:endModule
-        firstPixel = moduleStart[1+ mod]
-        thisModuleId = id[firstPixel]
-        @assert thisModuleId < MaxNumModules
+    first_module = 1
+    end_module = module_start[1]
+    for mod in first_module:end_module
+        first_pixel = module_start[1+ mod]
+        this_module_id = id[first_pixel]
+        @assert this_module_id < Max_num_modules
 
-    first = firstPixel
-    msize = numElements
+    first = first_pixel
+    msize = num_elements
 
-    for i in first:numElements
+    for i in first:num_elements
         if id[i] == InvId 
             continue
         end
-        if id[i] != thisModuleId
+        if id[i] != this_module_id
             atomicMin(msize, i)
             break
         end
     end
 
     # init hist  (ymax=416 < 512 : 9bits)
-    maxPixInModule = 4000
+    max_pix_in_module = 4000
     nbins = phase1PixelTopology::numColsInModule + 2;
 
     const Hist{T, N, M, K, U} = cms.cu.HistoContainer{T, N, M, K, U}
-    hist = Hist{UInt16, nbins, maxPixInModule, 9, UInt16}()
+    hist = Hist{UInt16, nbins, max_pix_in_module, 9, UInt16}()
 
     for j in 1:Hist::totbins()
         hist.off[j] = 0
     end
    
-    @assert msize == numElements || (msize < numElements && id[msize] != thisModuleId)
+    @assert msize == num_elements || (msize < num_elements && id[msize] != this_module_id)
 
-    if msize - firstPixel > maxPixInModule
+    if msize - first_pixel > max_pix_in_module
         using Printf
-        @Printf ("too many pixels in module %d: %d > %d\n", thisModuleId, msize - firstPixel, maxPixInModule)
-        msize = maxPixInModule + firstPixel
+        @Printf ("too many pixels in module %d: %d > %d\n", this_module_id, msize - first_pixel, max_pix_in_module)
+        msize = max_pix_in_module + first_pixel
     end
 
-    @assert msize - firstPixel <= maxPixInModule
+    @assert msize - first_pixel <= max_pix_in_module
 
     # fill histo
     for i in first:msize
@@ -127,17 +127,17 @@ function findClus(id:: UInt16, x::UInt16, y::UInt16, moduleStart::UInt32, nClust
         if(id[i] == InvId)
             continue 
         end
-        hist.fill(y[i], i - firstPixel)
+        hist.fill(y[i], i - first_pixel)
     end
 
-    maxiter = hist.size()
+    max_iter = hist.size()
     # allocate space for duplicate pixels: a pixel can appear more than once with different charge in the same event
-    maxNeighbours = 10
-    @assert (hist.size() / 1) <= maxiter
+    max_neighbours = 10
+    @assert (hist.size() / 1) <= max_iter
     # nearest neighbour 
-    nn[maxiter][maxNeighbours]
-    nnn[maxiter]
-    for k in 0:maxiter
+    nn[max_iter][max_neighbours]
+    nnn[max_iter]
+    for k in 0:max_iter
         nnn[k] = 0
     end
 
@@ -145,18 +145,18 @@ function findClus(id:: UInt16, x::UInt16, y::UInt16, moduleStart::UInt32, nClust
 
     # fill NN
     for (j, k) in zip(1:hist.size()-1, 1:hist.size()-1)
-       @assert k < maxiter
+       @assert k < max_iter
        p = hist.begin() + j 
-       i = p +firstPixel
+       i = p +first_pixel
        @assert id[i] != InvId
-       @assert id[i] == thisModuleId
+       @assert id[i] == this_module_id
        be = Hist::bin(y[i] + 1)
        e = hist.end(be)
        p += 1
        @assert 0 == nnn[k]
        while p<e 
             p += 1
-            m = p + firstPixel
+            m = p + first_pixel
             @assert m != i
             @assert y[m] - y[i] >= 0
             @assert y[m] - y[i] <= 1
@@ -164,7 +164,7 @@ function findClus(id:: UInt16, x::UInt16, y::UInt16, moduleStart::UInt32, nClust
                 continue
             end
             l = nnn[k] +=1
-            @assert l < maxNeighbours
+            @assert l < max_neighbours
             nn[k][l] = p
        end
 
@@ -180,27 +180,27 @@ function findClus(id:: UInt16, x::UInt16, y::UInt16, moduleStart::UInt32, nClust
         if 1 == nloops % 2
             for (j, k) in zip(1:hist.size()-1, 1:hist.size()-1)
                 p = hist.begin() + j
-                i = p + firstPixel
-                m = clusterId[i]
-                while m != clusterId[m]
-                    m = clusterId[m]
+                i = p + first_pixel
+                m = cluster_id[i]
+                while m != cluster_id[m]
+                    m = cluster_id[m]
                 end
-                clusterId[i] = m
+                cluster_id[i] = m
             end
         else
             more = false
             for (j, k) in zip(1:hist.size()-1, 1:hist.size()-1)
                 p = hist.begin() + j 
-                i = p + firstPixel
+                i = p + first_pixel
                 for kk in 1:nnn[k]
                     l = nn[k][kk]
-                    m = l + firstPixel
+                    m = l + first_pixel
                     @assert m != i
-                    old = atomicMin(clusterId[m], clusterId[i])
-                    if old != clisterId[i]
+                    old = atomicMin(cluster_id[m], cluster_id[i])
+                    if old != cluster_id[i]
                         more = true
                     end
-                    atomicMin(clusterId[i], old)
+                    atomicMin(cluster_id[i], old)
                 end
             end
 
@@ -208,14 +208,14 @@ function findClus(id:: UInt16, x::UInt16, y::UInt16, moduleStart::UInt32, nClust
         nloops += 1
     end
 
-    foundClusters = 0
+    found_clusters = 0
     for i in first:msize
         if id[i] == InvId
             continue
         end
-        if clusterId[i] == i
-            old = atomicInc(foundClusters, 0xffffffff) #The 0xffffffff is a bitmask that ensures the operation wraps around when it reaches the maximum value of UInt32.
-            clusterId[i] = -(old + 1)
+        if cluster_id[i] == i
+            old = atomicInc(found_clusters, 0xffffffff) #The 0xffffffff is a bitmask that ensures the operation wraps around when it reaches the maximum value of UInt32.
+            cluster_id[i] = -(old + 1)
         end
     end
 
@@ -223,21 +223,21 @@ function findClus(id:: UInt16, x::UInt16, y::UInt16, moduleStart::UInt32, nClust
         if id[i] == InvId 
             continue
         end
-        if clusterId[i] >= 0
-            clusterId[i] = clusterId[clusterId[i]]
+        if cluster_id[i] >= 0
+            cluster_id[i] = cluster_id[cluster_id[i]]
         end
     end
 
     for i in first:msize
         if id[i] == InvId 
-            clusterId[i] == -9999
+            cluster_id[i] == -9999
             continue
         end
-        clusterId[i] = - clusterId[i] -2
+        cluster_id[i] = - cluster_id[i] -2
     end
 
-    nClustersInModule[thisModuleId] = foundClusters
-    moduleId[mod] = thisModuleId
+    n_clusters_in_module[this_module_id] = found_clusters
+    moduleId[mod] = this_module_id
 end
 end
 
