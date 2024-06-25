@@ -34,16 +34,10 @@ mutable struct SiPixelFedCablingMapGPUWrapper
     end
 end
 
-function has_quality(wrapper::SiPixelFedCablingMapGPUWrapper)::Bool
-    return wrapper._has_quality
-end
+has_quality(wrapper::SiPixelFedCablingMapGPUWrapper)::Bool = wrapper._has_quality
 
-function get_cpu_product(wrapper::SiPixelFedCablingMapGPUWrapper)::SiPixelFedCablingMapGPU
-    return wrapper._cabling_map_host
-end
+get_cpu_product(wrapper::SiPixelFedCablingMapGPUWrapper)::SiPixelFedCablingMapGPU = wrapper._cabling_map_host
 
-function get_mod_to_unp_all(wrapper::SiPixelFedCablingMapGPUWrapper)::Vector{UInt8}
-    return wrapper._mod_to_unp_default
-end
+get_mod_to_unp_all(wrapper::SiPixelFedCablingMapGPUWrapper)::Vector{UInt8} = wrapper._mod_to_unp_default
 
 end # module RecoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper
