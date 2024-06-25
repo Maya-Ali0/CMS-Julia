@@ -50,15 +50,25 @@ function countModules(id::UInt16, moduleStart::UInt32, clusterId::UInt32, numEle
         end
     end
 end
-# inputs
-# id: Module ID of each pixel.
-# x, y: Local coordinates of each pixel.
-# moduleStart: Index of the first pixel of each module.
-# numElements: Total number of pixels.
-# Outputs (__restrict__ pointers):
-# nClustersInModule: Number of clusters found in each module.
-# moduleId: Module ID of each module.
-# clusterId: Cluster ID of each pixel.
+
+"""
+* @brief Finds and labels clusters of pixels within a module based on their coordinates and IDs.
+*
+* This function identifies clusters of pixels within a module by iterating through
+* pixel IDs (`id`), and coordinates (`x`, `y`). It uses atomic operations for concurrency
+* management to update `clusterId`, which stores the cluster ID for each pixel.
+*
+* @param id Array of UInt16, representing pixel IDs.
+* @param x Array of UInt16, representing pixel x-coordinates.
+* @param y Array of UInt16, representing pixel y-coordinates.
+* @param moduleStart Array of UInt32, specifying start indices for modules and pixel boundaries.
+* @param nClustersInModule UInt32, output array to store the number of clusters found per module.
+* @param moduleId UInt32, output array to store module IDs.
+* @param clusterId UInt32, array to store cluster IDs for each pixel.
+* @param numElements Int, the number of elements (pixels) in the `id` array.
+*
+* @remarks InvId refers to an invalid pixel ID.
+"""
 function findClus(id:: UInt16, x::UInt16, y::UInt16, moduleStart::UInt32, nClustersInModule:: UInt32, moduleId::UInt32, clusterId::UInt32, numElements::Int)
     
     # julia is 1 indexed
