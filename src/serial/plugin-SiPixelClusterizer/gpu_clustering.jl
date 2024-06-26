@@ -24,29 +24,31 @@ module GPU_DEBUG
 *
 * This function iterates through an array of pixel IDs (`id`) and identifies 
 * module boundaries. It utilizes an atomic operation to update an output array 
-* (`module_start`) that stores the starting index for each module within the `id` array.
+* (`module_start`) that stores the starting of the pixel index within a module for each module within the `id` array.
 *
 * @param id A constant array of type `UInt16` containing pixel IDs.
 * @param module_start An output array of type `UInt32` where the starting index of each module will be stored.
 * @param cluster_id An output array of type `UInt32` where each element is initially set to its own index (potentially used for cluster identification later).
-* @param num_elements The number of elements (pixels) in the `id` array.
+* @param num_elements The number of elements (digis) in the `id` array.
 * InvId refers to Invalid pixel 
-*
+* Changes since julia is indexed at 1
 """
-function count_modules(id::UInt16, module_start::UInt32, cluster_id::UInt32, num_elements::Int)
-    first = 0
-    for i in first:num_elements
+function count_modules(id::Vector{UInt16}, module_start::Vector{UInt32}, cluster_id::Vector{UInt32}, num_elements::Int)
+    first = 1
+    for i ∈ first:num_elements
         cluster_id[i] = i
-        if id[i] == InvId 
+        if id[i] == INV_ID 
             continue
         end
         j = i - 1
-        while j >= 0 && id[j] == InvId 
+        while j >= 1 && id[j] == INV_ID 
             j -= 1
         end
-        if j < 0 || id[j] != id[i]
-            loc = atomicInc(module_start, Max_num_modules)
-            module_start[loc + 1] = i
+        if j < 1 || id[j] != id[i]
+            #loc = atomicInc(module_start[1], Max_num_modules) Needed for concurrency C++
+            module_start[1] = max(module_start[1] + 1 , MAX_NUM_MODULES)
+            loc = module_start[1]
+            module_start[loc] = i
         end
     end
 end
