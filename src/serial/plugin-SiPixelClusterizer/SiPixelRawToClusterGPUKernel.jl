@@ -5,11 +5,11 @@ include("../CUDADataFormats/SiPixelDigisSoA.jl")
 using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 
 include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
-using .CUDADataFormats_SiPixelDigi_interface_SiPixelDigiErrorsSoA
+using .cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
 """
 Phase 1 Geometry Constants
 """
-module pixelgpudetails
+module pixelGPUDetails
     const LAYER_START_BIT::UInt32 = 20 # 4 layers
     const LADDER_START_BIT::UInt32 = 12 # 148 ladders
     const MODULE_START_BIT::UInt32 = 2 # 1856 silicon modules each with 160 x 416 pixels connected to 16 ReadOut Chips (ROC)
@@ -140,7 +140,7 @@ module pixelgpudetails
         return (row << the_packing.column_width) | col
     end
 
-    const MAX_FED_WORDS = MAX_FED * MAX_WORD
+    const MAX_FED_WORDS = pixelGPUDetails.MAX_FED * MAX_WORD
 
     struct WordFedAppender
         words::Vector{UInt32}

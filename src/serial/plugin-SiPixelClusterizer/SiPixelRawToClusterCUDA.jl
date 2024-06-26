@@ -5,7 +5,7 @@ include("../CUDADataFormats/SiPixelDigisSoA.jl")
 using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 
 include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
-using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
+using .cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
 
 include("../CondFormats/si_pixel_gain_calibration_for_hlt_gpu.jl")
 using .CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU
@@ -44,8 +44,8 @@ mutable struct SiPixelRawToClusterCUDA <: EDM.EDProducer
     digi_error_put_token::Union{Nothing, EDM.EDPutTokenT{SiPixelDigiErrorsSoA}}
     cluster_put_token::EDM.EDPutTokenT{SiPixelClustersSoA}
 
-    gpu_algo::pixelgpudetails.SiPixelRawToClusterGPUKernel
-    word_fed_appender::Union{Nothing, Ref{pixelgpudetails.SiPixelRawToClusterGPUKernel.WordFedAppender}}
+    gpu_algo::pixelGPUDetails.SiPixelRawToClusterGPUKernel
+    word_fed_appender::Union{Nothing, Ref{pixelGPUDetails.SiPixelRawToClusterGPUKernel.WordFedAppender}}
     errors::PixelFormatterErrors
 
     is_run2::Bool
@@ -60,11 +60,11 @@ mutable struct SiPixelRawToClusterCUDA <: EDM.EDProducer
         include_errors = true
         use_quality = true
         digi_error_put_token = include_errors ? produces(SiPixelDigiErrorsSoA, reg) : nothing
-        word_fed_appender = Ref(pixelgpudetails.SiPixelRawToClusterGPUKernel.WordFedAppender())
+        word_fed_appender = Ref(pixelGPUDetails.SiPixelRawToClusterGPUKernel.WordFedAppender())
         errors = PixelFormatterErrors()
         
         new(raw_get_token, digi_put_token, digi_error_put_token, cluster_put_token,
-            pixelgpudetails.SiPixelRawToClusterGPUKernel(),
+            pixelGPUDetails.SiPixelRawToClusterGPUKernel(),
             word_fed_appender, errors, is_run2, include_errors, use_quality)
     end
 end

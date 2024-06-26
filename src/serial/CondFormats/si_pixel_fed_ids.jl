@@ -22,8 +22,6 @@ end
 """
 Retrieves the list of FED IDs from the SiPixelFedIds structure.
 """
-function fed_ids(ids::SiPixelFedIds)
-    return ids._fed_ids
-end
+fed_ids(ids::SiPixelFedIds)::Vector{UInt} = ids._fed_ids
 
 end # module CondFormatsSiPixelFedIds
