@@ -96,7 +96,7 @@ module phase1PixelTopology
         return 11
     end
 
-    layer_index_size = number_of_modules ÷ max_module_stride
+    layer_index_size = UInt32(number_of_modules / max_module_stride)
 
     layer = map_to_array(layer_index_size, find_layer_from_compact)
 
