@@ -123,7 +123,7 @@ module errorChecker
             println("fedTrailer.check failed, Fed:",fedId," errorType = ",33)
             return false
         end
-        if (fedTrailer::fragment_length(the_trailer) != nWords)
+        if (fedTrailer::fragment_length(the_trailer) != num_words)
             println("fedTrailer.fragmentLength()!= nWords !! Fed: ",fedId, " errorType = ",34)
             errors_in_event = true
             if (_includeErrors)

@@ -57,7 +57,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
       - UInt16: The X-coordinate at the specified index
     """
     @inline function xx(view::DeviceConstView, i::Int)::UInt16
-        return unsafe_load(view.xx + i - 1)  # Memory is zero-indexed
+        return view.xx[i]
     end
 
     """
@@ -69,7 +69,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
       - UInt16: The Y-coordinate at the specified index
     """
     @inline function yy(view::DeviceConstView, i::Int)::UInt16
-        return unsafe_load(view.yy + i - 1)  # Memory is zero-indexed
+        return view.yy[i]
     end
 
     """
@@ -81,7 +81,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
       - UInt16: The ADC value at the specified index
     """
     @inline function adc(view::DeviceConstView, i::Int)::UInt16
-        return unsafe_load(view.adc + i - 1)  # Memory is zero-indexed
+        return view.adc[i]  
     end
 
     """
@@ -93,7 +93,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
       - UInt16: The module ID at the specified index
     """
     @inline function module_ind(view::DeviceConstView, i::Int)::UInt16
-        return unsafe_load(view.module_ind + i - 1)  # Memory is zero-indexed
+        return view.module_ind[i]  
     end
 
     """
@@ -105,7 +105,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
       - UInt32: The cluster ID at the specified index
     """
     @inline function clus(view::DeviceConstView, i::Int)::UInt32
-        return unsafe_load(view.clus + i - 1)  # Memory is zero-indexed
+        return view.clus[i]
     end
 
     """

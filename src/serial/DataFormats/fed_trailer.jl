@@ -161,7 +161,7 @@ module fedTrailer
     const FED_SLINK_ERROR_SHIFT = 14
     FED_SLINK_ERROR_EXTRACT(a::UInt32) = (a >> FED_SLINK_ERROR_SHIFT) & FED_SLINK_ERROR_WIDTH
 
-    """
+ `   """
     *********************************************************************************
     *                                                                               *
     *  Wrong FED ID (FED_WRONG_FEDID)                                               *
@@ -172,7 +172,7 @@ module fedTrailer
     *                                                                               *
     *********************************************************************************
     """
-
+`
     const FED_WRONG_FEDID_WIDTH = 0x00000001
     const FED_WRONG_FEDID_SHIFT = 15
     FED_WRONG_FEDID_EXTRACT(a::UInt32) = (a >> FED_WRONG_FEDID_SHIFT) & FED_WRONG_FEDID_WIDTH

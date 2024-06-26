@@ -10,80 +10,107 @@ using .cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
 Phase 1 Geometry Constants
 """
 module pixelGPUDetails
-    const LAYER_START_BIT::UInt32 = 20 # 4 layers
-    const LADDER_START_BIT::UInt32 = 12 # 148 ladders
-    const MODULE_START_BIT::UInt32 = 2 # 1856 silicon modules each with 160 x 416 pixels connected to 16 ReadOut Chips (ROC)
 
-    const PANEL_START_BIT::UInt32 = 10 # Group of ladders
-    const DISK_START_BIT::UInt32 = 18  
-    const BLADE_START_BIT::UInt32 = 12 # For FPIX, One half disk has 28 Blades (11 inner) and (17 outer). One module mounts each side of a blade
+    module pixelConstants
+        export LAYER_START_BIT, LADDER_START_BIT, MODULE_START_BIT, PANEL_START_BIT, DISK_START_BIT, BLADE_START_BIT, 
+            LAYER_MASK, LADDER_MASK, MODULE_MASK, PANEL_MASK, DISK_MASK, BLADE_MASK,
+            LINK_BITS, ROC_BITS, DCOL_BITS, PXID_BITS, ADC_BITS, LINK_BITS_L1, ROC_BITS_L1, COL_BITS_L1, ROW_BITS_L1, OMIT_ERR_BITS,
+            MAX_ROC_INDEX, NUM_ROWS_IN_ROC, NUM_COL_IN_ROC, MAX_WORD, ADC_SHIFT, PXID_SHIFT, DCOL_SHIFT, ROC_SHIFT, LINK_SHIFT,
+            ROW_SHIFT, COL_SHIFT, OMIT_ERR_SHIFT, LINK_MASK, ROC_MASK, COL_MASK, ROW_MASK, DCOL_MASK, PXID_MASK, ADC_MASK,
+            ERROR_MASK, OMIT_ERR_MASK, MAX_FED, MAX_LINK, MAX_FED_WORDS
+        const LAYER_START_BIT::UInt32 = 20 # 4 layers
+        const LADDER_START_BIT::UInt32 = 12 # 148 ladders
+        const MODULE_START_BIT::UInt32 = 2 # 1856 silicon modules each with 160 x 416 pixels connected to 16 ReadOut Chips (ROC) Used to determine on which side of the z-axis the pixel is on
 
-    const LAYER_MASK::UInt32 = 0xF # 4 bits
-    const LADDER_MASK::UInt32 = 0xFF # 8 bits
-    const MODULE_MASK::UInt32 = 0x3FF # 11 bits
-    const PANEL_MASK::UInt32 = 0x3 # 3 bits
-    const DISK_MASK::UInt32 = 0xF # 4 bits
-    const BLADE_MASK::UInt32 = 0x3F # 7 bits
+        const PANEL_START_BIT::UInt32 = 10 # Group of ladders # Used to determine on which side of the z-axis the pixel is on
+        const DISK_START_BIT::UInt32 = 18  
+        const BLADE_START_BIT::UInt32 = 12 # For FPIX, One half disk has 28 Blades (11 inner) and (17 outer). One module mounts each side of a blade
 
+        const LAYER_MASK::UInt32 = 0xF # 4 bits
+        const LADDER_MASK::UInt32 = 0xFF # 8 bits
+        const MODULE_MASK::UInt32 = 0x3FF # 10 bits
+        const PANEL_MASK::UInt32 = 0x3 # 2 bits
+        const DISK_MASK::UInt32 = 0xF # 4 bits
+        const BLADE_MASK::UInt32 = 0x3F # 6 bits
+        """
+        32 bit word for pixels not on layer 1
 
-    const LINK_BITS::UInt32 = 6 
-    const ROC_BITS::UInt32 = 5  
-    const DCOL_BITS::UInt32 = 5 
-    const PXID_BITS::UInt32 = 8
-    const ADC_BITS::UInt32 = 8
+        [  6 bits  | 5 bits | 5 bits |  8 bits  |8 bits  ]
+        [  Link    |  ROC   |  DCOL  |  PXID    |  ADC   ]
+        """
+        const LINK_BITS::UInt32 = 6 
+        const ROC_BITS::UInt32 = 5  
+        const DCOL_BITS::UInt32 = 5 
+        const PXID_BITS::UInt32 = 8
+        const ADC_BITS::UInt32 = 8
 
+        """
+        Special For Layer 1
+
+        [  6 bits  | 5 bits | 6 bits |  7 bits  | 8 bits  ]
+        [  Link    |  ROC   |  COL   |  ROW     |   ADC   ]
+        """
+        const LINK_BITS_L1::UInt32 = 6
+        const ROC_BITS_L1::UInt32 = 5
+        const COL_BITS_L1::UInt32 = 6
+        const ROW_BITS_L1::UInt32 = 7
+        const OMIT_ERR_BITS::UInt32 = 1 
+        """
+        Each ROC is an 80x52 pixel unit cell 
+        They are grouping columns by 2 : 26 DCOL
+        """
+        const MAX_ROC_INDEX::UInt32 = 8 
+        const NUM_ROWS_IN_ROC::UInt32 = 80 
+        const NUM_COL_IN_ROC::UInt32 = 52 
+
+        const MAX_WORD::UInt32 = 2000 # maxword in what ?
+
+        const ADC_SHIFT::UInt32 = 0
+        const PXID_SHIFT::UInt32 = ADC_SHIFT + ADC_BITS
+        const DCOL_SHIFT::UInt32 = PXID_SHIFT + PXID_BITS
+        const ROC_SHIFT::UInt32 = DCOL_SHIFT + DCOL_BITS
+        const LINK_SHIFT::UInt32 = ROC_SHIFT + ROC_BITS
+        """
+        Special For Layer 1 ROC
+        """
+        const ROW_SHIFT::UInt32 = ADC_SHIFT + ADC_BITS
+        const COL_shift::UInt32 = ROW_SHIFT + ROW_BITS_L1
+        const OMIT_ERR_shift::UInt32 = 20 # ?
+
+        const LINK_MASK::UInt32 = ~(~UInt32(0) << LINK_BITS_L1)
+        const ROC_MASK::UInt32 = ~(~UInt32(0) << ROC_BITS_L1)
+        const COL_MASK::UInt32 = ~(~UInt32(0) << COL_BITS_L1)
+        const ROW_MASK::UInt32 = ~(~UInt32(0) << ROW_BITS_L1)
+        const DCOL_MASK::UInt32 = ~(~UInt32(0) << DCOL_BITS) # ?
+        const PXID_MASK::UInt32 = ~(~UInt32(0) << PXID_BITS) # ?
+        const ADC_MASK::UInt32 = ~(~UInt32(0) << ADC_BITS)
+        const ERROR_MASK::UInt32 = ~(~UInt32(0) << ROC_BITS_L1) # ?
+        const OMIT_ERR_MASK::UInt32 = ~(~UInt32(0) << OMIT_ERR_BITS) # ?
+    end
+    using .pixelConstants
     """
-    [  6 bits  | 5 bits | 5 bits |  8 bits  |8 bits  ]
-    [  Link    |  ROC   |  DCOL  |  PXID    |  ADC   ]
-    Special For Layer 1
+    Detector id used to store information about the position of the pixel in the detector which are gathered from the cabling map given 
+    link roc fedId
     """
-    const LINK_BITS_L1::UInt32 = 6
-    const ROC_BITS_L1::UInt32 = 5
-    const COL_BITS_L1::UInt32 = 6
-    const ROW_BITS_L1::UInt32 = 7
-    const OMIT_ERR_BITS::UInt32 = 1 
-    """
-    Each ROC is an 80x52 pixel unit cell 
-    They are grouping columns by 2 : 26 DCOL
-    """
-    const MAX_ROC_INDEX::UInt32 = 8 
-    const NUM_ROWS_IN_ROC::UInt32 = 80 
-    const NUM_COL_IN_ROC::UInt32 = 52 
-
-    const MAX_WORD::UInt32 = 2000 # maxword in what ?
-
-    const ADC_SHIFT::UInt32 = 0
-    const PXID_SHIFT::UInt32 = ADC_SHIFT + ADC_BITS
-    const DCOL_SHIFT::UInt32 = PXID_SHIFT + PXID_BITS
-    const ROC_SHIFT::UInt32 = DCOL_SHIFT + DCOL_BITS
-    const LINK_SHIFT::UInt32 = ROC_SHIFT + ROC_BITS
-    """
-    Special For Layer 1 ROC
-    """
-    const ROW_SHIFT::UInt32 = ADC_SHIFT + ADC_BITS
-    const COL_shift::UInt32 = ROW_SHIFT + ROW_BITS_L1
-    const OMIT_ERR_shift::UInt32 = 20 # ?
-
-    const LINK_MASK::UInt32 = ~(~UInt32(0) << LINK_BITS_L1)
-    const ROC_MASK::UInt32 = ~(~UInt32(0) << ROC_BITS_L1)
-    const COL_MASK::UInt32 = ~(~UInt32(0) << COL_BITS_L1)
-    const ROW_MASK::UInt32 = ~(~UInt32(0) << ROW_BITS_L1)
-    const DCOL_MASK::UInt32 = ~(~UInt32(0) << DCOL_BITS) # ?
-    const PXID_MASK::UInt32 = ~(~UInt32(0) << PXID_BITS) # ?
-    const ADC_MASK::UInt32 = ~(~UInt32(0) << ADC_BITS)
-    const ERROR_MASK::UInt32 = ~(~UInt32(0) << ROC_BITS_L1) # ?
-    const OMIT_ERR_MASK::UInt32 = ~(~UInt32(0) << OMIT_ERR_BITS) # ?
-
     struct DetIdGPU
         raw_id::UInt32
         roc_in_det::UInt32
         module_id::UInt32
     end
+    """
+    Pixel Struct to store local coordinates inside ROC or global coordinates after mapping the local coordinates into its global coordinates within
+    the module
+    """
     struct Pixel
         row::UInt32
         col::UInt32
     end
+    """
+    Packing struct used to pack a digi into a 32 bit word which contains information about the global coordinates of the pixel within the module:
+        row column and adc
+     """
     const PackedDigiType = UInt32
+
     struct Packing
         
         row_width::UInt32
@@ -125,16 +152,22 @@ module pixelGPUDetails
         end
     end 
 
+    """
+    default outer constructor 
+    """
+    Packing() = Packing(11,11,0,10)
 
-    Packing() = Packing(11,11,0,11)
-
-
+    """
+    returns 32 bit word containing the packed digi
+    """
     @inline function pack(row::UInt32,col::UInt32,adc::UInt32)::UInt32
         the_packing::Packing = Packing()
         adc = min(adc,the_packing.max_adc)
         return (row << the_packing.ROW_SHIFT) | (col << the_packing.column_shift) | (adc << the_packing.ADC_SHIFT);
     end
-
+    """
+    pixel packing without adc
+    """
     function pixelToChannel(row::UInt32,col::UInt32)::UInt32
         the_packing::Packing = Packing()
         return (row << the_packing.column_width) | col
@@ -142,18 +175,28 @@ module pixelGPUDetails
 
     const MAX_FED_WORDS = pixelGPUDetails.MAX_FED * MAX_WORD
 
+    """
+    struct used to store all 32 bit words and their corresponding fed_ids
+    """
     struct WordFedAppender
         words::Vector{UInt32}
         fed_ids::Vector{UInt8}
     end
 
+    """
+    Outer Default Constructor
+    """
     WordFedAppender() = WordFedAppender(Vector{UInt32}(undef,MAX_FED_WORDS),Vector{UInt8}(undef,MAX_FED_WORDS))
 
     get_word(self::WordFedAppender) = return self.words
 
     get_fed_id(self::WordFedAppender) = return self.fed_ids
     
-
+    """
+        counter takes the values from 1 to length
+        Every Consecutive 4 bytes are reinterpreted as one word UInt32
+        the fed_ids array is filled with the fed_id value in the range ceiling((word_counter + 1) / 2) up to (wod_counter + length) ÷ 2
+    """
     function initialize_word_fed(word_fed_appender::WordFedAppender, fed_id::Int , word_counter_gpu::UInt , src::Vector{UInt8} , length::UInt)
         for index ∈ word_counter_gpu+1:word_counter_gpu + length
             counter = index-word_counter_gpu
@@ -164,34 +207,40 @@ module pixelGPUDetails
         get_fed_id(word_fed_appender)[(cld((word_counter_gpu+1),2):(word_counter_gpu + length) ÷ 2)] .= fed_id
     end
 
+
+    """
+    struct responsible for raw_data to cluster conversion
+        stores digis_d , clusters_d, and digi_errors_d
+    """
     struct SiPixelRawToClusterGPUKernel
         digis_d::SiPixelDigisSOA
         clusters_d::SiPixelClustersSOA
         digi_errors_d::SiPixelDigiErrorsSOA
-    
-        function SiPixelRawToClusterGPUKernel()
-            new(SiPixelDigisSOA(), SiPixelClustersSOA(), SiPixelDigiErrorsSOA())
-        end
     end
     
     @inline get_errors(self::SiPixelRawToClusterGPUKernel) = return self.digi_errors_d
 
     @inlune get_results(self::SiPixelRawToClusterGPUKernel) = return Pair{SiPixelDigisSOA,SiPixelClustersSoA}(self.digis_d,self.clusters_d)
 
-    function make_clusters(self::SiPixelRawToClusterGPUKernel,is_run_2::Bool,cabling_map::SiPixelFedCablingMapGPU,
-        mod_to_unp::Vector{UInt8},gains::SiPixelGainForHLTonGPU,word_fed::WordFedAppender,errors::PixelFormatterErrors,
-        word_counter::UInt32,fed_counter::UInt32,use_quality_info::Bool,include_errors::Bool,debug::bool)
-
-    end
-
+    """
+    getters of the 32 bit word in payload
+    """
     get_link(ww::UInt32)::UInt32 = (ww >> LINK_SHIFT) & LINK_MASK
 
     get_roc(ww::UInt32)::UInt32 = (ww >> ROC_SHIFT) & ROC_MASK
 
     get_adc(ww::UInt32)::UInt32 = (ww >> ADC_SHIFT) & ADC_MASK
 
+    """
+    Checker for whether the pixel lies on a disk or a layer
+    """
     is_barrel(raw_id::UInt32)::Bool = 1 == ((raw_id >> 25) & 0x7)
-
+    
+    """
+    getter for detectorID which constitutes the raw_id , roc_in_det index, and module_id 
+    
+    given as inputs the fed, link, and roc
+    """
     function get_raw_id(cabling_map::SiPixelFedCablingMapGPU , fed::UInt8 , link::UInt32 , roc::UInt32)::DetIdGPU
         index::UInt32 = fed*MAX_LINK*MAX_ROC + (link-1) * MAX_ROC + roc 
         det_id = DetIdGPU(cabling_map.raw_id[index],cabling_map.roc_in_det[index],cabling_map.module_id[index])
@@ -203,6 +252,11 @@ module pixelGPUDetails
 
         if bpix # if barrel pixel
             if side == -1 && layer != 1 # -Z side: 4 non flipped modules oriented like 'dddd', except Layer 1
+                """
+                think of 2x8 array of ROCs as 2 strips each of 1x8.
+                The mapping here happens as follows: The first strip is rotated 180 degrees horizontally. While the second strip is rotated 180 degrees
+                vertically in place. 
+                """
                 if roc_id_in_det_unit < 8 # upper 8 ROCs in 2x8 array
                     slope_row = 1 
                     slope_col = -1
@@ -215,6 +269,10 @@ module pixelGPUDetails
                     col_offset = (roc_id_in_det_unit - 8) * NUM_COL_IN_ROC
                 end
             else # +Z side: 4 non flipped modules oriented like 'pppp', but all 8 in layer1
+                """
+                Here the first strip is being rotated vertically by 180 degrees and is taking the place of the second strip. While the second strip is
+                taking the place of the first strip and being rotated horizontally by 180 degrees
+                """
                 if roc_id_in_det_unit < 8
                     slope_row = -1
                     slope_col = 1
@@ -230,6 +288,11 @@ module pixelGPUDetails
         else # if fpix pixel
             if side == -1 # pannel 1
                 if roc_id_in_det_unit < 8
+                """
+                think of 2x8 array of ROCs as 2 strips each of 1x8.
+                The mapping here happens as follows: The first strip is rotated 180 degrees horizontally. While the second strip is rotated 180 degrees
+                vertically in place. 
+                """
                     slope_row = 1
                     slope_col = -1
                     row_offset = 0
@@ -241,6 +304,10 @@ module pixelGPUDetails
                     col_offset = (roc_id_in_det_unit - 8) * NUM_COL_IN_ROC
                 end
             else # pannel 2
+                """
+                Here the first strip is being rotated vertically by 180 degrees and is taking the place of the second strip. While the second strip is
+                taking the place of the first strip and being rotated horizontally by 180 degrees
+                """
                 if roc_id_in_det_unit < 8
                     slope_row = 1
                     slope_col = -1
@@ -298,7 +365,9 @@ module pixelGPUDetails
     
         return error_type
     end
-
+    """
+    Checkers that check the range of the local row and column of a pixel
+    """
     roc_row_col_is_valid(roc_row, roc_col)::Bool = (roc_row < NUM_ROWS_IN_ROC) & (roc_col < NUM_COL_IN_ROC)
     dcol_is_valid(dcol::UInt32,px_id::UInt32) = (dcol < 26) & (2 <= pxid) & (pxid < 162)
 
@@ -526,8 +595,15 @@ module pixelGPUDetails
             else
                 # Conversion Rules for dcol and px_id
                 dcol::UInt32 = (ww >> DCOL_SHIFT) & DCOL_MASK
+                """
+                px_id range is from 2 to 161
+                """
                 px_id::UInt32 = (ww >> PXID_SHIFT) & PXID_MASK
+                """
+                I think in order for this to be consistent. The pixel_ids are numbered from 2 to 161 from the bottom of the strip (160x2)
+                """
                 row::UInt32 = NUM_ROWS_IN_ROC - px_id ÷ 2 
+                
                 col::UInt32 = dcol * 2 + px_id % 2
                 local_pixel.row = row 
                 local_pixel.col = col
@@ -549,6 +625,28 @@ module pixelGPUDetails
                 raw_id_arr[g_index] = raw_id
         end
     end
+
+
+    function make_clusters(is_run_2::Bool , cabling_map::SiPixelFedCablingMapGPU , mod_to_unp::Vector{UInt8} , gains::SiPixelGainForHLTonGPU ,
+                  word_fed::WordFedAppender , errors:: PixelFormatterErrors , word_counter::UInt32 , fed_counter::UInt32 , use_quality_info::Bool
+                  include_errors::Bool , debug::Bool)
+        printf("decoding %s digis. Max is %i ",word_counter,MAX_FED_WORDS)
+        digis_d = SiPixelDigisSOA(pixelGPUDetails.MAX_FED_WORDS)
+        if include_errors
+            digi_errors_d = SiPixelDigiErrorsSOA(pixelGPUDetails.MAX_FED_WORDS,errors)
+        end
+        clusters_d = SiPixelClustersSOA(gpuClustering.mAX_NUM_MODULES)
+
+        if word_counter # incase of empty event
+            assert(0 == word_counter % 2)
+            raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),xx(digis_d),yy(digis_d),adc(digis_d),
+            p_digi(digis_d), raw_id_arr(digis_d), module_ind(digis_d), error(digi_errors_d),use_quality_info,include_errors,debug)
+        end # end for raw to digi
+
+
+        
+
+    
 
 
 end
