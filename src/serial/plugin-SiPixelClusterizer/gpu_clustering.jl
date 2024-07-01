@@ -4,9 +4,10 @@
 # #endif
 
 include("../Geometry/phase1PixelTopology.jl")
-using .
-include("../CUDACore/HistoContainer.jl")
-using .
+using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
+
+include("../CUDACore/hist_to_container.jl")
+using .cms
 
 include("../CUDACore/cuda_assert.jl")
 using .__CUDA_ARCH__

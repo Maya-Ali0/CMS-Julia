@@ -10,7 +10,7 @@ module cms
             self.n += 1
             return old_val
         end
-        function count_from_vector(h::Vector{Histo},nh::UInt32,v::Vector{T} v,offsets::Vector{UInt32}) where Histo where T
+        function count_from_vector(h::Vector{Histo},nh::UInt32,v::Vector{T} v, offsets::Vector{UInt32}) where Histo where T
 
         end
         """
