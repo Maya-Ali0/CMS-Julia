@@ -2,6 +2,9 @@ module Geometry_TrackerGeometryBuilder_phase1PixelTopology_h
 
 module phase1PixelTopology
 
+    import Pkg
+    Pkg.add("StaticArrays")
+
     # Constants defining the dimensions of ROCs and modules
     const num_rows_in_ROC = 80
     const num_cols_in_ROC = 52
@@ -125,7 +128,7 @@ module phase1PixelTopology
     ## Returns
     - `Int`: The layer index.
     """
-    function find_layer_from_compact(det_id::UInt32)
+    function find_layer_from_compact(det_id)
         det_id *= max_module_stride
         for i in 0:11
             if det_id < layer_start[i + 1]
@@ -137,6 +140,7 @@ module phase1PixelTopology
 
     const layer_index_size = UInt32(number_of_modules ÷ max_module_stride)
 
+    # FIXME can do broadcasting
     const layer = map_to_array(layer_index_size, find_layer_from_compact)
 
     """
@@ -147,8 +151,8 @@ module phase1PixelTopology
     """
     function validate_layer_index()::Bool
         res = true
-        for i in 0:number_of_modules 
-            j = i ÷ max_module_stride
+        for i in 0:number_of_modules-1 
+            j = i ÷ max_module_stride + 1
             res = layer[j] < 10
             res = i >= layer_start[layer[j]]
             res = i < layer_start[layer[j] + 1]
@@ -282,6 +286,7 @@ module phase1PixelTopology
         return py + shift
     end
 
+    # FIXME why we need static arrays?
     using StaticArrays
 
     """
