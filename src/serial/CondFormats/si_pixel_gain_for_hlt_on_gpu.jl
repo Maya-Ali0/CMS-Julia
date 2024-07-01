@@ -1,22 +1,22 @@
-module CondFormatsSiPixelObjectsSiPixelGainForHLTonGPU
+module condFormatsSiPixelObjectsSiPixelGainForHLTonGPU
 
 include("../CUDACore/cuda_assert.jl")
-using .GPUConfig
+using .gpuConfig
 
 using Pkg
 Pkg.add("StaticArrays")
 using StaticArrays
 
-struct SiPixelGainForHLTonGPUDecodingStructure
+struct siPixelGainForHLTonGPUDecodingStructure
     gain::UInt8
     ped::UInt8
 end
 
-const DecodingStructure = SiPixelGainForHLTonGPUDecodingStructure
+const DecodingStructure = siPixelGainForHLTonGPUDecodingStructure
 const Range = Tuple{UInt32, UInt32}
 
-# copy of SiPixelGainCalibrationForHL
-mutable struct SiPixelGainForHLTonGPU
+# copy of siPixelGainCalibrationForHL
+mutable struct siPixelGainForHLTonGPU
     v_pedestals::DecodingStructure
     range_and_cols::MVector{2000, Tuple{Range, Int32}}
     _min_ped::Float32
@@ -29,15 +29,9 @@ mutable struct SiPixelGainForHLTonGPU
     _n_bins_to_use_for_encoding::UInt32
     _dead_flag::UInt32
     _noisy_flag::UInt32
-
-    function SiPixelGainForHLTonGPU()
-        v_pedestals = DecodingStructure(g)
-        range_and_cols = Vector{Tuple{Range, Int}}(undef, 2000)
-        new()
-    end
 end
 
-@inline function get_ped_and_gain(structure::SiPixelGainForHLTonGPU, module_ind::UInt32, col::Int32, row::Int32, is_dead_column_is_noisy_column::MVector{2, Bool})::Tuple{Float32, Float32}
+@inline function get_ped_and_gain(structure::siPixelGainForHLTonGPU, module_ind::UInt32, col::Int32, row::Int32, is_dead_column_is_noisy_column::MVector{2, Bool})::Tuple{Float32, Float32}
     range = first(structure.range_and_cols[module_ind])
     nCols = second(structure.range_and_cols[module_ind])
 
@@ -60,7 +54,7 @@ end
     return tuple{decode_ped(structure, s.ped & 0xFF), decode_gain(structure, s.gain & 0xFF)}
 end
 
-decode_gain(structure::SiPixelGainForHLTonGPU, gain::UInt32)::Float32 = gain * structure.gain_precision + structure._min_gain
-decode_ped(structure::SiPixelGainForHLTonGPU, ped::UInt32)::Float32 = ped * structure.ped_precision + structure._min_ped
+decode_gain(structure::siPixelGainForHLTonGPU, gain::UInt32)::Float32 = gain * structure.gain_precision + structure._min_gain
+decode_ped(structure::siPixelGainForHLTonGPU, ped::UInt32)::Float32 = ped * structure.ped_precision + structure._min_ped
 
-end # module CondFormatsSiPixelObjectsSiPixelGainForHLTonGPU
+end # module condFormatsSiPixelObjectsSiPixelGainForHLTonGPU

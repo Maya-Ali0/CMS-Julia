@@ -1,7 +1,7 @@
-module CondFormatsSiPixelFedIds
+module condFormatsSiPixelFedIds
 
 """
-Struct to hold SiPixel FED IDs
+Struct to hold siPixel FED IDs
 
 This struct stores a list of FED (Front-End Driver) IDs that are used in the pixel detector system. FED IDs uniquely identify each FED unit, which is responsible for reading out data from the detector.
 
@@ -11,7 +11,7 @@ This struct stores a list of FED (Front-End Driver) IDs that are used in the pix
 # Constructor
 Initializes the SiPixelFedIds structure with a given list of FED IDs.
 """
-mutable struct SiPixelFedIds
+mutable struct siPixelFedIds
     _fed_ids::Vector{UInt}
 
     function si_pixel_fed_ids(fed_ids::Vector{UInt})
@@ -22,6 +22,6 @@ end
 """
 Retrieves the list of FED IDs from the SiPixelFedIds structure.
 """
-fed_ids(ids::SiPixelFedIds)::Vector{UInt} = ids._fed_ids
+fed_ids(ids::siPixelFedIds)::Vector{UInt} = ids._fed_ids
 
-end # module CondFormatsSiPixelFedIds
+end # module condFormatsSiPixelFedIds

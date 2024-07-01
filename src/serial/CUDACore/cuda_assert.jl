@@ -1,4 +1,4 @@
-module GPUConfig
+module gpuConfig
 
 if isdefined(Main, :__CUDA_ARCH__)
     if !isdefined(Main, :GPU_DEBUG)
@@ -12,4 +12,4 @@ if isdefined(Main, :__CUDA_ARCH__)
     end
 end
 
-end # module GPUConfig
+end # module gpuConfig
