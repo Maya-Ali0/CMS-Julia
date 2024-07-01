@@ -131,7 +131,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
     function set_n_modules_digis(self::SiPixelDigisSoA, n_modules::UInt32, n_digis::UInt32)
         self.n_modules_h = n_modules
         self.n_digis_h = n_digis
-    end
+    end(())
 
     """
     Get the number of modules
