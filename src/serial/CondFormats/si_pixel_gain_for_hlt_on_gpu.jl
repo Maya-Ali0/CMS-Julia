@@ -18,7 +18,7 @@ const Range = Tuple{UInt32, UInt32}
 # copy of siPixelGainCalibrationForHL
 mutable struct siPixelGainForHLTonGPU
     v_pedestals::DecodingStructure
-    range_and_cols::MVector{2000, Tuple{Range, Int32}}
+    range_and_cols::MVector{2000, Tuple{Range, UInt16}}
     _min_ped::Float32
     _max_ped::Float32
     _min_gain::Float32
@@ -31,17 +31,19 @@ mutable struct siPixelGainForHLTonGPU
     _noisy_flag::UInt32
 end
 
-@inline function get_ped_and_gain(structure::siPixelGainForHLTonGPU, module_ind::UInt32, col::Int32, row::Int32, is_dead_column_is_noisy_column::MVector{2, Bool})::Tuple{Float32, Float32}
-    range = first(structure.range_and_cols[module_ind])
-    nCols = second(structure.range_and_cols[module_ind])
+# be careful of the type of unsigned ints, should it be UInt32 or UInt16, and check with consistencies in si_pixel_gain_for_hlt_on_gpu
+
+@inline function get_ped_and_gain(structure::siPixelGainForHLTonGPU, module_ind::UInt16, col::UInt16, row::UInt16, is_dead_column_is_noisy_column::MVector{2, Bool})::Tuple{Float32, Float32}
+    range::Range = structure.range_and_cols[module_ind][1]
+    nCols = structure.range_and_cols[module_ind][2]
 
     # determine what averaged data block we are in (there should be 1 or 2 of these depending on if plaquette is 1 by X or 2 by X
-    lengthOfColumnData::UInt32 = (second(range) - first(range)) / nCols
-    lengthOfAveragedDataInEachColumn::UInt32 = 2 # we always only have two values per column averaged block
-    numberOfDataBlocksToSkip::UInt32 = row / structure._number_of_rows_averaged_over
-    offset = first(range) + col + lengthOfColumnData + lengthOfAveragedDataInEachColumn*numberOfDataBlocksToSkip
+    lengthOfColumnData::UInt16 = (range[2] - range[1]) / nCols
+    lengthOfAveragedDataInEachColumn::UInt16 = 2 # we always only have two values per column averaged block
+    numberOfDataBlocksToSkip::UInt16 = row / structure._number_of_rows_averaged_over
+    offset = range[1] + col + lengthOfColumnData + lengthOfAveragedDataInEachColumn*numberOfDataBlocksToSkip
 
-    @assert offset < second(range)
+    @assert offset < range[2]
     @assert offset < 3088384
     @assert offset % 2 == 0
 
