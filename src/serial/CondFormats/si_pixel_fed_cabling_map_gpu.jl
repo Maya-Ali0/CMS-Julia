@@ -1,5 +1,5 @@
 """
-Module for handling the SiPixelFedCablingMapGPU structure in the Pixel GPU reconstruction process.
+Module for handling the siPixelFedCablingMapGPU structure in the Pixel GPU reconstruction process.
 
 # Overview
 This module defines constants and a structure related to the SiPixelFedCablingMapGPU, which is used in the reconstruction of pixel data on a GPU. The constants represent various 
@@ -8,10 +8,10 @@ limits and sizes for the FED (Front-End Driver) system. The structure, SiPixelFe
 # Constants and Structure
 The constants define maximum values for the FED system components. The structure includes arrays for different FED-related IDs and flags, as well as the size of the cabling map.
 """
-module RecoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
+module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
 
-# Export the SiPixelFedCablingMapGPU structure for use in other modules
-export SiPixelFedCablingMapGPU
+# Export the siPixelFedCablingMapGPU structure for use in other modules
+export siPixelFedCablingMapGPU
 
 """
 Module containing constants related to Pixel GPU details.
@@ -34,10 +34,10 @@ module pixelGPUDetails
     const MAX_SIZE::UInt32 = MAX_FED * MAX_LINK * MAX_ROC
     # Maximum size in bytes for boolean arrays
     const MAX_SIZE_BYTE_BOOL::UInt32 = MAX_SIZE * sizeof(UInt8)
-end # module PixelGPUDetails
+end # module pixelGPUDetails
 
 """
-Struct to hold the SiPixel FED Cabling Map for the GPU
+Struct to hold the siPixel FED Cabling Map for the GPU
 
     This struct represents the cabling map that connects the detector readout electronics to the 
     corresponding detector modules. It specifies how data signals are routed from the physical detector 
@@ -63,7 +63,7 @@ Initializes the arrays with zeros and sets the size to zero.
 # TODO: check memory alignment efficiency and necessity as well as the need for a constructor
 # TODO: ntuples or vectors?
 
-struct SiPixelFedCablingMapGPU
+struct siPixelFedCablingMapGPU
     fed::Array{UInt32, 1}
     link::Array{UInt32, 1}
     roc::Array{UInt32, 1}
@@ -73,18 +73,18 @@ struct SiPixelFedCablingMapGPU
     bad_rocs::Array{UInt8, 1}
     size::UInt32
 
-    # Constructor to initialize the SiPixelFedCablingMapGPU structure
-    function si_pixel_fed_cabling_map_gpu()
-        fed = fill(UInt32(0), PixelGPUDetails.MAX_SIZE)
-        link = fill(UInt32(0), PixelGPUDetails.MAX_SIZE)
-        roc = fill(UInt32(0), PixelGPUDetails.MAX_SIZE)
-        raw_id = fill(UInt32(0), PixelGPUDetails.MAX_SIZE)
-        roc_in_det = fill(UInt32(0), PixelGPUDetails.MAX_SIZE)
-        module_id = fill(UInt32(0), PixelGPUDetails.MAX_SIZE)
-        bad_rocs = fill(UInt8(0), PixelGPUDetails.MAX_SIZE)
+    # Constructor to initialize the siPixelFedCablingMapGPU structure
+    function siPixelFedCablingMapGPU()
+        fed = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
+        link = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
+        roc = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
+        raw_id = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
+        roc_in_det = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
+        module_id = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
+        bad_rocs = fill(UInt8(0), pixelGPUDetails.MAX_SIZE)
         size = UInt32(0)
         new(fed, link, roc, raw_id, roc_in_det, module_id, bad_rocs, size) # Zero-initialize all fields
     end
 end
 
-end # module RecoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
+end # module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
