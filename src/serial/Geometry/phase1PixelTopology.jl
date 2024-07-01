@@ -2,6 +2,9 @@ module Geometry_TrackerGeometryBuilder_phase1PixelTopology_h
 
 module phase1PixelTopology
 
+    import Pkg
+    Pkg.add("StaticArrays")
+
     # Constants defining the dimensions of ROCs and modules
     const num_rows_in_ROC = 80
     const num_cols_in_ROC = 52
@@ -19,7 +22,7 @@ module phase1PixelTopology
     const num_pixs_in_module = num_rows_in_module * num_cols_in_module
 
     const number_of_modules = 1856
-    const numer_of_layers = 10
+    const number_of_layers = 10
     
     # Starting indices for each layer
     const layer_start = [
@@ -125,7 +128,7 @@ module phase1PixelTopology
     ## Returns
     - `Int`: The layer index.
     """
-    function find_layer_from_compact(det_id::UInt32)
+    function find_layer_from_compact(det_id)
         det_id *= max_module_stride
         for i in 0:11
             if det_id < layer_start[i + 1]
@@ -137,6 +140,7 @@ module phase1PixelTopology
 
     const layer_index_size = UInt32(number_of_modules ÷ max_module_stride)
 
+    # FIXME can do broadcasting
     const layer = map_to_array(layer_index_size, find_layer_from_compact)
 
     """
@@ -147,8 +151,8 @@ module phase1PixelTopology
     """
     function validate_layer_index()::Bool
         res = true
-        for i in 0:number_of_modules 
-            j = i ÷ max_module_stride
+        for i in 0:number_of_modules-1 
+            j = i ÷ max_module_stride + 1
             res = layer[j] < 10
             res = i >= layer_start[layer[j]]
             res = i < layer_start[layer[j] + 1]
@@ -282,29 +286,30 @@ module phase1PixelTopology
         return py + shift
     end
 
+    # FIXME why we need static arrays?
     using StaticArrays
 
     """
     Struct representing the average geometry of the detector.
     
     ## Fields
-    - `numberOfLaddersInBarrel::Int`: Number of ladders in the barrel.
-    - `ladderZ::SVector{Float32, numberOfLaddersInBarrel}`: Z-coordinates of the ladders.
-    - `ladderX::SVector{Float32, numberOfLaddersInBarrel}`: X-coordinates of the ladders.
-    - `ladderY::SVector{Float32, numberOfLaddersInBarrel}`: Y-coordinates of the ladders.
-    - `ladderR::SVector{Float32, numberOfLaddersInBarrel}`: Radii of the ladders.
-    - `ladderMinZ::SVector{Float32, numberOfLaddersInBarrel}`: Minimum Z-coordinates of the ladders.
-    - `ladderMaxZ::SVector{Float32, numberOfLaddersInBarrel}`: Maximum Z-coordinates of the ladders.
+    - `number_of_ladders_in_barrel::Int`: Number of ladders in the barrel.
+    - `ladderZ::SVector{number_of_ladders_in_barrel, Float32}`: Z-coordinates of the ladders.
+    - `ladderX::SVector{number_of_ladders_in_barrel, Float32}`: X-coordinates of the ladders.
+    - `ladderY::SVector{number_of_ladders_in_barrel, Float32}`: Y-coordinates of the ladders.
+    - `ladderR::SVector{number_of_ladders_in_barrel, Float32}`: Radii of the ladders.
+    - `ladderMinZ::SVector{number_of_ladders_in_barrel, Float32}`: Minimum Z-coordinates of the ladders.
+    - `ladderMaxZ::SVector{number_of_ladders_in_barrel, Float32}`: Maximum Z-coordinates of the ladders.
     - `endCapZ::NTuple{2, Float32}`: Z-coordinates for the positive and negative endcap Layer1.
     """
     struct AverageGeometry
-        numberOfLaddersInBarrel::Int
-        ladderZ::SVector{Float32, numberOfLaddersInBarrel}
-        ladderX::SVector{Float32, numberOfLaddersInBarrel}
-        ladderY::SVector{Float32, numberOfLaddersInBarrel}
-        ladderR::SVector{Float32, numberOfLaddersInBarrel}
-        ladderMinZ::SVector{Float32, numberOfLaddersInBarrel}
-        ladderMaxZ::SVector{Float32, numberOfLaddersInBarrel}
+        number_of_ladders_in_barrel::Int
+        ladderZ::SVector{number_of_ladders_in_barrel, Float32}
+        ladderX::SVector{number_of_ladders_in_barrel, Float32}
+        ladderY::SVector{number_of_ladders_in_barrel, Float32}
+        ladderR::SVector{number_of_ladders_in_barrel, Float32}
+        ladderMinZ::SVector{number_of_ladders_in_barrel, Float32}
+        ladderMaxZ::SVector{number_of_ladders_in_barrel, Float32}
         endCapZ::NTuple{2, Float32}  # just for pos and neg Layer1
     end
 

@@ -10,6 +10,12 @@ module cms
             self.n += 1
             return old_val
         end
+<<<<<<< HEAD
+=======
+        function count_from_vector(h::Vector{Histo},nh::UInt32,v::Vector{T} v, offsets::Vector{UInt32}) where Histo where T
+
+        end
+>>>>>>> 9161be409dd1246ebcb948e90ba1f5b7dfbd7f5d
         """
          The off array within the struct stores the number of elements in the bins to its left excluding the elements inserted at bin indexed at b
          It represents the next available position where a new element can be inserted, 

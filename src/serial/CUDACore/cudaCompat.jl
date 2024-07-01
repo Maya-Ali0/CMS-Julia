@@ -110,31 +110,3 @@ end
 end
 
 end
-
-# Test cases
-using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat
-
-# AtomicCAS test
-arr = [1]
-old_value = cudacompat.atomicCAS(arr, 1, 2)
-println("AtomicCAS test: Original value = 1, New value = $(arr[1]), Returned old value = $old_value")
-
-# AtomicInc test
-old_value = cudacompat.atomicInc(arr, 2)
-println("AtomicInc test: Original value = 1, New value = $(arr[1]), Returned old value = $old_value")
-
-# AtomicAdd test
-old_value = cudacompat.atomicAdd(arr, 2)
-println("AtomicAdd test: Original value = 1, New value = $(arr[1]), Returned old value = $old_value")
-
-# AtomicSub test
-old_value = cudacompat.atomicSub(arr, 2)
-println("AtomicSub test: Original value = 5, New value = $(arr[1]), Returned old value = $old_value")
-
-# AtomicMin test
-old_value = cudacompat.atomicMin(arr, 2)
-println("AtomicMin test: Original value = 3, New value = $(arr[1]), Returned old value = $old_value")
-
-# AtomicMax test
-old_value = cudacompat.atomicMax(arr, 5)
-println("AtomicMax test: Original value = 3, New value = $(arr[1]), Returned old value = $old_value")
