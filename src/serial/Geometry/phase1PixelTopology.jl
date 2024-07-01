@@ -22,7 +22,7 @@ module phase1PixelTopology
     const num_pixs_in_module = num_rows_in_module * num_cols_in_module
 
     const number_of_modules = 1856
-    const numer_of_layers = 10
+    const number_of_layers = 10
     
     # Starting indices for each layer
     const layer_start = [
@@ -293,23 +293,23 @@ module phase1PixelTopology
     Struct representing the average geometry of the detector.
     
     ## Fields
-    - `numberOfLaddersInBarrel::Int`: Number of ladders in the barrel.
-    - `ladderZ::SVector{Float32, numberOfLaddersInBarrel}`: Z-coordinates of the ladders.
-    - `ladderX::SVector{Float32, numberOfLaddersInBarrel}`: X-coordinates of the ladders.
-    - `ladderY::SVector{Float32, numberOfLaddersInBarrel}`: Y-coordinates of the ladders.
-    - `ladderR::SVector{Float32, numberOfLaddersInBarrel}`: Radii of the ladders.
-    - `ladderMinZ::SVector{Float32, numberOfLaddersInBarrel}`: Minimum Z-coordinates of the ladders.
-    - `ladderMaxZ::SVector{Float32, numberOfLaddersInBarrel}`: Maximum Z-coordinates of the ladders.
+    - `number_of_ladders_in_barrel::Int`: Number of ladders in the barrel.
+    - `ladderZ::SVector{number_of_ladders_in_barrel, Float32}`: Z-coordinates of the ladders.
+    - `ladderX::SVector{number_of_ladders_in_barrel, Float32}`: X-coordinates of the ladders.
+    - `ladderY::SVector{number_of_ladders_in_barrel, Float32}`: Y-coordinates of the ladders.
+    - `ladderR::SVector{number_of_ladders_in_barrel, Float32}`: Radii of the ladders.
+    - `ladderMinZ::SVector{number_of_ladders_in_barrel, Float32}`: Minimum Z-coordinates of the ladders.
+    - `ladderMaxZ::SVector{number_of_ladders_in_barrel, Float32}`: Maximum Z-coordinates of the ladders.
     - `endCapZ::NTuple{2, Float32}`: Z-coordinates for the positive and negative endcap Layer1.
     """
     struct AverageGeometry
-        numberOfLaddersInBarrel::Int
-        ladderZ::SVector{Float32, numberOfLaddersInBarrel}
-        ladderX::SVector{Float32, numberOfLaddersInBarrel}
-        ladderY::SVector{Float32, numberOfLaddersInBarrel}
-        ladderR::SVector{Float32, numberOfLaddersInBarrel}
-        ladderMinZ::SVector{Float32, numberOfLaddersInBarrel}
-        ladderMaxZ::SVector{Float32, numberOfLaddersInBarrel}
+        number_of_ladders_in_barrel::Int
+        ladderZ::SVector{number_of_ladders_in_barrel, Float32}
+        ladderX::SVector{number_of_ladders_in_barrel, Float32}
+        ladderY::SVector{number_of_ladders_in_barrel, Float32}
+        ladderR::SVector{number_of_ladders_in_barrel, Float32}
+        ladderMinZ::SVector{number_of_ladders_in_barrel, Float32}
+        ladderMaxZ::SVector{number_of_ladders_in_barrel, Float32}
         endCapZ::NTuple{2, Float32}  # just for pos and neg Layer1
     end
 
