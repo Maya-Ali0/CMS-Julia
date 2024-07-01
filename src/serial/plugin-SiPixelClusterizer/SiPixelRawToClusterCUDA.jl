@@ -38,6 +38,7 @@ include("ErrorChecker.jl")
 using .errorChecker
 
 include("SiPixelRawToClusterGPUKernel.jl")
+
 mutable struct SiPixelRawToClusterCUDA <: EDM.EDProducer
     raw_get_token::EDM.EDGetTokenT{FEDRawDataCollection}
     digi_put_token::EDM.EDPutTokenT{SiPixelDigisSoA}
