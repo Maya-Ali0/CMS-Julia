@@ -1,7 +1,5 @@
 module condFormatsSiPixelObjectsSiPixelGainForHLTonGPU
 
-export SiPixelGainForHLTonGPU, get_ped_and_gain
-
 include("../CUDACore/cuda_assert.jl")
 using .gpuConfig
 
