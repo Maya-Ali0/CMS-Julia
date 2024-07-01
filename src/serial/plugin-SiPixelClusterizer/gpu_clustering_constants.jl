@@ -1,6 +1,6 @@
 module recoLocalTrackerSiPixelClusterizePluginsGPUClusteringConstants
 
 include("../CUDADataFormats/gpu_clustering_constants.jl")
-using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
+using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: gpuClustering
 
 end # module recoLocalTrackerSiPixelClusterizePluginsGPUClusteringConstants
