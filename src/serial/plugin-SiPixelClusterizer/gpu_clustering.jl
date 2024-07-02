@@ -102,7 +102,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             continue
         end
         if id[i] != this_module_id
-            Main.heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat.atomicMin(msize, i)
+            Main.heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat.min(msize, i)
             break
         end
     end

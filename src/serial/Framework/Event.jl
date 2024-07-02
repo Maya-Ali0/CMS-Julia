@@ -32,7 +32,7 @@ function get(event::Event, token::EDGetTokenT{T})::T where T
 end
 
 # Function to insert a product of type T into Event
-function emplace(event::Event, token::EDPutTokenT{T}, args...)
+function emplace(event::Event, token::EDPutTokenT{T}, args...) where T
     event.products[token.index] = Wrapper{T}(args...)
 end
 
