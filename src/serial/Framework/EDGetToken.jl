@@ -1,4 +1,4 @@
-module edm
+module edm_edgettoken
 
 const UNINITIALIZED_VALUE = UInt32(0xFFFFFFFF)
 

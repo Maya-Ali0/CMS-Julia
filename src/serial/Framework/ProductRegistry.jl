@@ -1,7 +1,9 @@
 include("EDGetToken.jl")
+using .edm_edgettoken
 include("EDPutToken.jl")
+using .edm_edputoken
 
-module edm
+module edm_product
 
 struct ProductRegistry
     currentModuleIndex::Int

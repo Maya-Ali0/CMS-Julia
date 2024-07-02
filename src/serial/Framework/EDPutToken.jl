@@ -1,6 +1,8 @@
-module edm
+module edm_edputoken
 
+export EDPutToken, EDPutTokenT
 const UNINITIALIZED_VALUE = UInt32(0xFFFFFFFF)
+
 
 struct EDPutTokenT{T}
     value::UInt32
