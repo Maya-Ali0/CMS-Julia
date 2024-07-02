@@ -1,6 +1,7 @@
 module edm
 
 include("ProductRegistry.jl")
+using .edm_product
 
 # Define StreamID as an alias for Int
 const StreamID = Int
@@ -25,13 +26,13 @@ streamID(event::Event) = event.streamId
 eventID(event::Event) = event.eventId
 
 # Function to retrieve a product of type T from Event
-function get(event::Event, token::EDGetTokenT{T})::T
+function get(event::Event, token::EDGetTokenT{T})::T where T
     wrapper = event.products[token.index]
     return wrapper.obj 
 end
 
 # Function to insert a product of type T into Event
-function emplace(event::Event, token::EDPutTokenT{T}, args...)
+function emplace(event::Event, token::EDPutTokenT{T}, args...) where T
     event.products[token.index] = Wrapper{T}(args...)
 end
 

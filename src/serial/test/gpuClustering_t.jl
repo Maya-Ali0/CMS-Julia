@@ -1,6 +1,5 @@
 include("../plugin-SiPixelClusterizer/gpu_clustering.jl")
-using .RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering.gpuClustering
-import .gpuClustering
+using .Main.RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering.gpuClustering
 
 include("../plugin-SiPixelClusterizer/gpu_cluster_charge_cut.jl")
 using .Main.gpuClustering
@@ -29,8 +28,15 @@ y = [5, 7, 9, 1, 3, 0, 4, 8, 2, 6]
 function generateClusters(kn)
     addBigNoise = 1 == kn % 2
     
+    global n, ncl  # Declare n and ncl as global
+
+    n = 0
+    ncl = 0
+    InvId = 0
+
+
     if addBigNoise
-        const MaxPixels = 1000
+        MaxPixels = 1000
         id = 666
         
         for x = 0:3:139
@@ -228,14 +234,14 @@ for kkk = 0:4
     generateClusters(kkk)
     
     println("created ", n, " digis in ", ncl, " clusters")
-    @assert n <= numElements
+    @assert n <= num_elements
     
     nModules = 0
     h_moduleStart[1] = nModules
-    countModules(h_id, h_moduleStart, h_clus, n)
+    Main.RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering.gpuClustering.GPU_DEBUG.count_modules(h_id, h_moduleStart, h_clus, n)
     fill!(h_clusInModule, 0)
     
-    findClus(h_id, h_x, h_y, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
+    Main.RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering.gpuClustering.GPU_DEBUG.find_clus(h_id, h_x, h_y, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
     
     nModules = h_moduleStart[1]  
     nclus = h_clusInModule

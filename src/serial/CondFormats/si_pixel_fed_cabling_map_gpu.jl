@@ -11,7 +11,7 @@ The constants define maximum values for the FED system components. The structure
 module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
 
 # Export the siPixelFedCablingMapGPU structure for use in other modules
-export siPixelFedCablingMapGPU
+export SiPixelFedCablingMapGPU
 
 """
 Module containing constants related to Pixel GPU details.
@@ -46,42 +46,42 @@ Struct to hold the siPixel FED Cabling Map for the GPU
     interpreting the data collected by the detector system.
 
 # Fields
-- fed: Array to store FED IDs, which is used for identifying the FEDs.
-- link: Array to store link IDs, which is used for identifying the links within each FED.
-- roc: Array to store ROC IDs, which is used for identifying the ROCs (Read-Out Chips) within each link.
-- raw_id: Array to store Raw IDs, which is used for storing the raw detector IDs.
-- roc_in_det: Array to store ROC in detector IDs, which is used for mapping the ROC within the detector module.
-- module_id: Array to store module IDs, which is used for identifying the detector modules.
-- bad_rocs: Array to store bad ROC flags, which is used for flagging ROCs that are not functioning correctly.
+- fed: Vector to store FED IDs, which is used for identifying the FEDs.
+- link: Vector to store link IDs, which is used for identifying the links within each FED.
+- roc: Vector to store ROC IDs, which is used for identifying the ROCs (Read-Out Chips) within each link.
+- raw_id: Vector to store Raw IDs, which is used for storing the raw detector IDs.
+- roc_in_det: Vector to store ROC in detector IDs, which is used for mapping the ROC within the detector module.
+- module_id: Vector to store module IDs, which is used for identifying the detector modules.
+- bad_rocs: Vector to store bad ROC flags, which is used for flagging ROCs that are not functioning correctly.
 - size: Size of the cabling map, which is used for storing the total number of entries in the cabling map.
 
 # Constructor
-Initializes the arrays with zeros and sets the size to zero.
+Initializes the Vectors with zeros and sets the size to zero.
 """
 
 # TODO: since this has more information than just cabling map, maybe we should invent a better name?
 # TODO: check memory alignment efficiency and necessity as well as the need for a constructor
 # TODO: ntuples or vectors?
 
-struct siPixelFedCablingMapGPU
-    fed::Array{UInt32, 1}
-    link::Array{UInt32, 1}
-    roc::Array{UInt32, 1}
-    raw_id::Array{UInt32, 1}
-    roc_in_det::Array{UInt32, 1}
-    module_id::Array{UInt32, 1}
-    bad_rocs::Array{UInt8, 1}
+struct SiPixelFedCablingMapGPU
+    fed::Vector{UInt32}
+    link::Vector{UInt32}
+    roc::Vector{UInt32}
+    raw_id::Vector{UInt32}
+    roc_in_det::Vector{UInt32}
+    module_id::Vector{UInt32}
+    bad_rocs::Vector{UInt8}
     size::UInt32
 
-    # Constructor to initialize the siPixelFedCablingMapGPU structure
-    function siPixelFedCablingMapGPU()
-        fed = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
-        link = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
-        roc = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
-        raw_id = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
-        roc_in_det = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
-        module_id = fill(UInt32(0), pixelGPUDetails.MAX_SIZE)
-        bad_rocs = fill(UInt8(0), pixelGPUDetails.MAX_SIZE)
+    # Constructor to initialize the SiPixelFedCablingMapGPU structure
+    function SiPixelFedCablingMapGPU()
+        fed = Vector{UIn32}(undef, pixelGpuDetails.MAX_SIZE)
+        link = Vector{UIn32}(undef, pixelGpuDetails.MAX_SIZE)
+        roc = Vector{UIn32}(undef, pixelGpuDetails.MAX_SIZE)
+        raw_id = Vector{UIn32}(undef, pixelGpuDetails.MAX_SIZE)
+        roc_in_det = Vector{UIn32}(undef, pixelGpuDetails.MAX_SIZE)
+        module_id = Vector{UIn32}(undef, pixelGpuDetails.MAX_SIZE)
+        bad_rocs = Vector{UInt8}(undef, pixelGpuDetails.MAX_SIZE)
         size = UInt32(0)
         new(fed, link, roc, raw_id, roc_in_det, module_id, bad_rocs, size) # Zero-initialize all fields
     end

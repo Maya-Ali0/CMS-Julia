@@ -1,7 +1,9 @@
-module edm
-
 include("EDGetToken.jl")
+using .edm_edgettoken
 include("EDPutToken.jl")
+using .edm_edputoken
+
+module edm_product
 
 struct ProductRegistry
     currentModuleIndex::Int
@@ -9,7 +11,7 @@ struct ProductRegistry
     typeToIndex::Dict{DataType, Tuple{UInt, UInt}}
 end
 
-function produces{T}(registry::ProductRegistry)::EDPutTokenT{T}
+function produces(registry::ProductRegistry,::Type{T})::EDPutTokenT{T} where T
     ind = length(registry.typeToIndex)
     if haskey(registry.typeToIndex, T)
         throw(RuntimeError("Product of type $T already exists"))
@@ -18,7 +20,7 @@ function produces{T}(registry::ProductRegistry)::EDPutTokenT{T}
     return EDPutTokenT{T}(ind)
 end
 
-function consumes{T}(registry::ProductRegistry)::EDGetTokenT{T}
+function consumes(registry::ProductRegistry,::Type{T})::EDGetTokenT{T} where T
     if !haskey(registry.typeToIndex, T)
         throw(RuntimeError("Product of type $T is not produced"))
     end

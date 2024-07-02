@@ -1,13 +1,13 @@
-include("../CUDACore/cuda_assert.jl")
-using .gpuConfig
-include("../CUDACore/prefixScan.jl")
-using .heterogeneousCoreCUDAUtilitiesInterfacePrefixScan
-include("gpu_clustering_constants.jl")
-using .Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
-
-
-
 module gpuClustering
+    include("../CUDACore/cuda_assert.jl")
+    using .gpuConfig
+    include("../CUDACore/prefixScan.jl")
+    using .heterogeneousCoreCUDAUtilitiesInterfacePrefixScan
+    include("gpu_clustering_constants.jl")
+    using .recoLocalTrackerSiPixelClusterizePluginsGPUClusteringConstants
+    include("../CUDACore/cudaCompat.jl")
+    using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat: cms
+
     using Printf
     function cluster_charge_cut(id, adc, moduleStart, nClustersInModule, moduleId, clusterId, numElements)
         charge = Vector(undef, MaxNumClusterPerModules)
@@ -16,7 +16,7 @@ module gpuClustering
         firstModule = 0
         endModule = moduleStart[0]
 
-        for mod in firstModule:1:endModule-1
+        for mod in firstModule + 1:endModule
             firstPixel = moduleStart[1 + mod]
             thisModuleId = id[firstPixel]
             @assert thisModuleId < MaxNumModules
@@ -37,7 +37,7 @@ module gpuClustering
             first = firstPixel
 
             if nClus > MaxNumClusterPerModules
-                for i in first:numElements-1
+                for i in first:numElements
                     if id[i] == InvId
                         continue
                     end
@@ -52,23 +52,29 @@ module gpuClustering
                 nClus = MaxNumClusterPerModules
             end
 
+            if isdefined(Main, :GPU_DEBUG)
+                if thisModuleId % 100 == 1
+                    @printf("start cluster charge cut for module %d in block %d\n", thisModuleId, 0)
+                end
+            end
+
             @assert nClus <= MaxNumClusterPerModules
-            for i in 0:nClus-1
+            for i in 1:nClus
                 charge[i] = 0
             end
 
-            for i in first:numElements-1
+            for i in first:numElements
                 if id[i] == InvId 
                     continue
                 end
                 if id[i] != thisModuleId
                     break
                 end
-                atomicAdd(charge[clusterId[i]], adc[i])
+                cms.cudacompat.atomicAdd(charge[clusterId[i]], adc[i])
             end
 
             chargeCut = thisModuleId < 96 ? 2000 : 4000
-            for i in 0:nClus -1
+            for i in 1:nClus
                 newclusId[i] = ok[i] = charge[i] > chargeCut ? 1 : 0
             end
 
@@ -81,13 +87,13 @@ module gpuClustering
 
             nClustersInModule[thisModuleId] =  newclusId[nClus - 1]
 
-            for i in 0:nClus-1
+            for i in 1:nClus
                 if ok[i] == 0 
                     newclusId[i] = InvId + 1
                 end
             end
 
-            for i in first:numElements-1 
+            for i in first:numElements
                 if id[i] == InvId 
                     continue
                 end
