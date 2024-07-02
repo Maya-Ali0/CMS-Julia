@@ -10,15 +10,22 @@ include("../CUDACore/hist_to_container.jl")
 using .cms
 
 include("../CUDACore/cuda_assert.jl")
-using .__CUDA_ARCH__
-include("gpu_clustering_constants.jl")
-using .RecoLocalTrackerSiPixelClusterizePluginsGPUClusteringConstants
+using .gpuConfig
+
+include("../CUDADataFormats/gpu_clustering_constants.jl")
+using .Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering 
+
+include("../CUDACore/cudaCompat.jl")
+using .Main.heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat
+
+
 
 module RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering
 
 module gpuClustering
 
 module GPU_DEBUG
+using Printf
 
 """
 * @brief Counts modules and assigns starting indices for each module in the data.
@@ -34,25 +41,30 @@ module GPU_DEBUG
 * InvId refers to Invalid pixel 
 * Changes since julia is indexed at 1
 """
-function count_modules(id::Vector{UInt16}, module_start::Vector{UInt32}, cluster_id::Vector{UInt32}, num_elements::Int)
+function count_modules(id::Vector{UInt16}, module_start::Vector{UInt32}, cluster_id::Vector{Int64}, num_elements::Int64)
     first = 1
     for i ∈ first:num_elements
         cluster_id[i] = i
-        if id[i] == INV_ID 
+        if id[i] == Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.INV_ID 
             continue
         end
         j = i - 1
-        while j >= 1 && id[j] == INV_ID 
+        while j >= 1 && id[j] == Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.INV_ID 
             j -= 1
         end
         if j < 1 || id[j] != id[i]
-            #loc = atomicInc(module_start[1], Max_num_modules) Needed for concurrency C++
-            module_start[1] = max(module_start[1] + 1 , MAX_NUM_MODULES)
+            module_start[1] = min(module_start[1] + 1, Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.MAX_NUM_MODULES)
             loc = module_start[1]
-            module_start[loc] = i
+            if loc < length(module_start)
+                module_start[loc] = i
+            else
+                println("Warning: Exceeded the bounds of module_start array. loc = $loc")
+                break
+            end
         end
     end
 end
+
 
 """
 * @brief Finds and labels clusters of pixels within a module based on their coordinates and IDs.
@@ -72,7 +84,7 @@ end
 *
 * @remarks InvId refers to an invalid pixel ID.
 """
-function find_clus(id:: UInt16, x::UInt16, y::UInt16, module_start::UInt32, n_clusters_in_module:: UInt32, moduleId::UInt32, cluster_id::UInt32, num_elements::Int)
+function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, cluster_id, num_elements)
     
     # julia is 1 indexed
     first_module = 1
@@ -80,17 +92,17 @@ function find_clus(id:: UInt16, x::UInt16, y::UInt16, module_start::UInt32, n_cl
     for mod in first_module:end_module
         first_pixel = module_start[1+ mod]
         this_module_id = id[first_pixel]
-        @assert this_module_id < Max_num_modules
+        @assert this_module_id < Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.MAX_NUM_MODULES
 
     first = first_pixel
     msize = num_elements
 
     for i in first:num_elements
-        if id[i] == InvId 
+        if id[i] == Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.INV_ID 
             continue
         end
         if id[i] != this_module_id
-            atomicMin(msize, i)
+            Main.heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat.atomicMin(msize, i)
             break
         end
     end
@@ -99,7 +111,7 @@ function find_clus(id:: UInt16, x::UInt16, y::UInt16, module_start::UInt32, n_cl
     max_pix_in_module = 4000
     nbins = phase1PixelTopology::numColsInModule + 2;
 
-    const Hist{T, N, M, K, U} = cms.cu.HistoContainer{T, N, M, K, U}
+    Hist{T, N, M, K, U} = cms.cu.HistoContainer{T, N, M, K, U}
     hist = Hist{UInt16, nbins, max_pix_in_module, 9, UInt16}()
 
     for j in 1:Hist::totbins()
@@ -109,8 +121,7 @@ function find_clus(id:: UInt16, x::UInt16, y::UInt16, module_start::UInt32, n_cl
     @assert msize == num_elements || (msize < num_elements && id[msize] != this_module_id)
 
     if msize - first_pixel > max_pix_in_module
-        using Printf
-        @Printf ("too many pixels in module %d: %d > %d\n", this_module_id, msize - first_pixel, max_pix_in_module)
+        @printf("too many pixels in module %d: %d > %d\n", this_module_id, msize - first_pixel, max_pix_in_module)
         msize = max_pix_in_module + first_pixel
     end
 
