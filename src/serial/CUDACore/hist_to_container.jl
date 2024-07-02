@@ -10,12 +10,6 @@ module cms
             self.n += 1
             return old_val
         end
-<<<<<<< HEAD
-=======
-        function count_from_vector(h::Vector{Histo},nh::UInt32,v::Vector{T} v, offsets::Vector{UInt32}) where Histo where T
-
-        end
->>>>>>> 9161be409dd1246ebcb948e90ba1f5b7dfbd7f5d
         """
          The off array within the struct stores the number of elements in the bins to its left excluding the elements inserted at bin indexed at b
          It represents the next available position where a new element can be inserted, 
@@ -30,6 +24,7 @@ module cms
             end
         end
 
+        HisToContainer{T,N_BINS,SIZE,S,I}() where {T,N_BINS,SIZE,S,I} = HisToContainer{T,N_BINS,SIZE, S,I,1}()
 
 
         """
@@ -183,7 +178,10 @@ module cms
         end
         size(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = UInt32(hist.off[tot_bins(hist)])
         size(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},b::UInt32) where {T, N_BINS, SIZE, S, I, N_HISTS} = hist.off[b+1] - hist.off[b]
-        endd(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = size(hist)
+        begin_h(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = 1 
+        end_h(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = size(hist)
+        begin_h(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},b::UInt32) where {T, N_BINS, SIZE, S, I, N_HISTS} = off[b]+1 
+        end_h(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},b::UInt32) where {T, N_BINS, SIZE, S, I, N_HISTS} = off[b+1]+1
     end
 
     """
@@ -210,6 +208,8 @@ module cms
             fill(h,v[i],i,ih)
         end
     end
+
+
 
 
 
