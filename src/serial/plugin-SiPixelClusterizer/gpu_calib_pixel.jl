@@ -9,7 +9,7 @@ include("../CUDACore/cuda_assert.jl")
 using .gpuConfig
 
 include("gpu_clustering_constants.jl")
-using .recoLocalTrackerSiPixelClusterizePluginsGPUClusteringConstants: gpuClustering
+using .Main.recoLocalTrackerSiPixelClusterizePluginsGPUClusteringConstants: gpuClustering
 
 using Pkg
 Pkg.add("StaticArrays")
