@@ -2,6 +2,7 @@ module edm
 
 const UNINITIALIZED_VALUE = UInt32(0xFFFFFFFF)
 
+export EDGetTokenT, EDGetToken
 
 struct EDGetTokenT{T}
     value::UInt32
