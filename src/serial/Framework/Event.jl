@@ -3,7 +3,6 @@ include("ProductRegistry.jl")
 module edm
 
 const StreamID = Int
-
 abstract type WrapperBase end
 
 struct Wrapper{T} <: WrapperBase
