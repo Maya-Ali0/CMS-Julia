@@ -6,6 +6,13 @@ using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 
 include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
 using .cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
+
+include("../CUDADataFormats/gpu_clustering_constants.jl")
+using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: gpuClustering
+
+include("../CUDACore/prefixScan.jl")
+using .heterogeneousCoreCUDAUtilitiesInterfacePrefixScan: cms
+
 """
 Phase 1 Geometry Constants
 """
@@ -642,11 +649,24 @@ module pixelGPUDetails
             raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),xx(digis_d),yy(digis_d),adc(digis_d),
             p_digi(digis_d), raw_id_arr(digis_d), module_ind(digis_d), error(digi_errors_d),use_quality_info,include_errors,debug)
         end # end for raw to digi
+    end
 
+    function fill_hits_module_start(clu_start::Vector{UInt32}, module_start::Vector{UInt32})
+        @assert (gpuClustering.MAX_NUM_MODULES < 2048)
 
+        for i in 1:gpuClustering.MAX_NUM_MODULES
+            module_start[i + 1] = min(gpuClustering.max_hits_in_module(), clus_start[i])
+        end
         
+        ws = Vector{UInt32}(undef, 32)
+        cms.cuda.block_prefix_scan(module_start[2:end], 10241)
+        cms.cuda.block_prefix_scan(module_start[1026:end], gpuClustering.max_hits_in_module() - 1024)
 
-    
+        for i in 1026:gpuClustering.MAX_NUM_MODULES + 1
+            module_start[i] += module_start[1025]
+        end
+    end
+
 
 
 end

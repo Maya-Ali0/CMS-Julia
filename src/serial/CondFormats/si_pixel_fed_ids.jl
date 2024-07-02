@@ -11,10 +11,12 @@ This struct stores a list of FED (Front-End Driver) IDs that are used in the pix
 # Constructor
 Initializes the SiPixelFedIds structure with a given list of FED IDs.
 """
-mutable struct siPixelFedIds
-    _fed_ids::Vector{UInt}
 
-    function si_pixel_fed_ids(fed_ids::Vector{UInt})
+# Stripped-down version of SiPixelFedCablingMap
+mutable struct SiPixelFedIds
+    _fed_ids::Vector{UInt32}
+
+    function SiPixelFedIds(fed_ids::Vector{UInt32})
         new(fed_ids)
     end
 end
@@ -22,6 +24,6 @@ end
 """
 Retrieves the list of FED IDs from the SiPixelFedIds structure.
 """
-fed_ids(ids::siPixelFedIds)::Vector{UInt} = ids._fed_ids
+fed_ids(ids::SiPixelFedIds)::Vector{UInt32} = ids._fed_ids
 
 end # module condFormatsSiPixelFedIds

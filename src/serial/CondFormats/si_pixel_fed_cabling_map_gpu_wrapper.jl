@@ -24,20 +24,20 @@ The siPixelFedCablingMapGPUWrapper struct includes:
 - get_mod_to_unp_all(wrapper::siPixelFedCablingMapGPUWrapper)::Vector{UInt8}: Retrieves the default module-to-unpacker mapping from the wrapper.
 
 """
-mutable struct siPixelFedCablingMapGPUWrapper
-    _cabling_map_host::siPixelFedCablingMapGPU
+mutable struct SiPixelFedCablingMapGPUWrapper
+    _cabling_map_host::SiPixelFedCablingMapGPU
     _mod_to_unp_default::Vector{UInt8}
     _has_quality::Bool
 
-    function siPixelFedCablingMapGPUWrapper(cabling_map::siPixelFedCablingMapGPU, mod_to_unp::Vector{UInt8})
+    function SiPixelFedCablingMapGPUWrapper(cabling_map::SiPixelFedCablingMapGPU, mod_to_unp::Vector{UInt8})
         new(cabling_map, mod_to_unp, false)
     end
 end
 
-has_quality(wrapper::siPixelFedCablingMapGPUWrapper)::Bool = wrapper._has_quality
+has_quality(wrapper::SiPixelFedCablingMapGPUWrapper) = wrapper._has_quality
 
-get_cpu_product(wrapper::siPixelFedCablingMapGPUWrapper)::siPixelFedCablingMapGPU = wrapper._cabling_map_host
+get_cpu_product(wrapper::SiPixelFedCablingMapGPUWrapper) = wrapper._cabling_map_host
 
-get_mod_to_unp_all(wrapper::siPixelFedCablingMapGPUWrapper)::Vector{UInt8} = wrapper._mod_to_unp_default
+get_mod_to_unp_all(wrapper::SiPixelFedCablingMapGPUWrapper) = wrapper._mod_to_unp_default
 
 end # module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper
