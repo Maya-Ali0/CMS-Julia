@@ -4,10 +4,10 @@
 # #endif
 
 include("../Geometry/phase1PixelTopology.jl")
-using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
+using .Main.Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
 
 include("../CUDACore/hist_to_container.jl")
-using .cms
+using .Main.cms
 
 include("../CUDACore/cuda_assert.jl")
 using .gpuConfig
@@ -109,12 +109,12 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
 
     # init hist  (ymax=416 < 512 : 9bits)
     max_pix_in_module = 4000
-    nbins = phase1PixelTopology::numColsInModule + 2;
+    nbins = Main.Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology.phase1PixelTopology.num_cols_in_module + 2;
 
-    Hist{T, N, M, K, U} = cms.cu.HistoContainer{T, N, M, K, U}
-    hist = Hist{UInt16, nbins, max_pix_in_module, 9, UInt16}()
+    Hist{T, N, M, K, U} = Main.cms.cuda.HisToContainer{T, N, M, K, U}
+    hist = Main.cms.cuda.HisToContainer{UInt16, nbins, max_pix_in_module, 9, UInt16, 1}()
 
-    for j in 1:Hist::totbins()
+    for j in 1:Main.cms.cuda.tot_bins(hist)
         hist.off[j] = 0
     end
    
@@ -129,10 +129,10 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
 
     # fill histo
     for i in first:msize
-        if(id[i] == InvId)
+        if(id[i] == Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.INV_ID)
             continue
         end
-        hist.count(y[i])
+        Main.cms.cuda.count(hist, y[i])
     end
     
     hist.finalize()
@@ -162,7 +162,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
        @assert k < max_iter
        p = hist.begin() + j 
        i = p +first_pixel
-       @assert id[i] != InvId
+       @assert id[i] != Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.INV_ID
        @assert id[i] == this_module_id
        be = Hist::bin(y[i] + 1)
        e = hist.end(be)
@@ -234,7 +234,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     end
 
     for i in first:msize
-        if id[i] == InvId 
+        if id[i] == Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.INV_ID 
             continue
         end
         if cluster_id[i] >= 0
@@ -243,7 +243,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     end
 
     for i in first:msize
-        if id[i] == InvId 
+        if id[i] == Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.INV_ID 
             cluster_id[i] == -9999
             continue
         end

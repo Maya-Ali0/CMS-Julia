@@ -35,7 +35,7 @@ module cms
         """
         function to find floor(log2(n)) in loglog(64)
         """
-        function i_log_2(v::UInt32)::UInt32
+        function i_log_2(v)::UInt32
             b::Vector{UInt32} = [0x2,0xC,0xF0,0xFF00,0xFFFF0000]
             s::Vector{UInt32} = [ 1,2,4,8,16]
             r::UInt32 = 0 
@@ -53,7 +53,7 @@ module cms
         n_bins(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_BINS
         n_hists(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} =  N_HISTS
         tot_bins(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
-        n_bits(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = ilog2(N_BINS - 1) + 1 # in case the number of bins was a power of 2 
+        n_bits(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = i_log_2(N_BINS - 1) + 1 # in case the number of bins was a power of 2 
         capacity(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = SIZE
         hist_off(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS},nh::UInt32) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_BINS * nh
         
@@ -64,7 +64,7 @@ module cms
         n_bins(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_BINS
         n_hists(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} =  N_HISTS
         tot_bins(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
-        n_bits(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = ilog2(N_BINS - 1) + 1 # in case the number of bins was a power of 2 
+        n_bits(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = i_log_2(N_BINS - 1) + 1 # in case the number of bins was a power of 2 
         capacity(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = SIZE
         hist_off(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}},nh::UInt32) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_BINS * nh
 
@@ -76,7 +76,7 @@ module cms
         function bin(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS},t::T)::unsigned(T) where {T, N_BINS, SIZE, S, I, N_HISTS}
             bits_to_represent_bins = n_bits(hist)
             shift::UInt32 = size_t(hist) - bits_to_represent_bins
-            mask::Uint32 = 1 << bits_to_represent_bins - 1
+            mask::UInt32 = 1 << bits_to_represent_bins - 1
             return (t >> shift) & mask
         end
 
@@ -139,7 +139,7 @@ module cms
         @inline function count(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},t::T) where {T, N_BINS, SIZE, S, I, N_HISTS}
             b::UInt32 = bin(hist,t)
             @assert(b <= n_bins(hist))
-            off[b] += 1
+            hist.off[b] += 1
         end
 
         @inline function fill(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},t::T,j::I) where {T, N_BINS, SIZE, S, I, N_HISTS}
