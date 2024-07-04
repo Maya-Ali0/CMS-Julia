@@ -1,14 +1,5 @@
 module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 
-    # Structure to hold a constant view of device data
-    struct DeviceConstView
-        xx::Vector{UInt16}         # X-coordinates of pixels
-        yy::Vector{UInt16}         # Y-coordinates of pixels
-        adc::Vector{UInt16}        # ADC values of pixels
-        module_ind::Vector{UInt16}  # Module indices of pixels
-        clus::Vector{UInt32}       # Cluster indices of pixels
-    end
-
     # Structure to hold SiPixel digis data
     struct SiPixelDigisSoA
         pdigi_d::Vector{UInt32}      # Digis data
@@ -45,6 +36,15 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
             new(pdigi_d, raw_id_arr_d, xx_d, yy_d, adc_d, module_ind_d, clus_d, view_d, 0, 0)
         end
     end
+
+     # Structure to hold a constant view of device data
+     struct DeviceConstView
+      xx::Vector{UInt16}         # X-coordinates of pixels
+      yy::Vector{UInt16}         # Y-coordinates of pixels
+      adc::Vector{UInt16}        # ADC values of pixels
+      module_ind::Vector{UInt16}  # Module indices of pixels
+      clus::Vector{UInt32}       # Cluster indices of pixels
+  end
 
     # Inline functions to access elements from DeviceConstView
 
