@@ -4,9 +4,7 @@ using .Main.RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering.gpuClustering
 include("../plugin-SiPixelClusterizer/gpu_cluster_charge_cut.jl")
 using .Main.gpuClustering
 
-
 const max_num_modules = 2000  # Assuming MaxNumModules is predefined
-
 num_elements = 256 * 2000
 
 # these in reality are already on GPU
@@ -27,20 +25,19 @@ y = [5, 7, 9, 1, 3, 0, 4, 8, 2, 6]
 
 function generateClusters(kn)
     addBigNoise = 1 == kn % 2
-    
+
     global n, ncl  # Declare n and ncl as global
 
     n = 0
     ncl = 0
     InvId = 0
 
-
     if addBigNoise
         MaxPixels = 1000
         id = 666
         
-        for x = 0:3:139
-            for yy = 0:3:399
+        for x in 0:3:139
+            for yy in 0:3:399
                 h_id[n+1] = id
                 h_x[n+1] = x
                 h_y[n+1] = yy
@@ -115,7 +112,7 @@ function generateClusters(kn)
     
     # diagonal
     ncl += 1
-    for x = 20:24
+    for x in 20:24
         h_id[n+1] = id
         h_x[n+1] = x
         h_y[n+1] = x
@@ -125,7 +122,7 @@ function generateClusters(kn)
     
     ncl += 1
     # reversed
-    for x = 45:-1:41
+    for x in 45:-1:41
         h_id[n+1] = id
         h_x[n+1] = x
         h_y[n+1] = x
@@ -139,7 +136,7 @@ function generateClusters(kn)
     
     # messy
     xx = [21, 25, 23, 24, 22]
-    for k = 1:5
+    for k in 1:5
         h_id[n+1] = id
         h_x[n+1] = xx[k]
         h_y[n+1] = 20 + xx[k]
@@ -149,7 +146,7 @@ function generateClusters(kn)
     
     # holes
     ncl += 1
-    for k = 1:5
+    for k in 1:5
         h_id[n+1] = id
         h_x[n+1] = xx[k]
         h_y[n+1] = 100
@@ -176,16 +173,16 @@ function generateClusters(kn)
     n += 1
     
     # all odd id
-    for id = 11:2:1800
+    for id in 11:2:1800
         if (id ÷ 20) % 2 != 0
             n += 1  # error, equivalent to h_id[n+1] = InvId
         end
         
-        for x = 0:4:39
+        for x in 0:4:39
             ncl += 1
             
             if (id ÷ 10) % 2 != 0
-                for k = 1:10
+                for k in 1:10
                     h_id[n+1] = id
                     h_x[n+1] = x
                     h_y[n+1] = x + y[k]
@@ -199,7 +196,7 @@ function generateClusters(kn)
                     n += 1
                 end
             else
-                for k = 10:-1:1
+                for k in 10:-1:1
                     h_id[n+1] = id
                     h_x[n+1] = x
                     h_y[n+1] = x + y[k]
@@ -228,7 +225,7 @@ function generateClusters(kn)
     end
 end
 
-for kkk = 0:4
+for kkk in 0:4
     n = 0
     ncl = 0
     generateClusters(kkk)
@@ -247,7 +244,7 @@ for kkk = 0:4
     nclus = h_clusInModule
     
     println("before charge cut found ", sum(nclus), " clusters")
-    for i = MaxNumModules:-1:1
+    for i in max_num_modules:-1:2  # Changed to 2 to avoid accessing 0 index
         if nclus[i] > 0
             println("last module is ", i - 1, ' ', nclus[i])
             break
@@ -256,12 +253,12 @@ for kkk = 0:4
     
     @assert ncl == sum(nclus)
     
-    clusterChargeCut(h_id, h_adc, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
+    gpuClustering.GPU_DEBUG.clusterChargeCut(h_id, h_adc, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
     
     println("found ", nModules, " Modules active")
     
     clids = Set{UInt}()
-    for i = 1:n
+    for i in 1:n
         @assert h_id[i] != 666  # only noise
         if h_id[i] == InvId
             continue
@@ -292,14 +289,10 @@ for kkk = 0:4
     end
     
     println("found ", sum(nclus), ' ', length(clids), " clusters")
-    for i = MaxNumModules:-1:1
+    for i in max_num_modules:-1:2  # Changed to 2 to avoid accessing 0 index
         if nclus[i] > 0
             println("last module is ", i - 1, ' ', nclus[i])
             break
         end
     end
 end
-
-
-
-
