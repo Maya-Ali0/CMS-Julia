@@ -1,7 +1,8 @@
 include("../CUDACore/hist_to_container.jl")
 using Printf
 using Random, Distributions
-function go() where {T,N_BINS,S,DELTA}
+using .histogram: n_bits , HisToContainer, n_bins , tot_bins, capacity, bin, hist_off, zero, size, count, finalize, fill, begin_h, val, end_h, for_each_in_bins
+function go(::Type{T},::Val{N_BINS},::Val{S},::Val{DELTA}) where {T,N_BINS,S,DELTA}
     eng = MersenneTwister() # mt19937 MersenneTwister Random Number Generator
 
     # Minimum and Maximum values representable by type T
@@ -19,19 +20,19 @@ function go() where {T,N_BINS,S,DELTA}
 
     v::Vector{T} = Vector{T}(undef,N)
 
-    Hist = HisToContainer{T,N_BINS,N,S}
+    Hist = HisToContainer{T,N_BINS,N,S,UInt32,1}
     Hist4 = HisToContainer{T,N_BINS,N,S,UInt16,4}
     
-    println("HistoContainer ", nbits(Hist), ' ', nbins(Hist), ' ', totbins(Hist), ' ', capacity(Hist), ' ', (rmax - rmin) / nbins(Hist))
-    println("bins ", bin(Hist, 0), ' ', bin(Hist, rmin), ' ', bin(Hist, rmax))
-    println("HistoContainer4 ", nbits(Hist4), ' ', nbins(Hist4), ' ', totbins(Hist4), ' ', capacity(Hist4), ' ', (rmax - rmin) / nbins(Hist))
+    println("HistoContainer ", n_bits(Hist), ' ', n_bins(Hist), ' ', tot_bins(Hist), ' ', capacity(Hist), ' ', (rmax - rmin) / n_bins(Hist))
+    println("bins ", bin(Hist, T(0)), ' ', bin(Hist, T(rmin)), ' ', bin(Hist, T(rmax)))
+    println("HistoContainer4 ", n_bits(Hist4), ' ', n_bins(Hist4), ' ', tot_bins(Hist4), ' ', capacity(Hist4), ' ', (rmax - rmin) / n_bins(Hist))
 
     for nh ∈ 0:3
-        println("bins ", Int(bin(Hist4,0)) + hist_off(Hist4,nh)," ",Int(bin(Hist,rmin)) + hist_off(Hist4,nh)," ",Int(bin(Hist,rmax)) + hist_off(Hist4,nh))
+        println("bins ", Int(bin(Hist4,T(0))) + hist_off(Hist4,nh)," ",Int(bin(Hist,T(rmin))) + hist_off(Hist4,nh)," ",Int(bin(Hist,T(rmax))) + hist_off(Hist4,nh))
     end
 
-    h::Hist
-    h4::Hist4
+    h = Hist()
+    h4 = Hist4()
 
 
     for it ∈ 0:4 
@@ -39,7 +40,7 @@ function go() where {T,N_BINS,S,DELTA}
             v[j] = rand(eng,rmin:rmax)
         end
         if(it == 2)
-            for j ∈ (N/2 + 1): (N/2 + N/4) # default 6001 to 9000 set to 4
+            for j ∈ (N ÷ 2 + 1): (N ÷ 2 + N ÷ 4) # default 6001 to 9000 set to 4
                 v[j] = 4 
             end
         end
@@ -50,40 +51,43 @@ function go() where {T,N_BINS,S,DELTA}
         @assert(size(h4) == 0)
         
         # Count values in histograms 
+        ones = 0 
         for j ∈ 1:N
             count(h,v[j])
+            if(bin(h4,v[j]) == 1)
+                ones+=1
+            end
             if j <= 2000 # first 2000 values count them in third histogram
                 count(h4,v[j],2)
             else
                 count(h4,v[j],j % 4)
             end
         end
-        
+        @assert(ones == h.off[1])
         @assert(size(h) == 0)
         @assert(size(h4) == 0)
         
         # Apply prefix sum on off array for both histograms
         finalize(h)
         finalize(h4)
-
         @assert(size(h) == N)
         @assert(size(h4) == N)
         
         # Fill histograms h and h4 with indices of v
         for j ∈ 1:N
-            fill(h,v[j],j)
+            fill(h,v[j],UInt32(j))
             if j <= 2000 # First 2000 values filled in third histogram
-                fill(h4,v[j],j)
+                fill(h4,v[j],UInt16(j),2)
             else
-                fill(h,v[j],j % 4)
+                fill(h4,v[j],UInt16(j % 4),j%4)
             end
         end
-        #@assert(h.off[0] == 0)
-        #@assert(h4.off[0] == 0)
+        @assert(h.off[1] == 0)
+        @assert(h4.off[1] == 0)
         @assert(size(h) == N)
         @assert(size(h4) == N)
         
-        verify = (i::UInt32,j::UInt32,k::UInt32,t1::UInt32,t2::UInt32) -> begin
+        verify = (i,j,k,t1,t2) -> begin
             @assert t1 <= N
             @assert t2 <= N
             if i != j && T(v[t1] - v[t2]) <= 0 
@@ -119,7 +123,6 @@ function go() where {T,N_BINS,S,DELTA}
             end
         end
     end
-
     for j ∈ 1:N
 
         b0 = bin(h,v[j])
@@ -138,7 +141,7 @@ function go() where {T,N_BINS,S,DELTA}
         for_each_in_bins(h,v[j],w,ftest)
         bp::Int = b0 + 1
         bm::Int = b0 - 1
-        if bp <= int(n_bins(h))
+        if bp <= Int(n_bins(h))
             rtot += end_h(h,bp) - begin_h(h,bp)
         end
         if bm >= 1
@@ -150,7 +153,7 @@ function go() where {T,N_BINS,S,DELTA}
         for_each_in_bins(h,v[j],w,ftest)
         bp+=1
         bm-=1
-        if bp <= int(n_bins(h))
+        if bp <= Int(n_bins(h))
             rtot += end_h(h,bp) - begin_h(h,bp)
         end
         if bm >= 1
@@ -159,26 +162,11 @@ function go() where {T,N_BINS,S,DELTA}
         @assert(tot == rtot)
     end
 end
-g
+go(::Type{T}) where {T} = go(T,Val{128}(),Val{8*sizeof(T)}(),Val{1000}())
 function testing()
-    go{Int16}()
-
-
-
-
-
-
-
-
-
-        
-
-
-            
-
-
-
-
-
-
+    go(Int16)
+    go(UInt8,128,8,4)
+    go(UInt16,313÷2,9,4)
 end
+
+testing()
