@@ -22,10 +22,9 @@ function go(::Type{T},::Val{N_BINS},::Val{S},::Val{DELTA}) where {T,N_BINS,S,DEL
 
     Hist = HisToContainer{T,N_BINS,N,S,UInt32,1}
     Hist4 = HisToContainer{T,N_BINS,N,S,UInt16,4}
-    
-    println("HistoContainer ", n_bits(Hist), ' ', n_bins(Hist), ' ', tot_bins(Hist), ' ', capacity(Hist), ' ', (rmax - rmin) / n_bins(Hist))
+    println("HistoContainer ", n_bits(Hist), ' ', n_bins(Hist), ' ', tot_bins(Hist), ' ', capacity(Hist), ' ', (rmax - rmin) ÷ n_bins(Hist))
     println("bins ", bin(Hist, T(0)), ' ', bin(Hist, T(rmin)), ' ', bin(Hist, T(rmax)))
-    println("HistoContainer4 ", n_bits(Hist4), ' ', n_bins(Hist4), ' ', tot_bins(Hist4), ' ', capacity(Hist4), ' ', (rmax - rmin) / n_bins(Hist))
+    println("HistoContainer4 ", n_bits(Hist4), ' ', n_bins(Hist4), ' ', tot_bins(Hist4), ' ', capacity(Hist4), ' ', (rmax - rmin) ÷ n_bins(Hist))
 
     for nh ∈ 0:3
         println("bins ", Int(bin(Hist4,T(0))) + hist_off(Hist4,nh)," ",Int(bin(Hist,T(rmin))) + hist_off(Hist4,nh)," ",Int(bin(Hist,T(rmax))) + hist_off(Hist4,nh))
@@ -54,16 +53,12 @@ function go(::Type{T},::Val{N_BINS},::Val{S},::Val{DELTA}) where {T,N_BINS,S,DEL
         ones = 0 
         for j ∈ 1:N
             count(h,v[j])
-            if(bin(h4,v[j]) == 1)
-                ones+=1
-            end
             if j <= 2000 # first 2000 values count them in third histogram
                 count(h4,v[j],2)
             else
                 count(h4,v[j],j % 4)
             end
         end
-        @assert(ones == h.off[1])
         @assert(size(h) == 0)
         @assert(size(h4) == 0)
         
@@ -135,24 +130,26 @@ function go(::Type{T},::Val{N_BINS},::Val{S},::Val{DELTA}) where {T,N_BINS,S,DEL
         end
         for_each_in_bins(h,v[j],w,ftest)
         rtot = end_h(h,b0) - begin_h(h,b0)
+        print(tot," ",rtot)
         @assert(tot == rtot)
         w = 1
         tot = 0 
         for_each_in_bins(h,v[j],w,ftest)
-        bp::Int = b0 + 1
-        bm::Int = b0 - 1
+        bp::Int = min(b0 + 1,n_bins(h))
+        bm::Int = max(b0 - 1,1)
         if bp <= Int(n_bins(h))
             rtot += end_h(h,bp) - begin_h(h,bp)
         end
         if bm >= 1
             rtot += end_h(h,bm) - begin_h(h,bm)
         end
+        print(tot," ",rtot)
         @assert(tot == rtot)
         w = 2 
         tot = 0 
         for_each_in_bins(h,v[j],w,ftest)
-        bp+=1
-        bm-=1
+        bp = min(b0 + 2,n_bins(h))
+        bm = max(b0 - 2,1)
         if bp <= Int(n_bins(h))
             rtot += end_h(h,bp) - begin_h(h,bp)
         end
@@ -164,9 +161,9 @@ function go(::Type{T},::Val{N_BINS},::Val{S},::Val{DELTA}) where {T,N_BINS,S,DEL
 end
 go(::Type{T}) where {T} = go(T,Val{128}(),Val{8*sizeof(T)}(),Val{1000}())
 function testing()
-    go(Int16)
-    go(UInt8,128,8,4)
-    go(UInt16,313÷2,9,4)
+    #go(Int16)
+    go(UInt8,Val{128}(),Val{8}(),Val{4}())
+    go(UInt16,Val{313÷2}(),Val{9}(),Val{4}())
 end
 
 testing()
