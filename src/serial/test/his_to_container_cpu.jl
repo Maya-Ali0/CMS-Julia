@@ -97,8 +97,8 @@ function go(::Type{T},::Val{N_BINS},::Val{S},::Val{DELTA}) where {T,N_BINS,S,DEL
             k = val(h,begin_h(h,i)) # get the index of the first element in bins to belong to bin i going over bins array from left to right  
             @assert(k <= N)
             # Consider taking v[k] - DELTA and v[k] + DELTA and find the appropriate bins for those values. We must assert that kl <= i <= kh
-            kl = N_BINS != 128 ? bin(h,max(rmin,v[k] - DELTA)) : bin(h,v[k] - T(DELTA))
-            kh = N_BINS != 128 ? bin(h,min(rmax,v[k] + DELTA)) : bin(h,v[k] + T(DELTA))
+            kl = N_BINS != 128 ? bin(h,T(max(rmin,v[k] - DELTA))) : bin(h,T(v[k] - T(DELTA)))
+            kh = N_BINS != 128 ? bin(h,T(min(rmax,v[k] + DELTA))) : bin(h,T(v[k] + T(DELTA)))
             
             if(N_BINS == 128)
                 @assert(kl != i)
@@ -130,32 +130,35 @@ function go(::Type{T},::Val{N_BINS},::Val{S},::Val{DELTA}) where {T,N_BINS,S,DEL
         end
         for_each_in_bins(h,v[j],w,ftest)
         rtot = end_h(h,b0) - begin_h(h,b0)
-        print(tot," ",rtot)
+        println(tot," ",rtot)
         @assert(tot == rtot)
         w = 1
         tot = 0 
         for_each_in_bins(h,v[j],w,ftest)
-        bp::Int = min(b0 + 1,n_bins(h))
-        bm::Int = max(b0 - 1,1)
+        bp::Int = b0 + 1
+        bm::Int = b0 - 1
         if bp <= Int(n_bins(h))
             rtot += end_h(h,bp) - begin_h(h,bp)
         end
         if bm >= 1
             rtot += end_h(h,bm) - begin_h(h,bm)
         end
+        println(j)
         print(tot," ",rtot)
         @assert(tot == rtot)
         w = 2 
         tot = 0 
         for_each_in_bins(h,v[j],w,ftest)
-        bp = min(b0 + 2,n_bins(h))
-        bm = max(b0 - 2,1)
+        bp = b0 + 2
+        bm = b0 - 2
         if bp <= Int(n_bins(h))
             rtot += end_h(h,bp) - begin_h(h,bp)
         end
         if bm >= 1
             rtot += end_h(h,bm) - begin_h(h,bm)
         end
+        println(j)
+        print(tot," ",rtot)
         @assert(tot == rtot)
     end
 end
