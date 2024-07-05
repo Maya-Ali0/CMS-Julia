@@ -149,6 +149,7 @@ end
 go(::Type{T}) where {T} = go(T, Val{128}(), Val{8 * sizeof(T)}(), Val{1000}())
 
 function testing()
+    go(Int16)
     go(UInt8, Val{128}(), Val{8}(), Val{4}())
     go(UInt16, Val{313 ÷ 2}(), Val{9}(), Val{4}())
 end
