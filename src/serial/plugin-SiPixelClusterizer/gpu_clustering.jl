@@ -7,7 +7,7 @@ include("../Geometry/phase1PixelTopology.jl")
 using .Main.Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
 
 include("../CUDACore/hist_to_container.jl")
-using .Main.cms
+using .Main.histogram
 
 include("../CUDACore/cuda_assert.jl")
 using .gpuConfig
@@ -111,10 +111,10 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     max_pix_in_module = 4000
     nbins = Main.Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology.phase1PixelTopology.num_cols_in_module + 2;
 
-    Hist{T, N, M, K, U} = Main.cms.cuda.HisToContainer{T, N, M, K, U}
-    hist = Main.cms.cuda.HisToContainer{UInt16, nbins, max_pix_in_module, 9, UInt16, 1}()
+    Hist{T, N, M, K, U} = Main.histogram.HisToContainer{T, N, M, K, U}
+    hist = Main.histogram.HisToContainer{UInt16, nbins, max_pix_in_module, 9, UInt16, 1}()
 
-    for j in 1:Main.cms.cuda.tot_bins(hist)
+    for j in 1:Main.histogram.tot_bins(hist)
         hist.off[j] = 0
     end
    
@@ -132,7 +132,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         if(id[i] == Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.INV_ID)
             continue
         end
-        Main.cms.cuda.count(hist, y[i])
+        Main.histogram.count(hist, y[i])
     end
     
     hist.finalize()

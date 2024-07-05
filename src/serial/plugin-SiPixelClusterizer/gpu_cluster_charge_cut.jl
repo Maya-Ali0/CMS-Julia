@@ -1,8 +1,8 @@
 module gpuClustering
     include("../CUDACore/cuda_assert.jl")
     using .gpuConfig
-    include("../CUDACore/prefixScan.jl")
-    using .heterogeneousCoreCUDAUtilitiesInterfacePrefixScan
+    include("../CUDACore/prefix_scan.jl")
+    using .Main.cms
     include("gpu_clustering_constants.jl")
     using .recoLocalTrackerSiPixelClusterizePluginsGPUClusteringConstants
     include("../CUDACore/cudaCompat.jl")
