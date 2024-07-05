@@ -6,8 +6,7 @@
 include("../Geometry/phase1PixelTopology.jl")
 using .Main.Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
 
-include("../CUDACore/hist_to_container.jl")
-using .Main.histogram
+
 
 include("../CUDACore/cuda_assert.jl")
 using .gpuConfig
@@ -25,6 +24,8 @@ module RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering
 module gpuClustering
 
 module GPU_DEBUG
+include("../CUDACore/hist_to_container.jl")
+using .histogram:size
 using Printf
 
 """
@@ -135,16 +136,17 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         Main.histogram.count(hist, y[i])
     end
     
-    hist.finalize()
+    finalize(hist)
 
     for i in first:msize
-        if(id[i] == InvId)
+        if(id[i] == Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.INV_ID)
             continue 
         end
-        hist.fill(y[i], i - first_pixel)
+        fill(hist, y[i], i - first_pixel)
     end
+    
 
-    max_iter = hist.size()
+    max_iter = size(hist)
     # allocate space for duplicate pixels: a pixel can appear more than once with different charge in the same event
     max_neighbours = 10
     @assert (hist.size() / 1) <= max_iter
@@ -224,7 +226,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
 
     found_clusters = 0
     for i in first:msize
-        if id[i] == InvId
+        if id[i] == Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering.INV_ID
             continue
         end
         if cluster_id[i] == i

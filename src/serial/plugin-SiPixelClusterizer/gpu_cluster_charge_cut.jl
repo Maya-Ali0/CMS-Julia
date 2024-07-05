@@ -2,11 +2,11 @@ module gpuClustering
     include("../CUDACore/cuda_assert.jl")
     using .gpuConfig
     include("../CUDACore/prefix_scan.jl")
-    using .Main.cms
+    using .Main.prefix_scan
     include("gpu_clustering_constants.jl")
     using .recoLocalTrackerSiPixelClusterizePluginsGPUClusteringConstants
     include("../CUDACore/cudaCompat.jl")
-    using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat: cms
+    using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms
 
     using Printf
     function cluster_charge_cut(id, adc, moduleStart, nClustersInModule, moduleId, clusterId, numElements)
@@ -78,7 +78,7 @@ module gpuClustering
                 newclusId[i] = ok[i] = charge[i] > chargeCut ? 1 : 0
             end
 
-            cms.cuda.blockPrefixScan(newclusId, nClus)
+            prefix_scan.blockPrefixScan(newclusId, nClus)
             @assert nClus >= newclusId[nclus - 1]
 
             if nClus == newclusId[nClus - 1]
