@@ -1,8 +1,8 @@
 include("../plugin-SiPixelClusterizer/gpu_clustering.jl")
-using .Main.RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering.gpuClustering
+using .RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering.gpuClustering
 
 include("../plugin-SiPixelClusterizer/gpu_cluster_charge_cut.jl")
-using .Main.gpuClustering
+using .gpuClustering
 
 const max_num_modules = 2000  # Assuming MaxNumModules is predefined
 num_elements = 256 * 2000

@@ -1,5 +1,5 @@
 
-module cms
+module prefix_scan
     """
         blockPrefixScan(ci::Vector{T}, co::Vector{T}, size::UInt32) where T
 

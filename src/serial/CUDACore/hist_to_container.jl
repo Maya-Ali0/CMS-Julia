@@ -1,6 +1,6 @@
 module histogram
     include("../CUDACore/prefix_scan.jl")
-    using .cms:block_prefix_scan
+    using .prefix_scan
     struct AtomicPairCounter
         n::UInt32
         m::UInt32
