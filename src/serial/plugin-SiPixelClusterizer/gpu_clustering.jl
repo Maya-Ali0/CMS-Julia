@@ -2,20 +2,11 @@
 # #ifdef GPU_DEBUG
 # uint32_t gMaxHit = 0;
 # #endif
-
-
-
-
-
-
-
-
-
 module gpuClustering
 
     using Printf
     include("../CUDADataFormats/gpu_clustering_constants.jl")
-    using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering:INV_ID, MAX_NUM_MODULES
+    using .Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering:INV_ID, MAX_NUM_MODULES
 
     include("../Geometry/phase1PixelTopology.jl")
     using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
@@ -135,8 +126,10 @@ module gpuClustering
             # allocate space for duplicate pixels: a pixel can appear more than once with different charge in the same event
             max_neighbours = 10
             # nearest neighbour 
-            nn[max_iter][max_neighbours] = Matrix{Int}(undef,max_iter,max_neighbors)
-            nnn[max_iter] = Vector{Int}(undef,max_iter)
+            nn = Matrix{Int}(undef, max_iter, max_neighbours)
+            nnn = Vector{Int}(undef, max_iter)
+            fill!(nnn, 0)
+            
             for k in 1:max_iter
                 nnn[k] = 0
             end
@@ -174,8 +167,8 @@ module gpuClustering
             n_loops = 0
             while more
                 if n_loops % 2 == 1
-                    for j ∈ 0:hist.size()-1
-                        p = hist.begin() + j
+                    for j ∈ 0:size(hist)-1
+                        p = begin(hist) + j
                         i = val(p) + first_pixel
                         m = cluster_id[i]
                         while m != cluster_id[m]
@@ -183,10 +176,11 @@ module gpuClustering
                         end
                         cluster_id[i] = m
                     end
+                end
                 else
                     more = false
-                    for (j, k) ∈ zip(0:hist.size()-1, 0:hist.size()-1)
-                        p = hist.begin() + j 
+                    for (j, k) ∈ zip(0:size(hist)-1, 0:size(hist)-1)
+                        p = begin(hist) + j 
                         i = val(p) + first_pixel
                         for kk ∈ 1:nnn[k]
                             l = nn[k][kk]
@@ -238,5 +232,6 @@ module gpuClustering
     end
 end
 
+end
 
         

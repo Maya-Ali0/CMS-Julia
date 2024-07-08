@@ -3,30 +3,31 @@ module gpuClusterCharge
     using .gpuConfig
     include("../CUDACore/prefix_scan.jl")
     using .Main.prefix_scan
-    include("gpu_clustering_constants.jl")
-    using .recoLocalTrackerSiPixelClusterizePluginsGPUClusteringConstants
+    include("../plugin-SiPixelClusterizer/gpu_clustering_constants.jl")
+    using .Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering:INV_ID, MAX_NUM_CLUSTERS_PER_MODULES, MAX_NUM_MODULES
     include("../CUDACore/cudaCompat.jl")
     using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms
 
+
     using Printf
     function cluster_charge_cut(id, adc, moduleStart, nClustersInModule, moduleId, clusterId, numElements)
-        charge = Vector(undef, MaxNumClusterPerModules)
-        ok = Vector(undef, MaxNumClusterPerModules)
-        newclusId = Vector(undef, MaxNumClusterPerModules)
+        charge = Vector(undef, MAX_NUM_CLUSTERS_PER_MODULES)
+        ok = Vector(undef, MAX_NUM_CLUSTERS_PER_MODULES)
+        newclusId = Vector(undef, MAX_NUM_CLUSTERS_PER_MODULES)
         firstModule = 0
-        endModule = moduleStart[0]
+        endModule = moduleStart[1]
 
         for mod in firstModule + 1:endModule
             firstPixel = moduleStart[1 + mod]
             thisModuleId = id[firstPixel]
-            @assert thisModuleId < MaxNumModules
+            @assert thisModuleId < MAX_NUM_MODULES
             @assert thisModuleId == moduleId[mod]
 
             nClus = nClustersInModule[thisModuleId]
             if nClus == 0
                 continue
             end
-            if nClus > MaxNumClusterPerModules
+            if nClus > MAX_NUM_CLUSTERS_PER_MODULES
                 @printf("Warning too many clusters in module %d in block %d: %d > %d\n",
                thisModuleId,
                0,
@@ -36,7 +37,7 @@ module gpuClusterCharge
             
             first = firstPixel
 
-            if nClus > MaxNumClusterPerModules
+            if nClus > MAX_NUM_CLUSTERS_PER_MODULES
                 for i in first:numElements
                     if id[i] == InvId
                         continue
@@ -44,12 +45,12 @@ module gpuClusterCharge
                     if id[i] != thisModuleId
                         break
                     end
-                    if clusterId[i] >= MaxNumClusterPerModules
+                    if clusterId[i] >= MAX_NUM_CLUSTERS_PER_MODULES
                         id[i] = InvId 
                         clusterId[i] = InvId 
                     end
                 end
-                nClus = MaxNumClusterPerModules
+                nClus = MAX_NUM_CLUSTERS_PER_MODULES
             end
 
             if isdefined(Main, :GPU_DEBUG)
@@ -58,7 +59,7 @@ module gpuClusterCharge
                 end
             end
 
-            @assert nClus <= MaxNumClusterPerModules
+            @assert nClus <= MAX_NUM_CLUSTERS_PER_MODULES
             for i in 1:nClus
                 charge[i] = 0
             end

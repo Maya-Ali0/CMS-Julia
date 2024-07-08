@@ -2,7 +2,10 @@ include("../plugin-SiPixelClusterizer/gpu_clustering.jl")
 using .gpuClustering:find_clus, count_modules
 
 include("../plugin-SiPixelClusterizer/gpu_cluster_charge_cut.jl")
-using .gpuClusterCharge
+using .gpuClusterCharge:cluster_charge_cut
+
+include("../plugin-SiPixelClusterizer/gpu_clustering_constants.jl")
+using .gpuClustering:INV_ID
 
 const max_num_modules = 2000  # Assuming MaxNumModules is predefined
 num_elements = 256 * 2000
@@ -19,18 +22,16 @@ h_clusInModule = Vector{UInt32}(undef, max_num_modules)
 h_moduleId = Vector{UInt32}(undef, max_num_modules)
 
 # later random number
-n::Int64 = 0
-ncl::Int64 = 0
-const y::Vector{Int64} = [5, 7, 9, 1, 3, 0, 4, 8, 2, 6]
 
-function generateClusters(kn)
+y= [5, 7, 9, 1, 3, 0, 4, 8, 2, 6]
+
+
+function generateClusters(kn, n_ref , ncl_ref)
+    n = n_ref[]
+    ncl = ncl_ref[]
+
     addBigNoise = 1 == kn % 2
-
-    global n, ncl  # Declare n and ncl as global
-
-    n = 1 # number of pixels
-    ncl = 0
-    InvId = 0
+    y = [5, 7, 9, 1, 3, 0, 4, 8, 2, 6]
 
     if addBigNoise # if odd
         MaxPixels = 1000
@@ -210,9 +211,9 @@ function generateClusters(kn)
                     end
                     
                     if id == 51
-                        h_id[n] = InvId
+                        h_id[n] = INV_ID
                         n += 1
-                        h_id[n] = InvId
+                        h_id[n] = INV_ID
                         n += 1
                     end
                     
@@ -228,9 +229,9 @@ function generateClusters(kn)
 end
 
 for kkk in 0:4
-    n = 0
+    n = 1
     ncl = 0
-    generateClusters(kkk)
+    generateClusters(kkk, Ref(n), Ref(ncl))
     
     println("created ", n, " digis in ", ncl, " clusters")
     @assert n <= num_elements
@@ -255,14 +256,14 @@ for kkk in 0:4
     
     @assert ncl == sum(nclus)
     
-    gpuClustering.GPU_DEBUG.clusterChargeCut(h_id, h_adc, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
+    cluster_charge_cut(h_id, h_adc, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
     
     println("found ", nModules, " Modules active")
     
     clids = Set{UInt}()
     for i in 1:n
         @assert h_id[i] != 666  # only noise
-        if h_id[i] == InvId
+        if h_id[i] == INV_ID
             continue
         end
         @assert 0 <= h_clus[i] < nclus[h_id[i]]
