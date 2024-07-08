@@ -1,43 +1,39 @@
-include(joinpath(@__DIR__, "..", "Framework", "Event.jl"))
+include("../Framework/ProductRegistry.jl")
 
-include(joinpath(@__DIR__, "..", "DataFormats", "FEDRawDataCollection.jl"))
-include(joinpath(@__DIR__, "..", "DataFormats", "DigiClusterCount.jl"))
-include(joinpath(@__DIR__, "..", "DataFormats", "TrackCount.jl"))
-include(joinpath(@__DIR__, "..", "DataFormats", "VertexCount.jl"))
+include("../DataFormats/data_formats.jl")
+include("../Framework/EandES.jl")
+include("../Framework/EDTokens.jl")
+
+using .dataFormats
+
+include("ReadRaw.jl")
 
 
+struct Source
+    maxEvents_::Int
+    runForMinutes_::Int
+    numEvents_::Int
 
-module edm
-
-    struct Source
-        maxEvents::Int
-        runForMinutes::Int
-        numEvents::Int
-
-        rawToken::EDPutTokenT{FEDRawDataCollection}
-        digiClusterToken::EDPutTokenT{DigiClusterCount}
-        trackToken::EDPutTokenT{TrackCount}
-        vertexToken::EDPutTokenT{VertexCount}
-
-        raw::Vector{FEDRawDataCollection}
-        digiclusters::Vector{DigiClusterCount}
-        tracks::Vector{TrackCount}
-        vertices::Vector{VertexCount}
-
-        validation::Bool
-    end
+    rawToken_::EDPutTokenT{FedRawDataCollection}
+    raw_::Vector{FedRawDataCollection}
     
+    validation_::Bool
 
+    #constructor
+    function Source(maxEvents::Int, runForMinutes::Int, reg::ProductRegistry, validation::Bool) 
+        maxEvents_ = maxEvents
+        runForMinutes_ = runForMinutes
+        rawToken_= produces(reg,FedRawDataCollection)
+        validation_= validation
 
+        raw_ = readall(open((@__DIR__) * "/../../../data/raw.bin"))
 
-
-
-
-
-
-
-
-
+        return new(maxEvents, runForMinutes, 30, rawToken_, raw_, validation)
+    end
 
 end
+
+
+
+
 

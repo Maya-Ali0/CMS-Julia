@@ -1,4 +1,6 @@
 module dataFormats
+
+    export FedRawDataCollection, FedRawData
     """
     FedNumbering constants and functions
 
@@ -37,7 +39,8 @@ module dataFormats
     """
 
     mutable struct FedRawData
-        data::Vector{UInt8} 
+        fedid::Int32
+        data::Vector{UInt8}
 
         function FedRawData(new_size::Int)
             if newsize % 8 != 0
@@ -45,6 +48,11 @@ module dataFormats
             end
             new(Vector{UInt8}(undef, new_size))
         end
+
+        function FedRawData(id::Int32, dataa::Vector{UInt8})
+            new(id,dataa)
+        end
+
         
         function FedRawData(in::FedRawData) # Copy Constructor
             new(copy(in.data))
@@ -97,7 +105,7 @@ module dataFormats
         Copy constructor.
         """
         FedRawDataCollection(in::FedRawDataCollection) = new(copy(in.data)) # copy constructor
-        FedRawDataCollection(data::Vector{UInt8}) = new(data)
+        FedRawDataCollection(data::Vector{FedRawData}) = new(data)
     end
 
     """

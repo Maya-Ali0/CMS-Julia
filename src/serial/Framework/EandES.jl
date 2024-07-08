@@ -1,22 +1,13 @@
-module edm
+include("EDTokens.jl")
 
-include("ProductRegistry.jl")
-using .edm_product
-
-# Define StreamID as an alias for Int
-const StreamID = Int
-
-# Abstract type for type erasure
 abstract type WrapperBase end
 
-# Wrapper type for holding objects of type T
 struct Wrapper{T} <: WrapperBase
     obj::T
 end
 
-# Event class
 struct Event
-    streamId::StreamID
+    streamId::Int
     eventId::Int
     products::Vector{Union{WrapperBase, Nothing}}  # Union type to allow for null elements
 end
@@ -36,4 +27,28 @@ function emplace(event::Event, token::EDPutTokenT{T}, args...) where T
     event.products[token.index] = Wrapper{T}(args...)
 end
 
+########################################################################
+
+
+abstract type ESWrapperBase end
+
+struct ESWrapper{T} <: ESWrapperBase
+    obj::T
 end
+
+mutable struct EventSetup
+    typeToProduct::Dict{DataType, ESWrapperBase}
+end
+
+function put(es::EventSetup, prod::T) where T
+    es.typeToProduct[T] = ESWrapper(prod)
+end
+
+function get(es::EventSetup, ::Type{T}) where T
+    if haskey(es.typeToProduct, T)
+        return es.typeToProduct[T].obj
+    else
+        throw(ErrorException("Product of type $(T) is not produced"))
+    end
+end
+
