@@ -3,17 +3,11 @@
 # uint32_t gMaxHit = 0;
 # #endif
 
-include("../Geometry/phase1PixelTopology.jl")
-using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
-
 include("../CUDACore/hist_to_container.jl")
-using .cms : HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
+using .histogram:HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
 
 include("../CUDACore/cuda_assert.jl")
 using .gpuConfig
-
-include("../CUDADataFormats/gpu_clustering_constants.jl")
-using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering : INV_ID, MAX_NUM_MODULES
 
 include("../CUDACore/cudaCompat.jl")
 using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat 
@@ -23,6 +17,11 @@ using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat
 module gpuClustering
 
     using Printf
+    include("../CUDADataFormats/gpu_clustering_constants.jl")
+    using .Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering:INV_ID, MAX_NUM_MODULES
+
+    include("../Geometry/phase1PixelTopology.jl")
+    using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
 
     """
     * @brief Counts modules and assigns starting indices for each module in the data.
@@ -39,7 +38,7 @@ module gpuClustering
     * Changes since julia is indexed at 1
     *Note: Each word in the main wordfedappender array is given a clusterid
     """
-    function count_modules(id::Vector{UInt16}, module_start::Vector{UInt32}, cluster_id::Vector{Int32}, num_elements::Int64)
+    function count_modules(id::Vector{UInt16}, module_start::Vector{UInt32}, cluster_id::Vector{Int64}, num_elements::Int64)
         first = 1
         for i ∈ first:num_elements
             cluster_id[i] = i
@@ -103,7 +102,7 @@ module gpuClustering
             # init hist  (ymax=416 < 512 : 9bits)
             max_pix_in_module = 4000
             nbins = num_cols_in_module + 2;
-            Hist{T, N, M, K, U} = Main.cms.cuda.HisToContainer{T, N, M, K, U}
+            Hist{T, N, M, K, U} = HisToContainer{T, N, M, K, U}
             hist = HisToContainer{UInt16, nbins, max_pix_in_module, 9, UInt16, 1}()
             zero(hist)
             @assert msize == num_elements || (msize < num_elements && id[msize] != this_module_id)

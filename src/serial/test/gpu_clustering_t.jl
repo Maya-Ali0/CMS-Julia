@@ -1,8 +1,8 @@
 include("../plugin-SiPixelClusterizer/gpu_clustering.jl")
-using .RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering.gpuClustering
+using .gpuClustering:find_clus, count_modules
 
 include("../plugin-SiPixelClusterizer/gpu_cluster_charge_cut.jl")
-using .gpuClustering
+using .gpuClusterCharge
 
 const max_num_modules = 2000  # Assuming MaxNumModules is predefined
 num_elements = 256 * 2000
@@ -235,10 +235,10 @@ for kkk in 0:4
     
     nModules = 0
     h_moduleStart[1] = nModules
-    Main.RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering.gpuClustering.GPU_DEBUG.count_modules(h_id, h_moduleStart, h_clus, n)
+    count_modules(h_id, h_moduleStart, h_clus, n)
     fill!(h_clusInModule, 0)
     
-    Main.RecoLocalTrackerSiPixelClusterizerPluginsGpuClustering.gpuClustering.GPU_DEBUG.find_clus(h_id, h_x, h_y, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
+    find_clus(h_id, h_x, h_y, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
     
     nModules = h_moduleStart[1]  
     nclus = h_clusInModule
