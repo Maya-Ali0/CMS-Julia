@@ -3,14 +3,11 @@
 # uint32_t gMaxHit = 0;
 # #endif
 
-include("../CUDACore/hist_to_container.jl")
-using .histogram:HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
 
-include("../CUDACore/cuda_assert.jl")
-using .gpuConfig
 
-include("../CUDACore/cudaCompat.jl")
-using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat 
+
+
+
 
 
 
@@ -18,10 +15,19 @@ module gpuClustering
 
     using Printf
     include("../CUDADataFormats/gpu_clustering_constants.jl")
-    using .Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering:INV_ID, MAX_NUM_MODULES
+    using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering:INV_ID, MAX_NUM_MODULES
 
     include("../Geometry/phase1PixelTopology.jl")
     using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
+
+    include("../CUDACore/hist_to_container.jl")
+    using .histogram:HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
+
+    include("../CUDACore/cuda_assert.jl")
+    using .gpuConfig
+
+    include("../CUDACore/cudaCompat.jl")
+    using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat 
 
     """
     * @brief Counts modules and assigns starting indices for each module in the data.

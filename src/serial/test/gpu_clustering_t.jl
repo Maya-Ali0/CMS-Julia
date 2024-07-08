@@ -19,29 +19,29 @@ h_clusInModule = Vector{UInt32}(undef, max_num_modules)
 h_moduleId = Vector{UInt32}(undef, max_num_modules)
 
 # later random number
-n = 0
-ncl = 0
-y = [5, 7, 9, 1, 3, 0, 4, 8, 2, 6]
+n::Int64 = 0
+ncl::Int64 = 0
+const y::Vector{Int64} = [5, 7, 9, 1, 3, 0, 4, 8, 2, 6]
 
 function generateClusters(kn)
     addBigNoise = 1 == kn % 2
 
     global n, ncl  # Declare n and ncl as global
 
-    n = 0
+    n = 1 # number of pixels
     ncl = 0
     InvId = 0
 
-    if addBigNoise
+    if addBigNoise # if odd
         MaxPixels = 1000
         id = 666
         
-        for x in 0:3:139
-            for yy in 0:3:399
-                h_id[n+1] = id
-                h_x[n+1] = x
-                h_y[n+1] = yy
-                h_adc[n+1] = 1000
+        for x in 0:3:139 # skipping 80 to 159 rows
+            for yy in 0:3:399 # skipping 400 to 415 columns
+                h_id[n] = id
+                h_x[n] = x
+                h_y[n] = yy
+                h_adc[n] = 1000
                 n += 1
                 ncl += 1
                 
@@ -56,108 +56,108 @@ function generateClusters(kn)
         end
     end
     
-    # isolated
+    # isolated (10,10)
     id = 42
     x = 10
     ncl += 1
-    h_id[n+1] = id
-    h_x[n+1] = x
-    h_y[n+1] = x
-    h_adc[n+1] = kn == 0 ? 100 : 5000
+    h_id[n] = id
+    h_x[n] = x
+    h_y[n] = x
+    h_adc[n] = kn == 0 ? 100 : 5000
     n += 1
     
-    # first column
+    # first column (10, 0)
     ncl += 1
-    h_id[n+1] = id
-    h_x[n+1] = x
-    h_y[n+1] = 0
-    h_adc[n+1] = 5000
+    h_id[n] = id
+    h_x[n] = x
+    h_y[n] = 0
+    h_adc[n] = 5000
     n += 1
     
-    # first columns
+    # first columns (90,2) (90,1) adjacent added one cluster
     ncl += 1
-    h_id[n+1] = id
-    h_x[n+1] = x + 80
-    h_y[n+1] = 2
-    h_adc[n+1] = 5000
+    h_id[n] = id
+    h_x[n] = x + 80
+    h_y[n] = 2
+    h_adc[n] = 5000
+    n += 1
+    # (90,1)
+    h_id[n] = id
+    h_x[n] = x + 80
+    h_y[n] = 1
+    h_adc[n] = 5000
     n += 1
     
-    h_id[n+1] = id
-    h_x[n+1] = x + 80
-    h_y[n+1] = 1
-    h_adc[n+1] = 5000
-    n += 1
-    
-    # last column
+    # last column (10, 415)
     ncl += 1
-    h_id[n+1] = id
-    h_x[n+1] = x
-    h_y[n+1] = 415
-    h_adc[n+1] = 5000
+    h_id[n] = id
+    h_x[n] = x
+    h_y[n] = 415
+    h_adc[n] = 5000
     n += 1
     
-    # last columns
+    # last columns (90, 415) , (90, 414) adjacent pixels one cluster
     ncl += 1
-    h_id[n+1] = id
-    h_x[n+1] = x + 80
-    h_y[n+1] = 415
-    h_adc[n+1] = 2500
+    h_id[n] = id
+    h_x[n] = x + 80
+    h_y[n] = 415
+    h_adc[n] = 2500
     n += 1
-    
-    h_id[n+1] = id
-    h_x[n+1] = x + 80
-    h_y[n+1] = 414
-    h_adc[n+1] = 2500
+    # (90, 414)
+    h_id[n] = id
+    h_x[n] = x + 80
+    h_y[n] = 414
+    h_adc[n] = 2500
     n += 1
     
     # diagonal
     ncl += 1
     for x in 20:24
-        h_id[n+1] = id
-        h_x[n+1] = x
-        h_y[n+1] = x
-        h_adc[n+1] = 1000
+        h_id[n] = id
+        h_x[n] = x
+        h_y[n] = x
+        h_adc[n] = 1000
         n += 1
     end
     
     ncl += 1
     # reversed
     for x in 45:-1:41
-        h_id[n+1] = id
-        h_x[n+1] = x
-        h_y[n+1] = x
-        h_adc[n+1] = 1000
+        h_id[n] = id
+        h_x[n] = x
+        h_y[n] = x
+        h_adc[n] = 1000
         n += 1
     end
     
     ncl += 1
-    h_id[n+1] = InvId  # error
+    h_id[n+1] = INV_ID  # error
     n += 1
     
     # messy
-    xx = [21, 25, 23, 24, 22]
+    xx = [21, 25, 23, 24, 22] # (21,41) , (25,45) , (23,43) , (22 , 42) , (24 , 44)
     for k in 1:5
-        h_id[n+1] = id
-        h_x[n+1] = xx[k]
-        h_y[n+1] = 20 + xx[k]
-        h_adc[n+1] = 1000
+        h_id[n] = id
+        h_x[n] = xx[k]
+        h_y[n] = 20 + xx[k]
+        h_adc[n] = 1000
         n += 1
     end
     
     # holes
     ncl += 1
     for k in 1:5
-        h_id[n+1] = id
-        h_x[n+1] = xx[k]
-        h_y[n+1] = 100
-        h_adc[n+1] = kn == 2 ? 100 : 1000
+        h_id[n] = id
+        h_x[n] = xx[k]
+        h_y[n] = 100 # (21,100) (25, 100) (23, 100) (24, 100) (22, 100)
+        h_adc[n] = kn == 2 ? 100 : 1000
         n += 1
-        
-        if xx[k] % 2 == 0
-            h_id[n+1] = id
-            h_x[n+1] = xx[k]
-            h_y[n+1] = 101
-            h_adc[n+1] = 1000
+
+        if xx[k] % 2 == 0 # (22,101) (24,101)
+            h_id[n] = id
+            h_x[n] = xx[k]
+            h_y[n] = 101
+            h_adc[n] = 1000
             n += 1
         end
     end
@@ -166,41 +166,43 @@ function generateClusters(kn)
     id = 0
     x = 10
     ncl += 1
-    h_id[n+1] = id
-    h_x[n+1] = x
-    h_y[n+1] = x
-    h_adc[n+1] = 5000
+    h_id[n] = id
+    h_x[n] = x
+    h_y[n] = x
+    h_adc[n] = 5000
     n += 1
     
-    # all odd id
-    for id in 11:2:1800
+    # above ids used 0, 666, 42
+    
+    # all odd id 
+    for id in 11:2:1800 # module ids go from module 11 to 1800
         if (id ÷ 20) % 2 != 0
-            n += 1  # error, equivalent to h_id[n+1] = InvId
+            h_id[n] = INV_ID
+            n += 1 
         end
-        
         for x in 0:4:39
             ncl += 1
             
-            if (id ÷ 10) % 2 != 0
+            if (id ÷ 10) % 2 != 0 # if tens digit id was odd do this
                 for k in 1:10
-                    h_id[n+1] = id
-                    h_x[n+1] = x
-                    h_y[n+1] = x + y[k]
-                    h_adc[n+1] = 100
+                    h_id[n] = id
+                    h_x[n] = x
+                    h_y[n] = x + y[k]
+                    h_adc[n] = 100
                     n += 1
                     
-                    h_id[n+1] = id
-                    h_x[n+1] = x + 1
-                    h_y[n+1] = x + y[k] + 2
-                    h_adc[n+1] = 1000
+                    h_id[n] = id
+                    h_x[n] = x + 1
+                    h_y[n] = x + y[k] + 2
+                    h_adc[n] = 1000
                     n += 1
                 end
             else
                 for k in 10:-1:1
-                    h_id[n+1] = id
-                    h_x[n+1] = x
-                    h_y[n+1] = x + y[k]
-                    h_adc[n+1] = kn == 2 ? 10 : 1000
+                    h_id[n] = id
+                    h_x[n] = x
+                    h_y[n] = x + y[k]
+                    h_adc[n] = kn == 2 ? 10 : 1000
                     n += 1
                     
                     if y[k] == 3
@@ -208,16 +210,16 @@ function generateClusters(kn)
                     end
                     
                     if id == 51
-                        h_id[n+1] = InvId
+                        h_id[n] = InvId
                         n += 1
-                        h_id[n+1] = InvId
+                        h_id[n] = InvId
                         n += 1
                     end
                     
-                    h_id[n+1] = id
-                    h_x[n+1] = x + 1
-                    h_y[n+1] = x + y[k] + 2
-                    h_adc[n+1] = kn == 2 ? 10 : 1000
+                    h_id[n] = id
+                    h_x[n] = x + 1
+                    h_y[n] = x + y[k] + 2
+                    h_adc[n] = kn == 2 ? 10 : 1000
                     n += 1
                 end
             end
