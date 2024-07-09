@@ -10,6 +10,10 @@ struct Event
     streamId::Int
     eventId::Int
     products::Vector{Union{WrapperBase, Nothing}}  # Union type to allow for null elements
+
+    function Event(streamIDD::Int,eventIDD::Int)
+        return new(streamIDD,eventIDD,Vector{Union{WrapperBase, Nothing}}())
+    end
 end
 
 # Accessor functions for Event
@@ -38,6 +42,10 @@ end
 
 mutable struct EventSetup
     typeToProduct::Dict{DataType, ESWrapperBase}
+
+    function EventSetup()
+        return new(Dict{DataType, ESWrapperBase}())
+    end
 end
 
 function put(es::EventSetup, prod::T) where T
