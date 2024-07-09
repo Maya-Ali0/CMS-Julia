@@ -1,3 +1,4 @@
+using Revise
 include("../plugin-SiPixelClusterizer/gpu_clustering.jl")
 using .gpuClustering:find_clus, count_modules
 
@@ -26,9 +27,9 @@ h_moduleId = Vector{UInt32}(undef, max_num_modules)
 y= [5, 7, 9, 1, 3, 0, 4, 8, 2, 6]
 
 
-function generateClusters(kn, n_ref , ncl_ref)
-    n = n_ref[]
-    ncl = ncl_ref[]
+function generateClusters(kn)
+    n = 1
+    ncl = 0
 
     addBigNoise = 1 == kn % 2
     y = [5, 7, 9, 1, 3, 0, 4, 8, 2, 6]
@@ -226,12 +227,13 @@ function generateClusters(kn, n_ref , ncl_ref)
             end
         end
     end
+    return n, ncl
 end
 
 for kkk in 0:4
     n = 1
     ncl = 0
-    generateClusters(kkk, Ref(n), Ref(ncl))
+    n,ncl = generateClusters(kkk)
     
     println("created ", n, " digis in ", ncl, " clusters")
     @assert n <= num_elements
@@ -253,6 +255,7 @@ for kkk in 0:4
             break
         end
     end
+    println("ncl: ", ncl, " nclus from function: ", sum(nclus))
     
     @assert ncl == sum(nclus)
     
