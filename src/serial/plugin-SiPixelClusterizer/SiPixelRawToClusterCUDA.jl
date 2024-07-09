@@ -1,78 +1,57 @@
 include("../CUDADataFormats/SiPixelClusterSoA.jl")
-using .CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
+using .CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
 
 include("../CUDADataFormats/SiPixelDigisSoA.jl")
-using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
+using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA
 
 include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
-using .cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
+using .cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA:SiPixelDigiErrorsSoA
 
 include("../CondFormats/si_pixel_gain_calibration_for_hlt_gpu.jl")
-using .CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU
+using .CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU:SiPixelGainCalibrationForHLTGPU
 
 include("../CondFormats/si_pixel_fed_cabling_map_gpu_wrapper.jl")
-using .RecoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper
+using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper:SiPixelFedCablingMapGPUWrapper
 
 include("../CondFormats/si_pixel_fed_ids.jl")
-using .CondFormatsSiPixelFedIds
-
-include("../DataFormats/PixelErrors.jl")
-using .DataFormatsSiPixelDigiInterfacePixelErrors
+using .condFormatsSiPixelFedIds
 
 include("../DataFormats/data_formats.jl")
-using .dataFormats
+using .dataFormats:FedRawData
 
 include("../Framework/EventSetup.jl")
-using .edm
-
-include("../Framework/Event.jl")
-using .edm
-
-include("../Framework/PluginFactory.jl")
-using .Framework_PluginFactory_h
-
-include("../Framework/EDProducer.jl")
-using .Framework_EDProducer_h
+using .edm:EventSetup
 
 include("ErrorChecker.jl")
 using .errorChecker
 
 include("SiPixelRawToClusterGPUKernel.jl")
+using .pixelGPUDetails: SiPixelRawToClusterGPUKernel, WordFedAppender
 
-mutable struct SiPixelRawToClusterCUDA <: EDM.EDProducer
-    raw_get_token::EDM.EDGetTokenT{FEDRawDataCollection}
-    digi_put_token::EDM.EDPutTokenT{SiPixelDigisSoA}
-    digi_error_put_token::Union{Nothing, EDM.EDPutTokenT{SiPixelDigiErrorsSoA}}
-    cluster_put_token::EDM.EDPutTokenT{SiPixelClustersSoA}
-
-    gpu_algo::pixelGPUDetails.SiPixelRawToClusterGPUKernel
-    word_fed_appender::Union{Nothing, Ref{pixelGPUDetails.SiPixelRawToClusterGPUKernel.WordFedAppender}}
+include("../DataFormats/PixelErrors.jl")
+using .DataFormatsSiPixelDigiInterfacePixelErrors: PixelErrorCompact, PixelFormatterErrors
+mutable struct SiPixelRawToClusterCUDA
+    gpu_algo::SiPixelRawToClusterGPUKernel
+    word_fed_appender::WordFedAppender
     errors::PixelFormatterErrors
-
     is_run2::Bool
     include_errors::Bool
     use_quality::Bool
-
-    function SiPixelRawToClusterCUDA(reg::EDM.ProductRegistry)
-        raw_get_token = consumes(FEDRawDataCollection, reg)
-        digi_put_token = produces(SiPixelDigisSoA, reg)
-        cluster_put_token = produces(SiPixelClustersSoA, reg)
+    function SiPixelRawToClusterCUDA()
         is_run2 = true
         include_errors = true
         use_quality = true
-        digi_error_put_token = include_errors ? produces(SiPixelDigiErrorsSoA, reg) : nothing
-        word_fed_appender = Ref(pixelGPUDetails.SiPixelRawToClusterGPUKernel.WordFedAppender())
+        word_fed_appender = WordFedAppender()
         errors = PixelFormatterErrors()
-        
-        new(raw_get_token, digi_put_token, digi_error_put_token, cluster_put_token,
-            pixelGPUDetails.SiPixelRawToClusterGPUKernel(),
+        new(
+            SiPixelRawToClusterGPUKernel(),
             word_fed_appender, errors, is_run2, include_errors, use_quality)
     end
 end
 
 
-function produce(self:: SiPixelRawToClusterCUDA, iEvent::edm.Event, iSetup::edm.EventSetup)
-    hgpu_map = edm.get(iSetup,SiPixelFedCablingMapGPUWrapper)
+function produce(self:: SiPixelRawToClusterCUDA, iSetup::EventSetup)
+    hgpu_map = edm.get(iSetup,SiPixelFedCablingMapGPUWrapper)   
     if(hasQuality(hgpuMap) != self._use_quality)
         error_message = "use_quality of the module ($_use_quality) differs from SiPixelFedCablingMapGPUWrapper. Please fix your configuration."
         throw(RuntimeError(error_message))
@@ -149,17 +128,13 @@ function produce(self:: SiPixelRawToClusterCUDA, iEvent::edm.Event, iSetup::edm.
                         gpu_gains, 
                         self._word_fed_appender, 
                         self._errors, 
-                        word_counter_gpu, 
-                        fed_counter, 
+                        word_counter_gpu, # number of 32 bit words
+                        fed_counter, # number of feds
                         self._use_quality, 
                         self.include_errors, 
-                        false)
-    tmp = getResults(self.gpu_algo)
-    emplace(iEvent,self.digi_put_token, tmp.first)
-    emplace(iEvent,self.cluster_put_token, tmp.second)
-    if(self.include_errors)    
-        emplace(iEvent,self._digi_error_put_token, self.gpu_algo.getErrors())
-    end
+                        false) #make clusters
+
+    tmp = getResults(self.gpu_algo) # return pair of digis and clusters
 end
 
 end  # module SiPixelRawToClusterCUDA

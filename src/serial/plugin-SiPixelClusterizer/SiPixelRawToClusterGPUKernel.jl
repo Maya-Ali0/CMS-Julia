@@ -1,23 +1,35 @@
-include("../CUDADataFormats/SiPixelClusterSoA.jl")
-using .CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 
-include("../CUDADataFormats/SiPixelDigisSoA.jl")
-using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
-
-include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
-using .cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
 
 include("../CUDADataFormats/gpu_clustering_constants.jl")
 using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: gpuClustering
 
-include("../CUDACore/prefixScan.jl")
-using .heterogeneousCoreCUDAUtilitiesInterfacePrefixScan: cms
+include("../CUDACore/prefix_scan.jl")
+using .prefix_scan:block_prefix_scan
 
 """
 Phase 1 Geometry Constants
 """
 module pixelGPUDetails
+    include("../CUDADataFormats/SiPixelClusterSoA.jl")
+    using .CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
+    
+    include("../CUDADataFormats/SiPixelDigisSoA.jl")
+    using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA
 
+    include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
+    
+    using .cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA:SiPixelDigiErrorsSoA
+
+    include("../CondFormats/si_pixel_fed_cabling_map_gpu.jl")
+    using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU:SiPixelFedCablingMapGPU
+
+    include("../DataFormats/PixelErrors.jl")
+    using .DataFormatsSiPixelDigiInterfacePixelErrors: PixelErrorCompact, PixelFormatterErrors
+
+    include("../CondFormats/si_pixel_gain_calibration_for_hlt_gpu.jl")
+    using .CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU:SiPixelGainForHLTonGPU
+
+    using Printf
     module pixelConstants
         export LAYER_START_BIT, LADDER_START_BIT, MODULE_START_BIT, PANEL_START_BIT, DISK_START_BIT, BLADE_START_BIT, 
             LAYER_MASK, LADDER_MASK, MODULE_MASK, PANEL_MASK, DISK_MASK, BLADE_MASK,
@@ -39,6 +51,7 @@ module pixelGPUDetails
         const PANEL_MASK::UInt32 = 0x3 # 2 bits
         const DISK_MASK::UInt32 = 0xF # 4 bits
         const BLADE_MASK::UInt32 = 0x3F # 6 bits
+        const MAX_FED::UInt32 = 150
         """
         32 bit word for pixels not on layer 1
 
@@ -220,14 +233,14 @@ module pixelGPUDetails
         stores digis_d , clusters_d, and digi_errors_d
     """
     struct SiPixelRawToClusterGPUKernel
-        digis_d::SiPixelDigisSOA
-        clusters_d::SiPixelClustersSOA
-        digi_errors_d::SiPixelDigiErrorsSOA
+        digis_d::SiPixelDigisSoA
+        clusters_d::SiPixelClustersSoA
+        digi_errors_d::SiPixelDigiErrorsSoA
     end
     
     @inline get_errors(self::SiPixelRawToClusterGPUKernel) = return self.digi_errors_d
 
-    @inlune get_results(self::SiPixelRawToClusterGPUKernel) = return Pair{SiPixelDigisSOA,SiPixelClustersSoA}(self.digis_d,self.clusters_d)
+    @inline get_results(self::SiPixelRawToClusterGPUKernel) = return Pair{SiPixelDigisSoA,SiPixelClustersSoA}(self.digis_d,self.clusters_d)
 
     """
     getters of the 32 bit word in payload
@@ -253,7 +266,7 @@ module pixelGPUDetails
         det_id = DetIdGPU(cabling_map.raw_id[index],cabling_map.roc_in_det[index],cabling_map.module_id[index])
     end
 
-    function frame_conversion(bpix::bool,side::Int,layer::UInt32,roc_id_in_det_unit::UInt32,local_pixel::Pixel)
+    function frame_conversion(bpix::Bool,side::Int,layer::UInt32,roc_id_in_det_unit::UInt32,local_pixel::Pixel)
         slope_row = slope_col = 0
         row_offset = col_offset = 0
 
@@ -340,7 +353,6 @@ module pixelGPUDetails
     
         if debug
             # Import the Printf package for formatted printing
-            using Printf
         end
     
         # Switch statement equivalent using multiple if-else
@@ -458,13 +470,15 @@ module pixelGPUDetails
 
     function get_err_raw_id(fed_id::UInt8 , err_word::UInt32 , error_type :: UInt32 , cabling_map :: SiPixelFedCablingMapGPU, debug::Bool = false)
         r_id :: UInt32 = 0xffffffff
-
+        roc::UInt32 = 1
+        link::UInt32 = 1
+        r_id_temp::UInt32
         if(error_type == 40)
             # set dummy values for cabling just to get det_id from link
             # cabling.dcol = 0 
             # cabling.px_id = 2
-            roc::UInt32 = 1
-            link::UInt32 = (err_word >> LINK_SHIFT) & LINK_MASK
+            roc = 1
+            link = (err_word >> LINK_SHIFT) & LINK_MASK
             r_id_temp = get_raw_id(cabling_map,fed_id,link,roc).raw_id
             if(r_id_temp != 9999)
                 r_id = r_id_temp
@@ -497,9 +511,9 @@ module pixelGPUDetails
                 # set dummy values for cabling just to get det_id from link if in barrel
                 # cabling.dcol = 0
                 # cabling.px_id = 2
-                roc::UInt32 = 1
-                link::UInt32 = chan_nmbr
-                r_id_temp::UInt32 = get_raw_id(cabling_map,fed_id,link,roc).raw_id
+                roc = 1
+                link = chan_nmbr
+                r_id_temp = get_raw_id(cabling_map,fed_id,link,roc).raw_id
                 
                 if(r_id_temp != 9999)
                     r_id = r_id_temp
@@ -508,9 +522,9 @@ module pixelGPUDetails
         elseif error_type == 38
             #cabling.dcol = 0
             #cabling.px_id = 2
-            roc::UInt32 = (err_word >> ROC_SHIFT) & ROC_MASK
-            link::UInt32 = (err_word >> LINK_SHIFT) * LINK_MASK
-            r_id_temp::UInt32 = get_raw_id(cabling_map,fed_id,link,roc).raw_id
+            roc = (err_word >> ROC_SHIFT) & ROC_MASK
+            link = (err_word >> LINK_SHIFT) * LINK_MASK
+            r_id_temp = get_raw_id(cabling_map,fed_id,link,roc).raw_id
             if(r_id_temp != 9999)
                 r_id = r_id_temp
             end
@@ -521,7 +535,7 @@ module pixelGPUDetails
 
     function raw_to_digi_kernal(cabling_map::SiPixelFedCablingMapGPU , mod_to_unp :: Vector{UInt8} , word_counter::UInt32 , 
                                 word::Vector{UInt32} , fed_ids::Vector{UInt8} , xx::Vector{UInt16} , yy::Vector{UInt16} ,
-                                adc::Vector{UInt16} , p_digi::Vector{UInt32} , raw_id_arr::Vector{UInt32} , module_id::Vector{Uint16},
+                                adc::Vector{UInt16} , p_digi::Vector{UInt32} , raw_id_arr::Vector{UInt32} , module_id::Vector{UInt16},
                                 err::Vector{PixelErrorCompact} , use_quality_info::Bool , include_errors::Bool , debug::Bool)
         first::UInt32 = 1
         n_end = word_counter
@@ -583,15 +597,18 @@ module pixelGPUDetails
             side = barrel ? ((the_module < 5) ? -1 : 1) : ((panel == 1) ? -1 : 1)
             panel = barrel ? 0 : (raw_id >> PANEL_START_BIT) & PANEL_MASK
             local_pixel::Pixel
+            row::UInt32
+            col::UInt32
+            error::UInt8
             if layer == 1 
-                col:: UInt32 = (ww >> COL_SHIFT) & COL_MASK
-                row:: UInt32 = (ww >> ROW_SHIFT) & ROW_MASK
+                col = (ww >> COL_SHIFT) & COL_MASK
+                row = (ww >> ROW_SHIFT) & ROW_MASK
                 local_pixel.row = row 
                 local_pixel.col = col
 
                 if include_errors
                     if ! roc_row_col_is_valid(row,col)
-                        error::UInt8 = conversion_error(fed_id,3,debug) # use the device function and fill the arrays
+                        error = conversion_error(fed_id,3,debug) # use the device function and fill the arrays
                         push!(err,PixelErrorCompact(raw_id,ww,error,fed_id))
                         if debug
                             printf("BPIX1 Error Status: %i\n", error)
@@ -609,13 +626,13 @@ module pixelGPUDetails
                 """
                 I think in order for this to be consistent. The pixel_ids are numbered from 2 to 161 from the bottom of the strip (160x2)
                 """
-                row::UInt32 = NUM_ROWS_IN_ROC - px_id ÷ 2 
+                row = NUM_ROWS_IN_ROC - px_id ÷ 2 
                 
-                col::UInt32 = dcol * 2 + px_id % 2
+                col = dcol * 2 + px_id % 2
                 local_pixel.row = row 
                 local_pixel.col = col
                 if include_errors && !(dcol_is_valid(dcol,px_id))
-                    error::UInt8 = conversion_error(fed_id,3,debug)
+                    error = conversion_error(fed_id,3,debug)
                     push!(err,PixelErrorCompact(raw_id,ww,error,fed_id))
                     if debug
                         printf("Error status: %i %d %d %d %d\n", error, dcol, px_id, fed_id, roc)
@@ -635,14 +652,14 @@ module pixelGPUDetails
 
 
     function make_clusters(is_run_2::Bool , cabling_map::SiPixelFedCablingMapGPU , mod_to_unp::Vector{UInt8} , gains::SiPixelGainForHLTonGPU ,
-                  word_fed::WordFedAppender , errors:: PixelFormatterErrors , word_counter::UInt32 , fed_counter::UInt32 , use_quality_info::Bool
-                  include_errors::Bool , debug::Bool)
+                  word_fed::WordFedAppender , errors:: PixelFormatterErrors , word_counter::UInt32 , fed_counter::UInt32 , use_quality_info::Bool,
+                  include_errors::Bool , debug::Bool )
         printf("decoding %s digis. Max is %i ",word_counter,MAX_FED_WORDS)
-        digis_d = SiPixelDigisSOA(pixelGPUDetails.MAX_FED_WORDS)
+        digis_d = SiPixelDigisSoA(pixelGPUDetails.MAX_FED_WORDS)
         if include_errors
-            digi_errors_d = SiPixelDigiErrorsSOA(pixelGPUDetails.MAX_FED_WORDS,errors)
+            digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors)
         end
-        clusters_d = SiPixelClustersSOA(gpuClustering.mAX_NUM_MODULES)
+        clusters_d = SiPixelClustersSoA(gpuClustering.mAX_NUM_MODULES)
 
         if word_counter # incase of empty event
             assert(0 == word_counter % 2)

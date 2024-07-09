@@ -1,10 +1,10 @@
 module errorChecker
     # Including necessary modules and files
     include("../DataFormats/SiPixelRawDataError.jl")
+    using .DataFormatsSiPixelRawDataError: SiPixelRawDataError
     include("Constants.jl")
     include("../DataFormats/fed_trailer.jl")
     include("../DataFormats/fed_header.jl")
-    using .DataFormats_SiPixelRawDataError_h: SiPixelRawDataError
     using .constants
 
     # Type aliases for convenience
