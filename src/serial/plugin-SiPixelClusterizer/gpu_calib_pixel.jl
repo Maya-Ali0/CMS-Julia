@@ -2,18 +2,15 @@ module recoLocalTrackerSiPixelClusterizerPluginsGPUCalibPixel
 
 module gpuCalibPixel
 
-include("../CondFormats/si_pixel_gain_for_hlt_on_gpu.jl")
-using .condFormatsSiPixelObjectsSiPixelGainForHLTonGPU: SiPixelGainForHLTonGPU, get_ped_and_gain
+using ...condFormatsSiPixelObjectsSiPixelGainForHLTonGPU: SiPixelGainForHLTonGPU, get_ped_and_gain
 
-include("../CUDACore/cuda_assert.jl")
-using .gpuConfig
+using ...gpuConfig
 
-include("gpu_clustering_constants.jl")
-using .Main.recoLocalTrackerSiPixelClusterizePluginsGPUClusteringConstants: gpuClustering
+using ...CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
 
-using Pkg
-Pkg.add("StaticArrays")
-using StaticArrays
+# using Pkg
+# Pkg.add("StaticArrays")
+# using StaticArrays
 
 const inv_id::UInt16 = 9999 # must be > MaxNumModules
 

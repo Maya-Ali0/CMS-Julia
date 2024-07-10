@@ -1,4 +1,5 @@
 module gpuClusterCharge
+<<<<<<< HEAD
     include("../CUDACore/cuda_assert.jl")
     using .gpuConfig
     include("../CUDACore/prefix_scan.jl")
@@ -7,6 +8,16 @@ module gpuClusterCharge
     using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering:INV_ID, MAX_NUM_CLUSTERS_PER_MODULES, MAX_NUM_MODULES
     include("../CUDACore/cudaCompat.jl")
     using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms
+=======
+    
+    using ..gpuConfig
+
+    using ..prefix_scan
+    
+    using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
+
+    using ..heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms
+>>>>>>> 7328908cd516433f8331210689d3f30ea7ee96dc
 
 
     using Printf

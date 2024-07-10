@@ -25,17 +25,22 @@ export LAYER_START_BIT, LADDER_START_BIT, MODULE_START_BIT, PANEL_START_BIT,
             OMIT_ERR_SHIFT, LINK_MASK, ROC_MASK, COL_MASK, ROW_MASK, DCOL_MASK,
             PXID_MASK, ADC_MASK, ERROR_MASK, OMIT_ERR_MASK, MAX_FED, MAX_LINK,
             MAX_FED_WORDS
-
+export readall, readevent, readfed
+export EventSetup
+export SiPixelFedCablingMapGPUWrapperESProducer
+export SiPixelGainCalibrationForHLTGPUESProducer
+export produce
+export SiPixelGainForHLTonGPU
+export MAX_SIZE
 
 #include("serial/bin/EventProcessor.jl")
-#include("serial/bin/ReadRAW.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu_wrapper.jl")
 include("serial/CondFormats/si_pixel_fed_ids.jl")
 include("serial/CondFormats/si_pixel_gain_calibration_for_hlt_gpu.jl")
-include("serial/CondFormats/si_pixel_gain_for_hlt_on_gpu.jl")
 include("serial/CUDACore/cuda_assert.jl")
+include("serial/CondFormats/si_pixel_gain_for_hlt_on_gpu.jl")
 include("serial/CUDACore/cudaCompat.jl")
 include("serial/CUDACore/cudastdAlgorithm.jl")
 include("serial/CUDACore/hist_to_container.jl")
@@ -57,13 +62,13 @@ include("serial/Geometry/phase1PixelTopology.jl")
 include("serial/plugin-SiPixelClusterizer/adc_threshold.jl")
 include("serial/plugin-SiPixelClusterizer/Constants.jl")
 include("serial/plugin-SiPixelClusterizer/ErrorChecker.jl")
-#include("serial/plugin-SiPixelClusterizer/gpu_calib_pixel.jl")
-#include("serial/plugin-SiPixelClusterizer/gpu_cluster_charge_cut.jl")
-#include("serial/plugin-SiPixelClusterizer/gpu_clustering_constants.jl")
-#include("serial/plugin-SiPixelClusterizer/gpu_clustering.jl")
-#include("serial/plugin-SiPixelClusterizer/SiPixelFedCablingMapGPUWrapperESProducer.jl")
-#include("serial/plugin-SiPixelClusterizer/SiPixelGainCalibrationForHLTGPUESProducer.jl")
-#include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.jl")
-#include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterGPUKernel.jl")
-#include("serial/plugin-SiPixelClusterizer/testClustering.jl")
+include("serial/plugin-SiPixelClusterizer/gpu_calib_pixel.jl")
+include("serial/plugin-SiPixelClusterizer/gpu_cluster_charge_cut.jl")
+include("serial/plugin-SiPixelClusterizer/gpu_clustering.jl")
+include("serial/plugin-SiPixelClusterizer/SiPixelFedCablingMapGPUWrapperESProducer.jl")
+include("serial/plugin-SiPixelClusterizer/SiPixelGainCalibrationForHLTGPUESProducer.jl")
+include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterGPUKernel.jl")
+include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.jl")
+# include("serial/plugin-SiPixelClusterizer/testClustering.jl")
+include("serial/bin/ReadRAW.jl")
 end

@@ -68,7 +68,7 @@ Initializes the Vectors with zeros and sets the size to zero.
 # TODO: check memory alignment efficiency and necessity as well as the need for a constructor
 # TODO: ntuples or vectors?
 
-struct SiPixelFedCablingMapGPU
+mutable struct SiPixelFedCablingMapGPU
     fed::Vector{UInt32}
     link::Vector{UInt32}
     roc::Vector{UInt32}

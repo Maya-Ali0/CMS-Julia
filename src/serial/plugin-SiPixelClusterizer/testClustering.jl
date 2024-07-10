@@ -3,8 +3,7 @@ module ClusteringTest
 using Printf
 using Test
 
-include("../plugin-SiPixelClusterizer/gpu_clustering.jl")
-using .gpuClustering:find_clus, count_modules
+using ..gpuClustering:find_clus, count_modules
 
 const INV_ID = 65535
 const MAX_NUM_MODULES = 10

@@ -1,13 +1,8 @@
-include("../CondFormats/si_pixel_fed_ids.jl")
 using .condFormatsSiPixelFedIds:SiPixelFedIds
-include("../CondFormats/si_pixel_fed_cabling_map_gpu.jl")
+
 using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU:SiPixelFedCablingMapGPU
-include("../CondFormats/si_pixel_fed_cabling_map_gpu_wrapper.jl")
+using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU.pixelGPUDetails
 
-include("../Framework/ESProducer.jl")
-include("../Framework/EandES.jl")
-
-include("../CondFormats/si_pixel_fed_cabling_map_gpu_wrapper.jl")
 using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper:SiPixelFedCablingMapGPUWrapper
 
 using .condFormatsSiPixelFedIds
@@ -19,6 +14,54 @@ struct SiPixelFedCablingMapGPUWrapperESProducer <: ESProducer
         new(datadir)
     end
 end
+
+
+function readCablingMap(io::IOStream,es::EventSetup)
+    data = read(io)
+
+    cablingMap = SiPixelFedCablingMapGPU()
+    offset = 1
+    size_UInt32 = sizeof(UInt32)
+    size_UInt8 = sizeof(UInt8)
+    jump = size_UInt32 * recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU.pixelGPUDetails.MAX_SIZE
+    jump2 = size_UInt8 * recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU.pixelGPUDetails.MAX_SIZE
+
+    cablingMap.fed .= reinterpret(UInt32, data[offset:offset + jump - 1])
+    offset += jump
+    
+    cablingMap.link .= reinterpret(UInt32, data[offset:offset + jump - 1])
+    offset += jump
+    
+    cablingMap.roc .= reinterpret(UInt32, data[offset:offset + jump - 1])
+    offset += jump
+    
+    cablingMap.raw_id .= reinterpret(UInt32, data[offset:offset + jump - 1])
+    offset += jump
+    
+    cablingMap.roc_in_det .= reinterpret(UInt32, data[offset:offset + jump - 1])
+    offset += jump
+    
+    cablingMap.module_id .= reinterpret(UInt32, data[offset:offset + jump - 1])
+    offset += jump
+    
+    cablingMap.bad_rocs .= reinterpret(UInt8, data[offset:offset + jump2 - 1])
+    offset += size_UInt8 * jump2
+
+    cablingMap.size = reinterpret(UInt32, data[offset:offset + 32*size_UInt32 - 1])[1]
+    print(Base.size(data))
+    print(offset)
+    offset += 128
+
+    mod_to_unp_def_size = reinterpret(UInt32, data[offset:offset + size_UInt32 - 1])[1]
+    offset += 4
+    mod_to_unp_default = Vector{UInt8}(undef, mod_to_unp_def_size)
+    jump3 = mod_to_unp_def_size
+
+    mod_to_unp_default.= reinterpret(UInt8, data[offset:offset + jump3 - 1])
+
+    put!(es,SiPixelFedCablingMapGPUWrapper(cablingMap,mod_to_unp_default))
+end
+
 
 function produce(producer::SiPixelFedCablingMapGPUWrapperESProducer, eventSetup::EventSetup)
     fed_ids_file = joinpath(producer.data, "fedIds.bin")
@@ -34,20 +77,13 @@ function produce(producer::SiPixelFedCablingMapGPUWrapperESProducer, eventSetup:
     # Read cablingMap.bin
     cabling_map_file = joinpath(producer.data, "cablingMap.bin")
 
+
     open(cabling_map_file, "r") do io
-        obj = Vector{UInt8}(undef,sizeof(SiPixelFedCablingMapGPU)) 
-        read!(io, obj)
-
-        mod_to_unp_def_size = read(io, UInt32)
-        mod_to_unp_default = Vector{UInt8}(undef, mod_to_unp_def_size)
-        read!(io, mod_to_unp_default)
-
-        objj::SiPixelFedCablingMapGPU = SiPixelFedCablingMapGPU()
-        put!(eventSetup,SiPixelFedCablingMapGPUWrapper(objj,mod_to_unp_default))
+        readCablingMap(io,eventSetup)
     end
-    
-    
+
 end
+
 
 
 
