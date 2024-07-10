@@ -31,7 +31,7 @@ using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat
 * Changes since julia is indexed at 1
 * Note: Each word in the main wordfedappender array is given a clusterid
 """
-function count_modules(id::Vector{UInt16}, module_start::Vector{UInt32}, cluster_id::Vector{Int64}, num_elements::Int64)
+function count_modules(id::Vector{UInt16}, module_start::Vector{Int}, cluster_id::Vector{Int64}, num_elements::Int64)
     first = 1
     for i ∈ first:num_elements
         cluster_id[i] = i
@@ -211,7 +211,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             if id[i] == INV_ID 
                 continue
             end
-            if cluster_id[i] >= 0
+            if cluster_id[i] > 0
                 cluster_id[i] = cluster_id[cluster_id[i]]
             end
         end
