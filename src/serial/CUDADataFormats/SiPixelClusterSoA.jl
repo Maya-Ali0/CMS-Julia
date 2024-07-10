@@ -1,5 +1,4 @@
 module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
-
     """
     Struct to represent a constant view of the device data.
     """

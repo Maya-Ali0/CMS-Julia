@@ -48,7 +48,7 @@ mutable struct EventSetup
     end
 end
 
-function put(es::EventSetup, prod::T) where T
+function put!(es::EventSetup, prod::T) where T
     es.typeToProduct[T] = ESWrapper(prod)
 end
 

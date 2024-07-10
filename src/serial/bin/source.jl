@@ -33,7 +33,6 @@ struct Source
 
 end
 
-
-
-
-
+function produce(src::Source,reg::ProductRegistry)
+    
+end

@@ -7,7 +7,7 @@ edmodules = Vector{String}()
 esmodules = Vector{String}()
 
 
-edmodules = ["BeamSpotToPOD", 
+edmodules = ["BeamSpotToPOD",
                 "SiPixelRawToClusterCUDA", 
                 "SiPixelRecHitCUDA", 
                 "CAHitNtupletCUDA", 
