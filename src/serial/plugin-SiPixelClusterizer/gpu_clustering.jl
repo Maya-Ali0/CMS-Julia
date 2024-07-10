@@ -107,7 +107,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             end
         end
         
-        max_pix_in_module = 4000
+        max_pix_in_module = 10
         nbins = num_cols_in_module + 2
         Hist{T, N, M, K, U} = HisToContainer{T, N, M, K, U}
         hist = HisToContainer{UInt16, nbins, max_pix_in_module, 9, UInt16, 1}()
@@ -133,8 +133,12 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             if id[i] == INV_ID
                 continue 
             end
+            
             fill(hist, y[i], i - first_pixel)
+            println(hist.bins)
         end
+
+        # println(hist)
         
         max_iter = size(hist)
         max_neighbours = 10
@@ -147,15 +151,17 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         for (j, k) in zip(0:size(hist)-1, 1:size(hist)-1)
             @assert k < max_iter
             p = begin_h(hist) + j
-            i = p + first_pixel
+            i = p + first_pixel # index of 32bit word (digi)
             @assert id[i] != INV_ID
             @assert id[i] == this_module_id
-            be = bin(hist, UInt16(y[i] + 1))
+            be = bin(hist, UInt16(y[i] + 1)) 
             e = end_h(hist, be)
             p += 1
             @assert nnn[k] == 0 
             while p < e
-                m = p + first_pixel
+                println(val(hist, p))
+                
+                m = val(hist, p) + first_pixel # index of 32bit word (digi)
                 @assert m != i
                 @assert y[m] - y[i] >= 0
                 println("p: ", p, " m: ", m, " ym: ", y[m], " yi: ", y[i])
@@ -169,7 +175,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
                 nnn[k] += 1
                 l = nnn[k]
                 @assert l <= max_neighbours
-                nn[k, l] = p
+                nn[k, l] = val(hist, p)
                 p += 1
             end
         end
@@ -180,7 +186,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             if n_loops % 2 == 1
                 for j ∈ 0:size(hist)-1
                     p = begin_h(hist) + j
-                    i = p + first_pixel
+                    i = val(hist, p) + first_pixel
                     m = cluster_id[i]
                     while m != cluster_id[m]
                         m = cluster_id[m]
@@ -191,7 +197,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
                 more = false
                 for (j, k) ∈ zip(0:size(hist)-1, 1:size(hist)-1)
                     p = begin_h(hist) + j 
-                    i = p + first_pixel
+                    i = val(hist, p) + first_pixel
                     for kk ∈ 1:nnn[k]
                         l = nn[k, kk]
                         m = l + first_pixel
