@@ -3,8 +3,6 @@ module condFormatsSiPixelObjectsSiPixelGainForHLTonGPU
 include("../CUDACore/cuda_assert.jl")
 using .gpuConfig
 
-using Pkg
-Pkg.add("StaticArrays")
 using StaticArrays
 
 struct SiPixelGainForHLTonGPUDecodingStructure

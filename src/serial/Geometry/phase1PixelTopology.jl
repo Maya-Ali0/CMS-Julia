@@ -1,10 +1,6 @@
 module Geometry_TrackerGeometryBuilder_phase1PixelTopology_h
 
 module phase1PixelTopology
-
-    import Pkg
-    Pkg.add("StaticArrays")
-
     # Constants defining the dimensions of ROCs and modules
     const num_rows_in_ROC = 80
     const num_cols_in_ROC = 52

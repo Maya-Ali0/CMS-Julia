@@ -1,7 +1,7 @@
 module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper
 
-    include("si_pixel_fed_cabling_map_gpu.jl")
-    using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
+#    include("si_pixel_fed_cabling_map_gpu.jl")
+    using ..recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
 
     """
     Module for wrapping the siPixelFedCablingMapGPU structure with additional metadata.

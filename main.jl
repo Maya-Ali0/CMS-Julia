@@ -1,13 +1,4 @@
-include("../DataFormats/data_formats.jl")
-using .dataFormats
-
-include("ReadRaw.jl")
-include("../Framework/EandES.jl")
-
-include("../plugin-SiPixelClusterizer/SiPixelFedCablingMapGPUWrapperESProducer.jl")
-include("../plugin-SiPixelClusterizer/SiPixelGainCalibrationForHLTGPUESProducer.jl")
-
-include("../plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.jl")
+using Patatrack
 
 raw_events = readall(open((@__DIR__) * "/../../../data/raw.bin")) # Reads 1000 events
 

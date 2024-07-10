@@ -1,5 +1,3 @@
-include("EDTokens.jl")
-
 struct ProductRegistry
     currentModuleIndex::Int
     consumedModules::Set{UInt}
