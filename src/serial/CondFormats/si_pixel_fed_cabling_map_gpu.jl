@@ -24,6 +24,7 @@ Module containing constants related to Pixel GPU details.
 - MAX_SIZE_BYTE_BOOL: Maximum size in bytes for boolean arrays.
 """
 module pixelGPUDetails
+    export MAX_SIZE , MAX_FED , MAX_ROC , MAX_SIZE, MAX_SIZE_BYTE_BOOL
     # Maximum number of FEDs for phase 1; not all are necessarily used
     const MAX_FED::UInt32 = 150
     # Maximum number of links/channels for Phase 1
@@ -79,18 +80,16 @@ struct SiPixelFedCablingMapGPU
 
     # Constructor to initialize the SiPixelFedCablingMapGPU structure
     function SiPixelFedCablingMapGPU()
-        fed = Vector{UInt32}(undef, pixelGpuDetails.MAX_SIZE)
-        link = Vector{UInt32}(undef, pixelGpuDetails.MAX_SIZE)
-        roc = Vector{UInt32}(undef, pixelGpuDetails.MAX_SIZE)
-        raw_id = Vector{UInt32}(undef, pixelGpuDetails.MAX_SIZE)
-        roc_in_det = Vector{UInt32}(undef, pixelGpuDetails.MAX_SIZE)
-        module_id = Vector{UInt32}(undef, pixelGpuDetails.MAX_SIZE)
-        bad_rocs = Vector{UInt8}(undef, pixelGpuDetails.MAX_SIZE)
+        fed = Vector{UInt32}(undef, MAX_SIZE)
+        link = Vector{UInt32}(undef, MAX_SIZE)
+        roc = Vector{UInt32}(undef, MAX_SIZE)
+        raw_id = Vector{UInt32}(undef, MAX_SIZE)
+        roc_in_det = Vector{UInt32}(undef, MAX_SIZE)
+        module_id = Vector{UInt32}(undef, MAX_SIZE)
+        bad_rocs = Vector{UInt8}(undef, MAX_SIZE)
         size = UInt32(0)
         new(fed, link, roc, raw_id, roc_in_det, module_id, bad_rocs, size) # Zero-initialize all fields
     end
 end
 
 end # module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
-
-print(sizeof(recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU.SiPixelFedCablingMapGPU))

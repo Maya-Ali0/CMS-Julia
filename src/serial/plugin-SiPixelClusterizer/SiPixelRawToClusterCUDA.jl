@@ -17,13 +17,9 @@ include("../CondFormats/si_pixel_fed_ids.jl")
 using .condFormatsSiPixelFedIds
 
 include("../DataFormats/data_formats.jl")
-using .dataFormats:FedRawData
+using .dataFormats:FedRawData,FedRawDataCollection
 
 include("../Framework/EandES.jl")
-<<<<<<< HEAD
-=======
-using .edm:EventSetup
->>>>>>> 7848cf59f48abee79dc86b5ff40da860a432b926
 
 include("ErrorChecker.jl")
 using .errorChecker
@@ -53,13 +49,8 @@ mutable struct SiPixelRawToClusterCUDA
 end
 
 
-<<<<<<< HEAD
-function produce(self:: SiPixelRawToClusterCUDA, iSetup::EventSetup)
+function produce(event::FedRawDataCollection,self:: SiPixelRawToClusterCUDA, iSetup::EventSetup)
     hgpu_map = get(iSetup,SiPixelFedCablingMapGPUWrapper)   
-=======
-function produce(self:: SiPixelRawToClusterCUDA, event::FedRawDataCollection , iSetup::EventSetup)
-    hgpu_map = edm.get(iSetup,SiPixelFedCablingMapGPUWrapper)   
->>>>>>> 7848cf59f48abee79dc86b5ff40da860a432b926
     if(hasQuality(hgpuMap) != self._use_quality)
         error_message = "use_quality of the module ($_use_quality) differs from SiPixelFedCablingMapGPUWrapper. Please fix your configuration."
         throw(RuntimeError(error_message))

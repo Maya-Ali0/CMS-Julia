@@ -7,7 +7,7 @@ include("../Framework/EandES.jl")
 include("../plugin-SiPixelClusterizer/SiPixelFedCablingMapGPUWrapperESProducer.jl")
 include("../plugin-SiPixelClusterizer/SiPixelGainCalibrationForHLTGPUESProducer.jl")
 
-include("../plugin-SiPixelClusterizer/")
+include("../plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.jl")
 
 raw_events = readall(open((@__DIR__) * "/../../../data/raw.bin")) # Reads 1000 events
 
