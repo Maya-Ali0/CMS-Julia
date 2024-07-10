@@ -1,4 +1,5 @@
 module histogram
+    import Base.fill!
     include("../CUDACore/prefix_scan.jl")
     using .prefix_scan:block_prefix_scan
     struct AtomicPairCounter
@@ -20,7 +21,7 @@ module histogram
         bins::Vector{I} # holds indices to the values placed within a certain bin that are of type I. Indices for bins range from 1 to SIZE
         psws::Int32 # prefix scan working place
         function HisToContainer{T,N_BINS,SIZE, S , I, N_HISTS}() where {T,N_BINS,SIZE,S,I,N_HISTS}
-            new(Vector{UInt32}(undef,N_BINS*N_HISTS+1),fill!(Vector{I}(undef,SIZE),0),0)
+            new(Vector{UInt32}(undef,N_BINS*N_HISTS+1),Vector{I}(undef,SIZE),0)
         end
     end
 
@@ -50,25 +51,25 @@ module histogram
         return r
     end
 
-    size_t(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = sizeof(T)*8
+    size_t(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = S
     n_bins(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_BINS
     n_hists(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} =  N_HISTS
     tot_bins(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
     n_bits(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
     capacity(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = SIZE
     hist_off(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS},nh::Int) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_BINS * nh
-    
+    type_I(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = I
     """
     functions given only the type but not an instance. Analogous to static members within structs in c++"
     """
-    size_t(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = sizeof(T)*8
+    size_t(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = S
     n_bins(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_BINS
     n_hists(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} =  N_HISTS
     tot_bins(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
     n_bits(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
     capacity(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = SIZE
     hist_off(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}},nh::Int) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_BINS * nh
-
+    type_I(::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}}) where {T, N_BINS, SIZE, S, I, N_HISTS} = I
 
 
     """
@@ -78,7 +79,7 @@ module histogram
         bits_to_represent_bins = n_bits(hist)
         shift::UInt32 = size_t(hist) - bits_to_represent_bins
         mask::UInt32 = 1 << bits_to_represent_bins - 1
-        return ((t >> shift) & mask + 1)
+        return ((t >> shift) & mask + T(1))
     end
 
     function bin(hist::Type{HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}},t::T)::unsigned(T) where {T, N_BINS, SIZE, S, I, N_HISTS}
@@ -151,13 +152,13 @@ module histogram
         end
     end
 
-    @inline function count(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},t::T) where {T, N_BINS, SIZE, S, I, N_HISTS}
+    @inline function count!(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},t::T) where {T, N_BINS, SIZE, S, I, N_HISTS}
         b::UInt32 = bin(hist,t)
         @assert(b <= n_bins(hist))
         hist.off[b] += 1
     end
 
-    @inline function fill(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},t::T,j::I) where {T, N_BINS, SIZE, S, I, N_HISTS}
+    @inline function fill!(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},t::T,j::I) where {T, N_BINS, SIZE, S, I, N_HISTS}
         b::UInt32 = bin(hist,t)
         @assert(b <= n_bins(hist))
         w = hist.off[b]
@@ -166,7 +167,7 @@ module histogram
         hist.bins[w] = j 
     end
 
-    @inline function count(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},t::T,nh) where {T, N_BINS, SIZE, S, I, N_HISTS}
+    @inline function count!(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},t::T,nh) where {T, N_BINS, SIZE, S, I, N_HISTS}
         b::UInt32 = bin(hist,t)
         @assert(b <= n_bins(hist))
         b+= hist_off(hist,nh)
@@ -174,7 +175,7 @@ module histogram
         hist.off[b] += 1
     end
 
-    @inline function fill(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},t::T,j::I,nh) where {T, N_BINS, SIZE, S, I, N_HISTS}
+    @inline function fill!(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},t::T,j::I,nh) where {T, N_BINS, SIZE, S, I, N_HISTS}
         b::UInt32 = bin(hist,t)
         @assert(b <= n_bins(hist))
         b+= hist_off(hist,nh)
@@ -185,7 +186,7 @@ module histogram
         hist.bins[w] = j
     end
 
-    @inline function finalize(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS}
+    @inline function finalize!(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS}
         @assert hist.off[tot_bins(hist)] == 0
         block_prefix_scan(hist.off,tot_bins(hist))
         @assert(hist.off[tot_bins(hist)] == hist.off[tot_bins(hist)-1])
