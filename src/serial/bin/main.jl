@@ -7,6 +7,8 @@ include("../Framework/EandES.jl")
 include("../plugin-SiPixelClusterizer/SiPixelFedCablingMapGPUWrapperESProducer.jl")
 include("../plugin-SiPixelClusterizer/SiPixelGainCalibrationForHLTGPUESProducer.jl")
 
+include("../plugin-SiPixelClusterizer/")
+
 raw_events = readall(open((@__DIR__) * "/../../../data/raw.bin")) # Reads 1000 events
 
 es::EventSetup = EventSetup()
@@ -19,8 +21,10 @@ gain_Calibration_producer::SiPixelGainCalibrationForHLTGPUESProducer = SiPixelGa
 produce(cabling_map_producer,es)
 produce(gain_Calibration_producer,es)
 
+
 for event ∈ raw_events
-    
+    rawToCluster::SiPixelRawToClusterCUDA()
+    produce(rawToCluster,es,event)
 end
 
 

@@ -19,7 +19,7 @@ using .condFormatsSiPixelFedIds
 include("../DataFormats/data_formats.jl")
 using .dataFormats:FedRawData
 
-include("../Framework/EventSetup.jl")
+include("../Framework/EandES.jl")
 using .edm:EventSetup
 
 include("ErrorChecker.jl")
@@ -50,7 +50,7 @@ mutable struct SiPixelRawToClusterCUDA
 end
 
 
-function produce(self:: SiPixelRawToClusterCUDA, iSetup::EventSetup)
+function produce(self:: SiPixelRawToClusterCUDA, event::FedRawDataCollection , iSetup::EventSetup)
     hgpu_map = edm.get(iSetup,SiPixelFedCablingMapGPUWrapper)   
     if(hasQuality(hgpuMap) != self._use_quality)
         error_message = "use_quality of the module ($_use_quality) differs from SiPixelFedCablingMapGPUWrapper. Please fix your configuration."
@@ -62,7 +62,7 @@ function produce(self:: SiPixelRawToClusterCUDA, iSetup::EventSetup)
     hgains = iSetup[SiPixelGainCalibrationForHLTGPU()]
     gpu_gains = getCPUProduct(hgains)
     fed_ids::Vector{UInt} = fedIds(iSetup[SiPixelFedIds]) #fedIds
-    buffers::FedRawDataCollection = iEvent[self.raw_get_token] #fedData
+    buffers::FedRawDataCollection = event #fedData
     clear(self.errors)
 
     # Data Extraction for Raw to Digi
