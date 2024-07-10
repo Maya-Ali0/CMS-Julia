@@ -53,6 +53,7 @@ function count_modules(id::Vector{UInt16}, module_start::Vector{Int}, cluster_id
             end
         end
     end
+    println("module_start after count_modules: ", module_start)
 end
 
 """
@@ -227,7 +228,10 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             n_clusters_in_module[this_module_id] = found_clusters
             moduleId[mod] = this_module_id
         end
+        return found_clusters
     end
+  
 end
+
 
 end
