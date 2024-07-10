@@ -1,9 +1,3 @@
-include("../CondFormats/si_pixel_gain_calibration_for_hlt_gpu.jl")
-include("../CondFormats/si_pixel_gain_for_hlt_on_gpu.jl")
-
-include("../Framework/ESProducer.jl")
-include("../Framework/EandES.jl")
-
 using .CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU
 using .condFormatsSiPixelObjectsSiPixelGainForHLTonGPU
 

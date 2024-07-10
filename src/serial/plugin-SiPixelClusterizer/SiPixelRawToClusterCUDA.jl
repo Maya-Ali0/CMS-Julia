@@ -1,33 +1,21 @@
-include("../CUDADataFormats/SiPixelClusterSoA.jl")
 using .CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
 
-include("../CUDADataFormats/SiPixelDigisSoA.jl")
 using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA
 
-include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
 using .cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA:SiPixelDigiErrorsSoA
 
-include("../CondFormats/si_pixel_gain_calibration_for_hlt_gpu.jl")
 using .CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU:SiPixelGainCalibrationForHLTGPU
 
-include("../CondFormats/si_pixel_fed_cabling_map_gpu_wrapper.jl")
 using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper:SiPixelFedCablingMapGPUWrapper
 
-include("../CondFormats/si_pixel_fed_ids.jl")
 using .condFormatsSiPixelFedIds
 
-include("../DataFormats/data_formats.jl")
 using .dataFormats:FedRawData,FedRawDataCollection
 
-include("../Framework/EandES.jl")
-
-include("ErrorChecker.jl")
 using .errorChecker
 
-include("SiPixelRawToClusterGPUKernel.jl")
 using .pixelGPUDetails: SiPixelRawToClusterGPUKernel, WordFedAppender
 
-include("../DataFormats/PixelErrors.jl")
 using .DataFormatsSiPixelDigiInterfacePixelErrors: PixelErrorCompact, PixelFormatterErrors
 mutable struct SiPixelRawToClusterCUDA
     gpu_algo::SiPixelRawToClusterGPUKernel

@@ -1,13 +1,7 @@
-include("../CondFormats/si_pixel_fed_ids.jl")
 using .condFormatsSiPixelFedIds:SiPixelFedIds
-include("../CondFormats/si_pixel_fed_cabling_map_gpu.jl")
+
 using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU:SiPixelFedCablingMapGPU
-include("../CondFormats/si_pixel_fed_cabling_map_gpu_wrapper.jl")
 
-include("../Framework/ESProducer.jl")
-include("../Framework/EandES.jl")
-
-include("../CondFormats/si_pixel_fed_cabling_map_gpu_wrapper.jl")
 using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper:SiPixelFedCablingMapGPUWrapper
 
 using .condFormatsSiPixelFedIds

@@ -1,20 +1,32 @@
 module gpuClustering
 
 using Printf
-include("../CUDADataFormats/gpu_clustering_constants.jl")
-using .Main.CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering: INV_ID, MAX_NUM_MODULES
 
-include("../Geometry/phase1PixelTopology.jl")
-using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
+using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 
-include("../CUDACore/hist_to_container.jl")
-using .histogram: HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
+using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
 
-include("../CUDACore/cuda_assert.jl")
-using .gpuConfig
+using ..histogram: HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
 
-include("../CUDACore/cudaCompat.jl")
-using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat 
+using ..gpuConfig
+
+using ..heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat 
+
+
+###
+# using ..pixelGPUConstants
+if isdefined(Main, :GPU_SMALL_EVENTS)
+    const max_hits_in_iter() = 64
+else
+    const max_hits_in_iter() = 160 # optimized for real data PU 50
+end
+max_hits_in_module() = 1024
+MAX_NUM_MODULES::UInt32 = 2000
+MAX_NUM_CLUSTERS_PER_MODULES::Int32 = max_hits_in_module()
+MAX_HITS_IN_MODULE::UInt32 = max_hits_in_module() # as above
+MAX_NUM_CLUSTERS::UInt32 = pixelGPUConstants.MAX_NUMBER_OF_HITS
+INV_ID::UInt16 = 9999 # must be > MaxNumModules
+###
 
 """
 * @brief Counts modules and assigns starting indices for each module in the data.

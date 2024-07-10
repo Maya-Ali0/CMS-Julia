@@ -1,33 +1,20 @@
-
-
-include("../CUDADataFormats/gpu_clustering_constants.jl")
-using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: gpuClustering
-
-include("../CUDACore/prefix_scan.jl")
 using .prefix_scan:block_prefix_scan
 
 """
 Phase 1 Geometry Constants
 """
 module pixelGPUDetails
-    include("../CUDADataFormats/SiPixelClusterSoA.jl")
-    using .CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
+    using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
     
-    include("../CUDADataFormats/SiPixelDigisSoA.jl")
-    using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA
-
-    include("../CUDADataFormats/SiPixelDigiErrorsSoA.jl")
+    using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA
     
-    using .cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA:SiPixelDigiErrorsSoA
+    using ..cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA:SiPixelDigiErrorsSoA
 
-    include("../CondFormats/si_pixel_fed_cabling_map_gpu.jl")
-    using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU:SiPixelFedCablingMapGPU
+    using ..recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU:SiPixelFedCablingMapGPU
 
-    include("../DataFormats/PixelErrors.jl")
-    using .DataFormatsSiPixelDigiInterfacePixelErrors: PixelErrorCompact, PixelFormatterErrors
+    using ..DataFormatsSiPixelDigiInterfacePixelErrors: PixelErrorCompact, PixelFormatterErrors
 
-    include("../CondFormats/si_pixel_gain_calibration_for_hlt_gpu.jl")
-    using .CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU:SiPixelGainForHLTonGPU
+    using ..CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU:SiPixelGainForHLTonGPU
 
     using Printf
     module pixelConstants
