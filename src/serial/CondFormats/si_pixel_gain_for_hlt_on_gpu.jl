@@ -1,9 +1,10 @@
 module condFormatsSiPixelObjectsSiPixelGainForHLTonGPU
 
-include("../CUDACore/cuda_assert.jl")
-using .gpuConfig
+using ..gpuConfig
 
 using StaticArrays
+
+export SiPixelGainForHLTonGPU
 
 struct SiPixelGainForHLTonGPUDecodingStructure
     gain::UInt8
