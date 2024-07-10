@@ -18,7 +18,6 @@ y = UInt16[1, 1, 1, 2, 2, 2, 3, 3]
 num_elements = length(id)
 println(num_elements)
 module_start = fill(0, MAX_NUM_MODULES + 1)
-module_start[1] = 0
 cluster_id = fill(0, num_elements)
 n_clusters_in_module = fill(UInt32(0), MAX_NUM_MODULES + 1)
 moduleId = fill(1, MAX_NUM_MODULES + 1)

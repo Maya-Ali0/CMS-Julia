@@ -20,7 +20,7 @@ module histogram
         bins::Vector{I} # holds indices to the values placed within a certain bin that are of type I. Indices for bins range from 1 to SIZE
         psws::Int32 # prefix scan working place
         function HisToContainer{T,N_BINS,SIZE, S , I, N_HISTS}() where {T,N_BINS,SIZE,S,I,N_HISTS}
-            new(Vector{UInt32}(undef,N_BINS*N_HISTS+1),Vector{I}(undef,SIZE),0)
+            new(Vector{UInt32}(undef,N_BINS*N_HISTS+1),fill!(Vector{I}(undef,SIZE),0),0)
         end
     end
 
