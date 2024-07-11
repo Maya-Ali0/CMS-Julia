@@ -235,20 +235,17 @@ for kkk in 0:4
     println("ncl: ", ncl, " nclus from function: ", sum(nclus))
     @assert ncl == sum(nclus)
     
-    cluster_charge_cut(h_id, h_adc, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
+    # cluster_charge_cut(h_id, h_adc, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
     
     println("found ", nModules, " Modules active")
-    
+    # println(h_clus[1:1000])
     clids = SortedSet{UInt}()
     for i in 1:n
         @assert h_id[i] != 666  # only noise
-        if h_id[i] == INV_ID
+        if h_id[i] == INV_ID 
             continue
         end
         @assert h_clus[i] >= 1
-        println(i)
-        println(h_clus[i])
-        println(nclus[h_id[i]+1])
         @assert h_clus[i] <= nclus[h_id[i]+1]
         push!(clids, h_id[i] * 1000 + h_clus[i])
     end
