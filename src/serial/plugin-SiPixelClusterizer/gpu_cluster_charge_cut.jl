@@ -65,7 +65,7 @@ module gpuClusterCharge
             end
 
             for i in first:numElements
-                if id[i] == InvId 
+                if id[i] == INV_ID 
                     continue
                 end
                 if id[i] != thisModuleId
