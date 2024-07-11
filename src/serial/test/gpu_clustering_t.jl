@@ -5,6 +5,7 @@ using .gpuClustering:find_clus, count_modules
 include("../plugin-SiPixelClusterizer/gpu_cluster_charge_cut.jl")
 using .gpuClusterCharge:cluster_charge_cut
 
+using DataStructures:SortedSet
 INV_ID = 9999
 
 const max_num_modules = 2000  # Assuming MaxNumModules is predefined
@@ -225,9 +226,9 @@ for kkk in 0:4
     nclus = h_clusInModule
     
     println("before charge cut found ", sum(nclus), " clusters")
-    for i in max_num_modules:-1:1
-        if nclus[i] > 0
-            println("last module is ", i, ' ', nclus[i])
+    for i in max_num_modules-1:-1:0
+        if nclus[i+1] > 0
+            println("last module is ", i, ' ', nclus[i+1])
             break
         end
     end
@@ -238,41 +239,44 @@ for kkk in 0:4
     
     println("found ", nModules, " Modules active")
     
-    clids = Set{UInt}()
+    clids = SortedSet{UInt}()
     for i in 1:n
         @assert h_id[i] != 666  # only noise
         if h_id[i] == INV_ID
             continue
         end
-        @assert 0 <= h_clus[i] < nclus[h_id[i]]
+        @assert h_clus[i] >= 1
+        println(i)
+        println(h_clus[i])
+        println(nclus[h_id[i]+1])
+        @assert h_clus[i] <= nclus[h_id[i]+1]
         push!(clids, h_id[i] * 1000 + h_clus[i])
     end
     
     # verify no hole in numbering
-    p = first(clids)
-    cmid = p ÷ 1000
-    @assert 0 == p % 1000
-    for c in Iterators.drop(clids, 1)
-        cc = c
-        pp = p
-        mid = cc ÷ 1000
-        pnc = pp % 1000
-        nc = cc % 1000
-        if mid != cmid
-            @assert 0 == cc % 1000
-            @assert nclus[cmid + 1] - 1 == pp % 1000
-            cmid = mid
-            p = c
+    p_cl_id = first(clids)
+    p_mod_id = p_cl_id ÷ 1000
+    @assert 1 == p_cl_id % 1000
+    for curr_cl_id ∈ Iterators.drop(clids, 1)
+        curr_mod_id = curr_cl_id ÷ 1000
+        nc = curr_cl_id % 1000
+        pnc = p_cl_id % 1000
+
+        if p_mod_id != curr_mod_id
+            @assert 1 == curr_cl_id % 1000
+            @assert nclus[curr_mod_id + 1] - 1 == p_cl_id % 1000
+            curr_mod_id = p_mod_id
+            p_mod_id = curr_cl_id
             continue
         end
-        p = c
+        p_mod_id = curr_cl_id
         @assert nc == pnc + 1
     end
     
     println("found ", sum(nclus), ' ', length(clids), " clusters")
-    for i in max_num_modules:-1:2  # Changed to 2 to avoid accessing 0 index
-        if nclus[i] > 0
-            println("last module is ", i - 1, ' ', nclus[i])
+    for i in max_num_modules-1:-1:0  
+        if nclus[i+1] > 0
+            println("last module is ", i, ' ', nclus[i+1])
             break
         end
     end

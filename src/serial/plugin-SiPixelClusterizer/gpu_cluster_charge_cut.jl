@@ -2,28 +2,24 @@ module gpuClusterCharge
     include("../CUDACore/cuda_assert.jl")
     using .gpuConfig
     include("../CUDACore/prefix_scan.jl")
-    using .prefix_scan
+    using .prefix_scan:block_prefix_scan
     include("../CUDADataFormats/gpu_clustering_constants.jl")
     using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants:INV_ID, MAX_NUM_CLUSTERS_PER_MODULES, MAX_NUM_MODULES
-    include("../CUDACore/cudaCompat.jl")
-    using .heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms
-
-
     using Printf
     function cluster_charge_cut(id, adc, moduleStart, nClustersInModule, moduleId, clusterId, numElements)
-        charge = Vector(undef, MAX_NUM_CLUSTERS_PER_MODULES)
+        charge = fill(0,MAX_NUM_CLUSTERS_PER_MODULES)
         ok = Vector(undef, MAX_NUM_CLUSTERS_PER_MODULES)
         newclusId = Vector(undef, MAX_NUM_CLUSTERS_PER_MODULES)
-        firstModule = 0
+        firstModule = 1
         endModule = moduleStart[1]
 
-        for mod in firstModule + 1:endModule
+        for mod ∈ firstModule:endModule
             firstPixel = moduleStart[1 + mod]
             thisModuleId = id[firstPixel]
             @assert thisModuleId < MAX_NUM_MODULES
             @assert thisModuleId == moduleId[mod]
 
-            nClus = nClustersInModule[thisModuleId]
+            nClus = nClustersInModule[thisModuleId+1]
             if nClus == 0
                 continue
             end
@@ -31,7 +27,7 @@ module gpuClusterCharge
                 @printf("Warning too many clusters in module %d in block %d: %d > %d\n",
                thisModuleId,
                0,
-               nclus,
+               nClus,
                MaxNumClustersPerModules)
             end
             
@@ -53,15 +49,38 @@ module gpuClusterCharge
                 nClus = MAX_NUM_CLUSTERS_PER_MODULES
             end
 
-            if isdefined(Main, :GPU_DEBUG)
-                if thisModuleId % 100 == 1
-                    @printf("start cluster charge cut for module %d in block %d\n", thisModuleId, 0)
+            @assert nClus <= MAX_NUM_CLUSTERS_PER_MODULES
+
+            
+
+            for i in first:numElements
+                if id[i] == INV_ID 
+                    continue
                 end
+                if id[i] != thisModuleId
+                    break
+                end
+                charge[clusterId[i]] += adc[i]
             end
 
-            @assert nClus <= MAX_NUM_CLUSTERS_PER_MODULES
+            chargeCut = thisModuleId < 96 ? 2000 : 4000 # L1 : 2000 , other layers : 4000
             for i in 1:nClus
-                charge[i] = 0
+                newclusId[i] = ok[i] = charge[i] > chargeCut ? 1 : 0
+            end
+            
+            block_prefix_scan(newclusId, nClus)
+            @assert nClus >= newclusId[nClus]
+
+            if nClus == newclusId[nClus]
+                continue
+            end
+
+            nClustersInModule[thisModuleId] =  newclusId[nClus]
+
+            for i in 1:nClus
+                if ok[i] == 0 
+                    newclusId[i] = INV_ID 
+                end
             end
 
             for i in first:numElements
@@ -71,39 +90,9 @@ module gpuClusterCharge
                 if id[i] != thisModuleId
                     break
                 end
-                cms.cudacompat.atomicAdd(charge[clusterId[i]], adc[i])
-            end
-
-            chargeCut = thisModuleId < 96 ? 2000 : 4000
-            for i in 1:nClus
-                newclusId[i] = ok[i] = charge[i] > chargeCut ? 1 : 0
-            end
-
-            prefix_scan.blockPrefixScan(newclusId, nClus)
-            @assert nClus >= newclusId[nclus - 1]
-
-            if nClus == newclusId[nClus - 1]
-                continue
-            end
-
-            nClustersInModule[thisModuleId] =  newclusId[nClus - 1]
-
-            for i in 1:nClus
-                if ok[i] == 0 
-                    newclusId[i] = InvId + 1
-                end
-            end
-
-            for i in first:numElements
-                if id[i] == InvId 
-                    continue
-                end
-                if id[i] != thisModuleId
-                    break
-                end
-                clusterId[i] = newclusId[clusterId[i] - 1]
-                if clusterId[i] == InvId 
-                    id[i] = InvId 
+                clusterId[i] = newclusId[clusterId[i]]
+                if clusterId[i] == INV_ID 
+                    id[i] = INV_ID 
                 end
             end
         end

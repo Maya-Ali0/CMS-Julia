@@ -242,7 +242,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
                 cluster_id[i] = -9999
                 continue
             end
-            cluster_id[i] = -cluster_id[i] - 1
+            cluster_id[i] = -cluster_id[i] 
         end
         n_clusters_in_module[this_module_id+1] = found_clusters
         moduleId[mod] = this_module_id
