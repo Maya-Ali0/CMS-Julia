@@ -1,26 +1,21 @@
 module gpuClustering
 
 using Printf
-<<<<<<< HEAD
 include("../CUDADataFormats/gpu_clustering_constants.jl")
-using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.gpuClustering: INV_ID, MAX_NUM_MODULES
-=======
->>>>>>> 7328908cd516433f8331210689d3f30ea7ee96dc
+using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 
-using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
+#using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 
-<<<<<<< HEAD
 include("../CUDACore/hist_to_container.jl")
 using .histogram: HisToContainer, zero, count!, finalize!, size, bin, val, begin_h, end_h, fill!, type_I
-=======
-using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
->>>>>>> 7328908cd516433f8331210689d3f30ea7ee96dc
 
-using ..histogram: HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
+include("../Geometry/phase1PixelTopology.jl")
+using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
+#using ..histogram: HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
 
-using ..gpuConfig
+#using ..gpuConfig
 
-using ..heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat 
+#using ..heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat 
 
 
 ###
@@ -30,10 +25,9 @@ if isdefined(Main, :GPU_SMALL_EVENTS)
 else
     const max_hits_in_iter() = 160 # optimized for real data PU 50
 end
-max_hits_in_module() = 1024
 MAX_NUM_MODULES::UInt32 = 2000
-MAX_NUM_CLUSTERS_PER_MODULES::Int32 = max_hits_in_module()
-MAX_HITS_IN_MODULE::UInt32 = max_hits_in_module() # as above
+MAX_NUM_CLUSTERS_PER_MODULES::Int32 = 1024
+MAX_HITS_IN_MODULE::UInt32 = 1024 # as above
 MAX_NUM_CLUSTERS::UInt32 = pixelGPUConstants.MAX_NUMBER_OF_HITS
 INV_ID::UInt16 = 9999 # must be > MaxNumModules
 ###
@@ -119,7 +113,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         max_pix_in_module = 4000
         nbins = num_cols_in_module + 2
         Hist{T, N, M, K, U} = HisToContainer{T, N, M, K, U}
-        hist = HisToContainer{UInt16, nbins, max_pix_in_module, 9, UInt16, 1}()
+        hist = HisToContainer{Int16, nbins, max_pix_in_module, 9, UInt16, 1}()
         zero(hist)
         
         @assert msize == num_elements || (msize < num_elements && id[msize] != this_module_id)
@@ -164,7 +158,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             i = val(hist,p) + first_pixel # index of 32bit word (digi)
             @assert id[i] != INV_ID
             @assert id[i] == this_module_id
-            be = bin(hist, UInt16(y[i] + 1)) 
+            be = bin(hist, y[i] + Int16(1)) 
             e = end_h(hist, be)
             p += 1
             @assert nnn[k] == 0 
@@ -175,7 +169,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
                 if y[m] - y[i] > 1
                     break
                 end
-                if abs(x[m] - 0 - x[i]) > 1
+                if abs(x[m] - x[i]) > 1
                     p += 1
                     continue
                 end

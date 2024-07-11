@@ -5,19 +5,16 @@ using .gpuClustering:find_clus, count_modules
 include("../plugin-SiPixelClusterizer/gpu_cluster_charge_cut.jl")
 using .gpuClusterCharge:cluster_charge_cut
 
-include("../plugin-SiPixelClusterizer/gpu_clustering_constants.jl")
-using .gpuClustering:INV_ID
-
-
+INV_ID = 9999
 
 const max_num_modules = 2000  # Assuming MaxNumModules is predefined
 num_elements = 256 * 2000 # digis (pixels)
 
 # these in reality are already on GPU
 h_id = Vector{UInt16}(undef, num_elements) #module ids
-h_x = Vector{UInt16}(undef, num_elements) 
-h_y = Vector{UInt16}(undef, num_elements)
-h_adc = Vector{UInt16}(undef, num_elements)
+h_x = Vector{Int16}(undef, num_elements) 
+h_y = Vector{Int16}(undef, num_elements)
+h_adc = Vector{Int16}(undef, num_elements)
 h_clus = Vector{Int}(undef, num_elements) # cluster id of each digi
 
 h_moduleStart = Vector{Int64}(undef, max_num_modules + 1) # extra stores at first index the number of modules

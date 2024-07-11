@@ -1,6 +1,11 @@
 module CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
 
 module pixelGPUConstants
+    INV_ID::UInt16 = 9999 # must be > MaxNumModules
+    MAX_NUM_CLUSTERS_PER_MODULES::Int32 = 1024
+    MAX_NUM_CLUSTERS_PER_MODULES::Int32 = 1024
+    MAX_HITS_IN_MODULE::UInt32 = 1024 # as above
+    MAX_NUM_MODULES::UInt32 = 2000
     if isdefined(Main, :GPU_SMALL_EVENTS)
         const MAX_NUMBER_OF_HITS::UInt32 = 24 * 1024
     else

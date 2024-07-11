@@ -1,2 +1,2 @@
 include("../CUDADataFormats/gpu_clustering_constants.jl")
-using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: gpuClustering
+using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants

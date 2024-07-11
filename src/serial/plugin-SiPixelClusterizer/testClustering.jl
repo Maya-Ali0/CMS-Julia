@@ -2,8 +2,8 @@ module ClusteringTest
 
 using Printf
 using Test
-
-using ..gpuClustering:find_clus, count_modules
+include("../plugin-SiPixelClusterizer/gpu_clustering.jl")
+using .gpuClustering:find_clus, count_modules
 
 const INV_ID = 65535
 const MAX_NUM_MODULES = 10
@@ -11,8 +11,8 @@ const num_cols_in_module = 416
 
 # Mockup data for testing
 id = UInt16[1, 1, 1, 1, 1, 1, 1, 1]
-x = UInt16[1, 3, 5, 7, 9, 11, 13, 2]
-y = UInt16[1, 3, 5, 7, 9, 11, 13, 2]
+x = Int16[1, 3, 5, 7, 9, 11, 13, 2]
+y = Int16[1, 3, 5, 7, 9, 11, 13, 2]
 
 num_elements = length(id)
 println(num_elements)
