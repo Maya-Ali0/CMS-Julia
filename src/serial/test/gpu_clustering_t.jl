@@ -234,11 +234,15 @@ for kkk in 0:4
     end
     println("ncl: ", ncl, " nclus from function: ", sum(nclus))
     @assert ncl == sum(nclus)
-    
-    # cluster_charge_cut(h_id, h_adc, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
+    # println(h_clus[3106]) # 7
+    # println(nclus[h_id[3106]+1]) # 6
+    # println(3106) # 3106
+    # println(h_id[3106]) # 41
+     println(nclus[42]) # 6
+    cluster_charge_cut(h_id, h_adc, h_moduleStart,nclus, h_moduleId, h_clus, n)
     
     println("found ", nModules, " Modules active")
-    # println(h_clus[1:1000])
+    println(h_clus[1:1000])
     clids = SortedSet{UInt}()
     for i in 1:n
         @assert h_id[i] != 666  # only noise
