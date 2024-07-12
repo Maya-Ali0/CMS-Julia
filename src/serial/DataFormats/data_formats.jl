@@ -1,6 +1,6 @@
 module dataFormats
 
-    export FedRawDataCollection, FedRawData
+    export FedRawDataCollection, FedRawData, FedData, data
     """
     FedNumbering constants and functions
 
@@ -69,7 +69,7 @@ module dataFormats
     """
     Length of the data buffer in bytes.
     """
-    function size(self::FedRawData)::Int
+    function Base.length(self::FedRawData)::Int
         return length(self.data)
     end
 
@@ -117,7 +117,7 @@ module dataFormats
     """ 
     function for getting FedRawData
     """
-    function FedData(self::FedRawDataCollection,Fedid :: Int)
+    function FedData(self::FedRawDataCollection,Fedid :: Integer)
         return self.data[Fedid]
     end
 
@@ -170,5 +170,5 @@ module dataFormats
             37 => "Error: Invalid dcol/pixel address",
         )[errorType, "Error: Unknown error type"]
     end
-    
+
 end # module DataFormats

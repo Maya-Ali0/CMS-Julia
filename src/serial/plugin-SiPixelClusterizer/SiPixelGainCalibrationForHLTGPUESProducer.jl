@@ -34,7 +34,7 @@ function readGain(io::IOStream,es::EventSetup)
     # println(nbytes)
     
 
-    size:: UInt32= nbytes//2 # over 2 because we need half the bytes
+    size:: UInt32= nbytes ÷ 2 # over 2 because we need half the bytes
     v_pedestals = Vector{DecodingStructure}(undef,size) 
     read!(io,v_pedestals)
 

@@ -4,7 +4,7 @@ using .prefix_scan:block_prefix_scan
 Phase 1 Geometry Constants
 """
 module pixelGPUDetails
-    export make_clusters, get_results
+    export make_clusters, get_results, initialize_word_fed
 
     using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
     
@@ -27,7 +27,7 @@ module pixelGPUDetails
             LINK_BITS, ROC_BITS, DCOL_BITS, PXID_BITS, ADC_BITS, LINK_BITS_L1, ROC_BITS_L1, COL_BITS_L1, ROW_BITS_L1, OMIT_ERR_BITS,
             MAX_ROC_INDEX, NUM_ROWS_IN_ROC, NUM_COL_IN_ROC, MAX_WORD, ADC_SHIFT, PXID_SHIFT, DCOL_SHIFT, ROC_SHIFT, LINK_SHIFT,
             ROW_SHIFT, COL_SHIFT, OMIT_ERR_SHIFT, LINK_MASK, ROC_MASK, COL_MASK, ROW_MASK, DCOL_MASK, PXID_MASK, ADC_MASK,
-            ERROR_MASK, OMIT_ERR_MASK, MAX_FED, MAX_LINK, MAX_FED_WORDS
+            ERROR_MASK, OMIT_ERR_MASK, MAX_FED, MAX_LINK, MAX_FED_WORDS, initialize_word_fed
         const LAYER_START_BIT::UInt32 = 20 # 4 layers
         const LADDER_START_BIT::UInt32 = 12 # 148 ladders
         const MODULE_START_BIT::UInt32 = 2 # 1856 silicon modules each with 160 x 416 pixels connected to 16 ReadOut Chips (ROC) Used to determine on which side of the z-axis the pixel is on
@@ -208,14 +208,15 @@ module pixelGPUDetails
         Every Consecutive 4 bytes are reinterpreted as one word UInt32
         the fed_ids array is filled with the fed_id value in the range ceiling((word_counter + 1) / 2) up to (wod_counter + length) ÷ 2
     """
-    function initialize_word_fed(word_fed_appender::WordFedAppender, fed_id::Int , word_counter_gpu::UInt , src::Vector{UInt8} , length::UInt)
-        for index ∈ word_counter_gpu+1:word_counter_gpu + length
+    function initialize_word_fed(word_fed_appender::WordFedAppender, fed_id::Integer , src::Vector{UInt8}, word_counter_gpu::Integer)
+        len = length(src) ÷ 4
+        for index ∈ (word_counter_gpu+1):(word_counter_gpu + len)
             counter = index-word_counter_gpu
             start_index_byte = 4*(counter-1) + 1
             word_32::Vector{UInt8} = src[start_index_byte:start_index_byte+3]
             get_word(word_fed_appender)[index] = reinterpret(UInt32,word_32)[1]
         end
-        get_fed_id(word_fed_appender)[(cld((word_counter_gpu+1),2):(word_counter_gpu + length) ÷ 2)] .= fed_id
+        get_fed_id(word_fed_appender)[(cld((word_counter_gpu+1),2):(word_counter_gpu + len) ÷ 2)] .= (fed_id - 1200)
     end
 
 
@@ -649,7 +650,7 @@ module pixelGPUDetails
     function make_clusters(gpu_algo::SiPixelRawToClusterGPUKernel,is_run_2::Bool , cabling_map::SiPixelFedCablingMapGPU , mod_to_unp::Vector{UInt8} , gains::SiPixelGainForHLTonGPU ,
                   word_fed::WordFedAppender , errors::PixelFormatterErrors , word_counter::Integer , fed_counter::Integer , use_quality_info::Bool,
                   include_errors::Bool , debug::Bool )
-        # @printf("decoding %s digis. Max is %i ",word_counter,MAX_FED_WORDS)
+        @printf("decoding %s digis. Max is %i ",word_counter,MAX_FED_WORDS)
         digis_d = gpu_algo.digis_d
         if include_errors
             digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors)
