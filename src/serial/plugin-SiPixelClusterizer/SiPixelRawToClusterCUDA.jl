@@ -51,13 +51,8 @@ function produce(self:: SiPixelRawToClusterCUDA,event::FedRawDataCollection, iSe
     gpu_map = get_cpu_product(hgpu_map)
     gpu_modules_to_unpack::Vector{UInt8} = get_mod_to_unp_all(hgpu_map)
     hgains = get(iSetup,SiPixelGainCalibrationForHLTGPU)
-<<<<<<< HEAD
-    gpu_gains = get_cpu_product(hgains)
-    fed_ids::Vector{UInt} = fedIds(iSetup[SiPixelFedIds]) #fedIds
-=======
     gpu_gains = CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU.get_cpu_product(hgains)
     fed_ids::Vector{UInt} = get(iSetup,SiPixelFedIds)._fed_ids
->>>>>>> 01a893744c24a2163cb34b04e0dc4dec2d6b7819
     buffers::FedRawDataCollection = event #fedData
     empty!(self.errors)
 
@@ -70,7 +65,8 @@ function produce(self:: SiPixelRawToClusterCUDA,event::FedRawDataCollection, iSe
     for fed_id ∈ fed_ids
 
        if(fed_id == 40) # Skipping Pilot Blade Data
-        continue
+            continue
+       end
 
         @assert(fed_id >= 1200)
         fed_counter++
@@ -132,5 +128,3 @@ function produce(self:: SiPixelRawToClusterCUDA,event::FedRawDataCollection, iSe
 
     tmp = get_results(self.gpu_algo) # return pair of digis and clusters
 end
-
-end  # module SiPixelRawToClusterCUDA

@@ -1,6 +1,6 @@
 module dataFormats
 
-    export FedRawDataCollection, FedRawData
+    export FedRawDataCollection, FedRawData, size
     """
     FedNumbering constants and functions
 
