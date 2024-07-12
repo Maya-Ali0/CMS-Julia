@@ -676,6 +676,13 @@ module pixelGPUDetails
         for i in 1026:gpuClustering.MAX_NUM_MODULES + 1
             module_start[i] += module_start[1025]
         end
+        MAX_HITS = gpuClustering.Max_
+        for i in first:gpuClustering.MAX_NUM_MODULES + 1
+            if module_start[i] > MAX_HITS
+                module_start[i] = MAX_HITS
+            end
+        end
+        
     end
 
 
