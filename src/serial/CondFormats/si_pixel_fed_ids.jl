@@ -1,5 +1,7 @@
 module condFormatsSiPixelFedIds
 
+export fed_ids
+
     """
     Struct to hold siPixel FED IDs
 

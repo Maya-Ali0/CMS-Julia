@@ -20,6 +20,8 @@ using .DataFormatsSiPixelDigiInterfacePixelErrors: PixelErrorCompact, PixelForma
 
 import .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper.get_cpu_product
 
+using .pixelGPUDetails
+
 mutable struct SiPixelRawToClusterCUDA
     gpu_algo::SiPixelRawToClusterGPUKernel
     word_fed_appender::WordFedAppender
@@ -51,15 +53,15 @@ function produce(self:: SiPixelRawToClusterCUDA,event::FedRawDataCollection, iSe
 
     hgains = get(iSetup,SiPixelGainCalibrationForHLTGPU)
     gpu_gains = CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU.get_cpu_product(hgains)
-    fed_ids::Vector{UInt} = fedIds(iSetup[SiPixelFedIds]) #fedIds
+    fed_ids::Vector{UInt} = get(iSetup,SiPixelFedIds)._fed_ids
     buffers::FedRawDataCollection = event #fedData
-    clear(self.errors)
+    empty!(self.errors)
 
     # Data Extraction for Raw to Digi
     word_counter_gpu :: Int = 0 
     fed_counter:: Int = 0 
     errors_in_event:: Bool = false 
-    error_check::errorChecker = ErrorChecker()
+    error_checker = ErrorChecker()
 
     for fed_id ∈ fed_ids
 
@@ -111,20 +113,20 @@ function produce(self:: SiPixelRawToClusterCUDA,event::FedRawDataCollection, iSe
         @assert (0 == (ew - bw) % 2) # Number of 32 bit words should be a multiple of 2
         intializeWordFed(word_fed_appender,fed_id, word_counter_gpu, num_word32)
         wordCounterGPU += num_word32
-    end
-    makeClusters(gpu_algo,is_run2,
-                        gpuMap, 
-                        gpuModulesToUnpack, 
+    end 
+    make_clusters(self.gpu_algo,self.is_run2,
+                        gpu_map, 
+                        gpu_modules_to_unpack, 
                         gpu_gains, 
-                        self._word_fed_appender, 
-                        self._errors, 
+                        self.word_fed_appender, 
+                        self.errors, 
                         word_counter_gpu, # number of 32 bit words
                         fed_counter, # number of feds
-                        self._use_quality, 
+                        self.use_quality, 
                         self.include_errors, 
                         false) #make clusters
 
-    tmp = getResults(self.gpu_algo) # return pair of digis and clusters
+    tmp = get_results(self.gpu_algo) # return pair of digis and clusters
 end
 
 end  # module SiPixelRawToClusterCUDA
