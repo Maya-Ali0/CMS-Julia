@@ -41,11 +41,11 @@ function generateClusters(kn)
                 h_x[n] = x
                 h_y[n] = yy
                 h_adc[n] = 1000
-                if MaxPixels <= ncl
+                if max_pixels <= ncl
                     break
                 end
             end
-            if MaxPixels <= ncl
+            if max_pixels <= ncl
                 break
             end
         end
@@ -234,15 +234,9 @@ for kkk in 0:4
     end
     println("ncl: ", ncl, " nclus from function: ", sum(nclus))
     @assert ncl == sum(nclus)
-    # println(h_clus[3106]) # 7
-    # println(nclus[h_id[3106]+1]) # 6
-    # println(3106) # 3106
-    # println(h_id[3106]) # 41
-     println(nclus[42]) # 6
     cluster_charge_cut(h_id, h_adc, h_moduleStart,nclus, h_moduleId, h_clus, n)
     
     println("found ", nModules, " Modules active")
-    println(h_clus[1:1000])
     clids = SortedSet{UInt}()
     for i in 1:n
         @assert h_id[i] != 666  # only noise
@@ -265,12 +259,12 @@ for kkk in 0:4
 
         if p_mod_id != curr_mod_id
             @assert 1 == curr_cl_id % 1000
-            @assert nclus[curr_mod_id + 1] - 1 == p_cl_id % 1000
-            curr_mod_id = p_mod_id
-            p_mod_id = curr_cl_id
+            @assert nclus[p_mod_id + 1] == p_cl_id % 1000
+            p_mod_id = curr_mod_id
+            p_cl_id = curr_cl_id
             continue
         end
-        p_mod_id = curr_cl_id
+        p_cl_id = curr_cl_id
         @assert nc == pnc + 1
     end
     

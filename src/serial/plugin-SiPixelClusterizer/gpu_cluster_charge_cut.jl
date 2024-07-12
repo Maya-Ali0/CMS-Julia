@@ -65,14 +65,7 @@ module gpuClusterCharge
             for i in 1:nClus
                 newclusId[i] = ok[i] = charge[i] > chargeCut ? 1 : 0
             end
-            if(thisModuleId == 41)
-                print(nClus)
-                print(newclusId)
-            end
             block_prefix_scan(newclusId, nClus)
-            if(thisModuleId == 41)
-                print(newclusId)
-            end
             @assert nClus >= newclusId[nClus]
 
             if nClus == newclusId[nClus]
