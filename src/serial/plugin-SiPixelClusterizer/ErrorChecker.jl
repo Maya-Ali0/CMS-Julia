@@ -13,6 +13,8 @@ module errorChecker
     const DetErrors = Vector{SiPixelRawDataError}
     const Errors = Dict{UInt32, DetErrors}
 
+    export ErrorChecker
+
     """
     ErrorChecker struct
 

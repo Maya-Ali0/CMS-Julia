@@ -4,6 +4,8 @@ using .prefix_scan:block_prefix_scan
 Phase 1 Geometry Constants
 """
 module pixelGPUDetails
+    export make_clusters, get_results
+
     using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
     
     using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA
@@ -644,11 +646,11 @@ module pixelGPUDetails
     end
 
 
-    function make_clusters(is_run_2::Bool , cabling_map::SiPixelFedCablingMapGPU , mod_to_unp::Vector{UInt8} , gains::SiPixelGainForHLTonGPU ,
-                  word_fed::WordFedAppender , errors:: PixelFormatterErrors , word_counter::UInt32 , fed_counter::UInt32 , use_quality_info::Bool,
+    function make_clusters(gpu_algo::SiPixelRawToClusterGPUKernel,is_run_2::Bool , cabling_map::SiPixelFedCablingMapGPU , mod_to_unp::Vector{UInt8} , gains::SiPixelGainForHLTonGPU ,
+                  word_fed::WordFedAppender , errors::PixelFormatterErrors , word_counter::Integer , fed_counter::Integer , use_quality_info::Bool,
                   include_errors::Bool , debug::Bool )
-        printf("decoding %s digis. Max is %i ",word_counter,MAX_FED_WORDS)
-        digis_d = SiPixelDigisSoA(pixelGPUDetails.MAX_FED_WORDS)
+        # @printf("decoding %s digis. Max is %i ",word_counter,MAX_FED_WORDS)
+        digis_d = gpu_algo.digis_d
         if include_errors
             digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors)
         end

@@ -40,6 +40,11 @@ export PixelErrorCompact, PixelFormatterErrors
 export has_quality, SiPixelFedCablingMapGPUWrapper
 export get_cpu_product
 export get_mod_to_unp_all
+export fed_ids
+export ErrorChecker
+export make_clusters
+export get_results
+
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
