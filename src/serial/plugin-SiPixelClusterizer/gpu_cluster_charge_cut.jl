@@ -8,17 +8,15 @@ module gpuClusterCharge
     using Printf
     function cluster_charge_cut(id, adc, moduleStart, nClustersInModule, moduleId, clusterId, numElements)
         charge = fill(0,MAX_NUM_CLUSTERS_PER_MODULES)
-        ok = Vector(undef, MAX_NUM_CLUSTERS_PER_MODULES)
-        newclusId = Vector(undef, MAX_NUM_CLUSTERS_PER_MODULES)
+        ok = fill(0, MAX_NUM_CLUSTERS_PER_MODULES)
+        newclusId = fill(0, MAX_NUM_CLUSTERS_PER_MODULES)
         firstModule = 1
         endModule = moduleStart[1]
-
         for mod ∈ firstModule:endModule
             firstPixel = moduleStart[1 + mod]
             thisModuleId = id[firstPixel]
             @assert thisModuleId < MAX_NUM_MODULES
             @assert thisModuleId == moduleId[mod]
-
             nClus = nClustersInModule[thisModuleId+1]
             if nClus == 0
                 continue
@@ -35,15 +33,15 @@ module gpuClusterCharge
 
             if nClus > MAX_NUM_CLUSTERS_PER_MODULES
                 for i in first:numElements
-                    if id[i] == InvId
+                    if id[i] == INV_ID | id[i] == -INV_ID
                         continue
                     end
                     if id[i] != thisModuleId
                         break
                     end
                     if clusterId[i] >= MAX_NUM_CLUSTERS_PER_MODULES
-                        id[i] = InvId 
-                        clusterId[i] = InvId 
+                        id[i] = INV_ID 
+                        clusterId[i] = INV_ID 
                     end
                 end
                 nClus = MAX_NUM_CLUSTERS_PER_MODULES
@@ -54,7 +52,7 @@ module gpuClusterCharge
             
 
             for i in first:numElements
-                if id[i] == INV_ID 
+                if id[i] == INV_ID | id[i] == -INV_ID 
                     continue
                 end
                 if id[i] != thisModuleId
@@ -67,7 +65,6 @@ module gpuClusterCharge
             for i in 1:nClus
                 newclusId[i] = ok[i] = charge[i] > chargeCut ? 1 : 0
             end
-            
             block_prefix_scan(newclusId, nClus)
             @assert nClus >= newclusId[nClus]
 
@@ -75,7 +72,7 @@ module gpuClusterCharge
                 continue
             end
 
-            nClustersInModule[thisModuleId] =  newclusId[nClus]
+            nClustersInModule[thisModuleId+1] =  newclusId[nClus]
 
             for i in 1:nClus
                 if ok[i] == 0 
