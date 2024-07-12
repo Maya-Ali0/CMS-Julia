@@ -227,7 +227,6 @@ module pixelGPUDetails
         digi_errors_d::SiPixelDigiErrorsSoA
 
         function SiPixelRawToClusterGPUKernel()
-            println(typeof(PixelFormatterErrors()))
             new(SiPixelDigisSoA(Int64(MAX_FED_WORDS)),SiPixelClustersSoA(MAX_NUM_MODULES),SiPixelDigiErrorsSoA(MAX_FED_WORDS,PixelFormatterErrors())) # fix me
         end
     end

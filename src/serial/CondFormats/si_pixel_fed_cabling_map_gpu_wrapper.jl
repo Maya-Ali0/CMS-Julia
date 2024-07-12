@@ -1,5 +1,5 @@
 module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper
-
+    export has_quality, SiPixelFedCablingMapGPUWrapper
 #    include("si_pixel_fed_cabling_map_gpu.jl")
     using ..recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
 

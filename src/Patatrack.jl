@@ -37,6 +37,7 @@ export RangeAndCols, DecodingStructure
 export SiPixelRawToClusterCUDA
 export MAX_NUM_MODULES
 export PixelErrorCompact, PixelFormatterErrors
+export has_quality, SiPixelFedCablingMapGPUWrapper
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")

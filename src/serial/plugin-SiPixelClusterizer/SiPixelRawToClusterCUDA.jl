@@ -6,7 +6,7 @@ using .cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA:SiPixelDigiErrors
 
 using .CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU:SiPixelGainCalibrationForHLTGPU
 
-using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper:SiPixelFedCablingMapGPUWrapper
+using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper
 
 using .condFormatsSiPixelFedIds
 
@@ -37,11 +37,11 @@ mutable struct SiPixelRawToClusterCUDA
 end
 
 
-function produce(event::FedRawDataCollection,self:: SiPixelRawToClusterCUDA, iSetup::EventSetup)
+function produce(self:: SiPixelRawToClusterCUDA,event::FedRawDataCollection, iSetup::EventSetup)
     hgpu_map = get(iSetup,SiPixelFedCablingMapGPUWrapper)   
-    if(hasQuality(hgpuMap) != self._use_quality)
-        error_message = "use_quality of the module ($_use_quality) differs from SiPixelFedCablingMapGPUWrapper. Please fix your configuration."
-        throw(RuntimeError(error_message))
+    if(has_quality(hgpu_map) != self.use_quality)
+        error_message = "use_quality of the module ($self.use_quality) differs from SiPixelFedCablingMapGPUWrapper. Please fix your configuration."
+        error(error_message)
     end
     gpu_map = getCPUProduct(hgpu_map)
     gpu_modules_to_unpack::Vector{UInt8} = getModToUnpAll(hgpu_map)
