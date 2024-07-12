@@ -48,8 +48,8 @@ function readCablingMap(io::IOStream,es::EventSetup)
     offset += size_UInt8 * jump2
 
     cablingMap.size = reinterpret(UInt32, data[offset:offset + 32*size_UInt32 - 1])[1]
-    print(Base.size(data))
-    print(offset)
+    # print(Base.size(data))
+    # print(offset)
     offset += 128
 
     mod_to_unp_def_size = reinterpret(UInt32, data[offset:offset + size_UInt32 - 1])[1]
@@ -76,7 +76,6 @@ function produce(producer::SiPixelFedCablingMapGPUWrapperESProducer, eventSetup:
 
     # Read cablingMap.bin
     cabling_map_file = joinpath(producer.data, "cablingMap.bin")
-
 
     open(cabling_map_file, "r") do io
         readCablingMap(io,eventSetup)

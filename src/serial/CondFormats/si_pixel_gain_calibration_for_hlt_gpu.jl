@@ -6,25 +6,8 @@ This module defines structures and functions related to gain calibration for the
 """
 module CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU
 
-"""
-Struct to hold gain calibration data for HLT (High-Level Trigger) on the GPU.
 
-This struct is currently empty, but it serves as a placeholder for future development where gain calibration 
-data specific to the HLT on GPU will be stored. Gain calibration is essential for correcting the gain variations 
-in the pixel detector, ensuring accurate data readout and processing.
-"""
-mutable struct SiPixelGainForHLTonGPU
-end
 
-"""
-Struct to hold decoding information for SiPixelGainForHLTonGPU.
-
-This struct is currently empty, but it serves as a placeholder for future development where decoding information 
-for the gain calibration data specific to the HLT on GPU will be stored. This is necessary for interpreting and 
-applying the gain calibration data during the data processing steps.
-"""
-struct SiPixelGainForHLTonGPUDecodingStructure
-end
 
 """
 Struct to manage gain calibration data for HLT on the GPU.
@@ -38,13 +21,11 @@ This struct contains the gain calibration data and associated metadata required 
 # Constructor
 Initializes the siPixelGainCalibrationForHLTGPU struct with the provided gain calibration object for HLT on the host and gain data.
 """
-mutable struct SiPixelGainCalibrationForHLTGPU
-    _gain_for_hlt_on_host::SiPixelGainForHLTonGPU
-    _gain_data::Vector{UInt8}
 
-    function SiPixelGainCalibrationForHLTGPU(gain::SiPixelGainForHLTonGPU, gain_data::Vector{UInt8})
-        new(gain, gain_data)
-    end
+using ..condFormatsSiPixelObjectsSiPixelGainForHLTonGPU
+
+struct SiPixelGainCalibrationForHLTGPU
+    _gain_for_hlt_on_host::SiPixelGainForHLTonGPU # gainData is with in the SiPixelGainForHLTonGPU structure
 end
 
 """

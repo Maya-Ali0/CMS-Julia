@@ -32,15 +32,18 @@ export SiPixelGainCalibrationForHLTGPUESProducer
 export produce
 export SiPixelGainForHLTonGPU
 export MAX_SIZE
+export RANGE_COUNT
+export RangeAndCols, DecodingStructure
+export SiPixelRawToClusterCUDA
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu_wrapper.jl")
 include("serial/CondFormats/si_pixel_fed_ids.jl")
-include("serial/CondFormats/si_pixel_gain_calibration_for_hlt_gpu.jl")
 include("serial/CUDACore/cuda_assert.jl")
 include("serial/CondFormats/si_pixel_gain_for_hlt_on_gpu.jl")
+include("serial/CondFormats/si_pixel_gain_calibration_for_hlt_gpu.jl")
 include("serial/CUDACore/cudaCompat.jl")
 include("serial/CUDACore/cudastdAlgorithm.jl")
 include("serial/CUDACore/hist_to_container.jl")

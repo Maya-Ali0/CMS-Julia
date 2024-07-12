@@ -10,46 +10,36 @@ struct SiPixelGainCalibrationForHLTGPUESProducer <: ESProducer
 end
 
 function readGain(io::IOStream,es::EventSetup)
-    data = read(io)
 
-    cablingMap = SiPixelFedCablingMapGPU()
-    offset = 1
-    size_UInt32 = sizeof(UInt32)
-    size_UInt8 = sizeof(UInt8)
-    jump = size_UInt32 * recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU.pixelGPUDetails.MAX_SIZE
-    jump2 = size_UInt8 * recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU.pixelGPUDetails.MAX_SIZE
+    read(io,8) # skip the _v_pedestals pointer
 
-    cablingMap.fed .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.link .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.roc .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.raw_id .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.roc_in_det .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.module_id .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.bad_rocs .= reinterpret(UInt8, data[offset:offset + jump2 - 1])
-    offset += size_UInt8 * jump2
+    range_and_cols = Vector{RangeAndCols}(undef,RANGE_COUNT)
+    read!(io,range_and_cols)
 
-    cablingMap.size = reinterpret(UInt32, data[offset:offset + 32*size_UInt32 - 1])[1]
 
-    nbytes = reinterpret(UInt32, data[offset:offset + size_UInt32 - 1])[1]
-    offset += 4
-    mod_to_unp_default = Vector{UInt8}(undef, mod_to_unp_def_size)
-    jump3 = mod_to_unp_def_size
+    _min_ped = read(io,Float32)
+    _max_ped = read(io,Float32)
+    _min_gain = read(io,Float32)
+    _max_gain = read(io,Float32)
 
-    mod_to_unp_default.= reinterpret(UInt8, data[offset:offset + jump3 - 1])
+    ped_precision = read(io,Float32)
+    gain_precision = read(io,Float32)
 
-    put!(eventSetup,SiPixelGainCalibrationForHLTGPU(gain,gain_data))
+    _number_of_rows_averaged_over = read(io,UInt32)
+    _n_bins_to_use_for_encoding = read(io,UInt32)
+    _dead_flag = read(io,UInt32)
+    _noisy_flag = read(io,UInt32)
+
+    nbytes = read(io,UInt32)
+    println(nbytes)
+    
+
+    size:: UInt32= nbytes//2 # over 2 because we need half the bytes
+    v_pedestals = Vector{DecodingStructure}(undef,size) 
+    read!(io,v_pedestals)
+
+    gain = SiPixelGainForHLTonGPU(v_pedestals,range_and_cols,_min_ped,_max_ped,_min_gain,_max_gain,ped_precision,gain_precision,_number_of_rows_averaged_over,_n_bins_to_use_for_encoding,_dead_flag,_noisy_flag)
+    put!(es,SiPixelGainCalibrationForHLTGPU(gain))
 end
 
 
@@ -58,15 +48,6 @@ function produce(producer::SiPixelGainCalibrationForHLTGPUESProducer, eventSetup
     
     #read gain.bin
     open(gain_file, "r") do io
-
-        buffer = read(io, sizeof(SiPixelGainForHLTonGPU))
-        gain = reinterpret(SiPixelGainForHLTonGPU, buffer)[1]
-        read!(io, gain)
-
-        nbytes = read(io, UInt32)
-        gain_data = Vector{UInt8}(undef, nbytes)
-        read!(io, gain_data)
-
         readGain(io,eventSetup)        
     end
 end

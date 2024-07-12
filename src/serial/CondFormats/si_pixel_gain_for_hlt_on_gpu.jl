@@ -1,10 +1,12 @@
 module condFormatsSiPixelObjectsSiPixelGainForHLTonGPU
 
+export RANGE_COUNT
+
 using ..gpuConfig
 
 using StaticArrays
 
-export SiPixelGainForHLTonGPU
+export SiPixelGainForHLTonGPU, RangeAndCols, DecodingStructure
 
 struct SiPixelGainForHLTonGPUDecodingStructure
     gain::UInt8
@@ -12,25 +14,34 @@ struct SiPixelGainForHLTonGPUDecodingStructure
 end
 
 const DecodingStructure = SiPixelGainForHLTonGPUDecodingStructure
-const Range = Tuple{UInt32, UInt32}
+
+struct RangeAndCols
+    first::UInt32
+    last::UInt32
+    cols::Int32
+end
+
+const RANGE_COUNT = 2000
 
 # copy of SiPixelGainCalibrationForHL
-mutable struct SiPixelGainForHLTonGPU
+struct SiPixelGainForHLTonGPU
+    v_pedestals::Vector{DecodingStructure}
+    
+    range_and_cols::Vector{RangeAndCols}
+    
+
     _min_ped::Float32
     _max_ped::Float32
     _min_gain::Float32
     _max_gain::Float32
 
+    ped_precision::Float32
+    gain_precision::Float32
+
     _number_of_rows_averaged_over::UInt32 # this is 80!!!!
     _n_bins_to_use_for_encoding::UInt32
     _dead_flag::UInt32
     _noisy_flag::UInt32
-
-    ped_precision::Float32
-    gain_precision::Float32
-
-    v_pedestals::DecodingStructure
-    range_and_cols::MVector{2000, Tuple{Range, UInt16}}
 end
 
 @inline function get_ped_and_gain(structure::SiPixelGainForHLTonGPU, module_ind, col, row, is_dead_column_is_noisy_column::MVector{2, Bool})
