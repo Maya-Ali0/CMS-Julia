@@ -31,7 +31,7 @@ function readGain(io::IOStream,es::EventSetup)
     _noisy_flag = read(io,UInt32)
 
     nbytes = read(io,UInt32)
-    println(nbytes)
+    # println(nbytes)
     
 
     size:: UInt32= nbytes//2 # over 2 because we need half the bytes

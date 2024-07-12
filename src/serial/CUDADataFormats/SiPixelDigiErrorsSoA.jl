@@ -28,7 +28,7 @@ module cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
             error_d = Vector{PixelErrorCompact}(undef, maxFedWords)
             fill!(error_d, PixelErrorCompact())
 
-            @assert isempty(data_d)
+            # @assert isempty(error_d)
             @assert length(data_d) == maxFedWords
 
             # Return a new instance of SiPixelDigiErrorsSoA

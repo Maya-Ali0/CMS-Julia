@@ -17,6 +17,10 @@ module DataFormatsSiPixelDigiInterfacePixelErrors
       word::UInt32
       erro_type::UInt8
       fed_id::UInt8
+
+      function PixelErrorCompact()
+        new(zero(UInt32),zero(UInt32),zero(UInt8),zero(UInt8))
+      end
   end
 
   """

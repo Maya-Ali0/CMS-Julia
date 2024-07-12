@@ -7,7 +7,7 @@ This module defines structures and functions related to gain calibration for the
 module CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU
 
 
-
+export get_cpu_product, SiPixelGainCalibrationForHLTGPU
 
 """
 Struct to manage gain calibration data for HLT on the GPU.
