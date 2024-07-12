@@ -47,7 +47,7 @@ function produce(self:: SiPixelRawToClusterCUDA,event::FedRawDataCollection, iSe
     #     error(error_message)
     # end
     gpu_map = get_cpu_product(hgpu_map)
-    gpu_modules_to_unpack::Vector{UInt8} = getModToUnpAll(hgpu_map)
+    gpu_modules_to_unpack::Vector{UInt8} = get_mod_to_unp_all(hgpu_map)
 
     hgains = iSetup[SiPixelGainCalibrationForHLTGPU()]
     gpu_gains = getCPUProduct(hgains)
