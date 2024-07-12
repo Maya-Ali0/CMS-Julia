@@ -48,9 +48,8 @@ function produce(self:: SiPixelRawToClusterCUDA,event::FedRawDataCollection, iSe
     # end
     gpu_map = get_cpu_product(hgpu_map)
     gpu_modules_to_unpack::Vector{UInt8} = get_mod_to_unp_all(hgpu_map)
-
     hgains = get(iSetup,SiPixelGainCalibrationForHLTGPU)
-    gpu_gains = getCPUProduct(hgains)
+    gpu_gains = get_cpu_product(hgains)
     fed_ids::Vector{UInt} = fedIds(iSetup[SiPixelFedIds]) #fedIds
     buffers::FedRawDataCollection = event #fedData
     clear(self.errors)
