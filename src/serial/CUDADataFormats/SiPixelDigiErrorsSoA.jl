@@ -1,8 +1,7 @@
 
 
 module cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
-  include("../DataFormats/PixelErrors.jl")
-  using .DataFormatsSiPixelDigiInterfacePixelErrors: PixelErrorCompact, PixelFormatterErrors
+  using ..DataFormatsSiPixelDigiInterfacePixelErrors
     """
     This module defines the data structure for storing SiPixel digi error data in a 
     format suitable for CUDA operations. It includes structures and functions 
@@ -21,7 +20,7 @@ module cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
         Outputs:
           - A new instance of SiPixelDigiErrorsSoA with allocated data arrays and initialized pointers
         """
-        function SiPixelDigiErrorsSoA(maxFedWords::UInt64, errors::PixelFormatterErrors)
+        function SiPixelDigiErrorsSoA(maxFedWords, errors::PixelFormatterErrors)
             # Allocate memory for the data arrays.
             data_d = Vector{PixelErrorCompact}(undef, maxFedWords)
             fill!(data_d, PixelErrorCompact())  # Zero-initialize

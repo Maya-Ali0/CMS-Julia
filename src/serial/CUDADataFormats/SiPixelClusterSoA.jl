@@ -68,6 +68,8 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
         
         view_d::DeviceConstView             # Device view containing the data pointers
         nClusters_h::UInt32                 # Number of clusters (stored on host)
+
+        
     end
 
     """
@@ -77,7 +79,7 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     Outputs:
     - SiPixelClustersSoA: A new instance with allocated data arrays and initialized device view.
     """
-    function SiPixelClustersSoA(maxClusters::Int)
+    function SiPixelClustersSoA(maxClusters)
         # Allocate memory for the data arrays.
         module_start_d = zeros(UInt32, maxClusters + 1)
         clus_in_module_d = zeros(UInt32, maxClusters)

@@ -35,6 +35,8 @@ export MAX_SIZE
 export RANGE_COUNT
 export RangeAndCols, DecodingStructure
 export SiPixelRawToClusterCUDA
+export MAX_NUM_MODULES
+export PixelErrorCompact, PixelFormatterErrors
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
@@ -50,13 +52,13 @@ include("serial/CUDACore/hist_to_container.jl")
 include("serial/CUDACore/prefix_scan.jl")
 include("serial/CUDADataFormats/gpu_clustering_constants.jl")
 include("serial/CUDADataFormats/SiPixelClusterSoA.jl")
+include("serial/DataFormats/SiPixelRawDataError.jl")
+include("serial/DataFormats/PixelErrors.jl")
 include("serial/CUDADataFormats/SiPixelDigiErrorsSoA.jl")
 include("serial/CUDADataFormats/SiPixelDigisSoA.jl")
 include("serial/DataFormats/data_formats.jl")
 include("serial/DataFormats/fed_header.jl")
 include("serial/DataFormats/fed_trailer.jl")
-include("serial/DataFormats/PixelErrors.jl")
-include("serial/DataFormats/SiPixelRawDataError.jl")
 include("serial/Framework/EDTokens.jl")
 include("serial/Framework/EandES.jl")
 include("serial/Framework/ESProducer.jl")

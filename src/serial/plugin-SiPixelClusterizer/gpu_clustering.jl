@@ -1,5 +1,7 @@
 module gpuClustering
 
+export MAX_NUM_MODULES
+
 using Printf
 include("../CUDADataFormats/gpu_clustering_constants.jl")
 using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants

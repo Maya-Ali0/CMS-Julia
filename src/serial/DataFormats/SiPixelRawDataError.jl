@@ -21,7 +21,11 @@ module DataFormatsSiPixelRawDataError
         error_type::Int
         fed_id::Int
         error_message::String
-        
+
+        function SiPixelRawDataError()
+           new(zero(UInt32),zero(UInt64),zero(Int),zero(Int),"")
+        end
+
         function SiPixelRawDataError(error_word_32::UInt32, error_type::Int, fed_id::Int)
             error_word_32 = error_word_32
             error_word_64 = 0

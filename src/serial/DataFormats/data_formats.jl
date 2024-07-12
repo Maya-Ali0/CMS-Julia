@@ -170,10 +170,5 @@ module dataFormats
             37 => "Error: Invalid dcol/pixel address",
         )[errorType, "Error: Unknown error type"]
     end
-    """
-        PixelFormatterErrors
     
-    A dictionary mapping ints to lists of SiPixelRawDataError objects.
-    """
-    const PixelFormatterErrors = Dict{UInt32, Vector{SiPixelRawDataError}}()
 end # module DataFormats

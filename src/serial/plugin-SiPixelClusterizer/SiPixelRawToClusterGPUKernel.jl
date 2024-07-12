@@ -16,6 +16,8 @@ module pixelGPUDetails
 
     using ..CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU:SiPixelGainForHLTonGPU
 
+    using ..gpuClustering
+
     using Printf
     module pixelConstants
         export LAYER_START_BIT, LADDER_START_BIT, MODULE_START_BIT, PANEL_START_BIT, DISK_START_BIT, BLADE_START_BIT, 
@@ -223,6 +225,11 @@ module pixelGPUDetails
         digis_d::SiPixelDigisSoA
         clusters_d::SiPixelClustersSoA
         digi_errors_d::SiPixelDigiErrorsSoA
+
+        function SiPixelRawToClusterGPUKernel()
+            println(typeof(PixelFormatterErrors()))
+            new(SiPixelDigisSoA(Int64(MAX_FED_WORDS)),SiPixelClustersSoA(MAX_NUM_MODULES),SiPixelDigiErrorsSoA(MAX_FED_WORDS,PixelFormatterErrors())) # fix me
+        end
     end
     
     @inline get_errors(self::SiPixelRawToClusterGPUKernel) = return self.digi_errors_d
@@ -646,7 +653,7 @@ module pixelGPUDetails
         if include_errors
             digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors)
         end
-        clusters_d = SiPixelClustersSoA(gpuClustering.mAX_NUM_MODULES)
+        clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES)
 
         if word_counter != 0 # incase of empty event
             assert(0 == word_counter % 2)

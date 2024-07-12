@@ -1,8 +1,8 @@
 
 
 module DataFormatsSiPixelDigiInterfacePixelErrors
-  include("SiPixelRawDataError.jl")
-  using .DataFormatsSiPixelRawDataError: SiPixelRawDataError 
+  using ..DataFormatsSiPixelRawDataError: SiPixelRawDataError 
+  export PixelErrorCompact, PixelFormatterErrors
   """
   Definition of PixelErrorCompact struct representing compact pixel error information.
 
@@ -26,6 +26,6 @@ module DataFormatsSiPixelDigiInterfacePixelErrors
   Value Type: Vector{Main.DataFormats_SiPixelRawDataError_h.SiPixelRawDataError}
 
   """
-  PixelFormatterErrors = Dict{UInt32, Vector{SiPixelRawDataError}}
+  const PixelFormatterErrors = Dict{UInt32, Vector{SiPixelRawDataError}}
 
 end # module
