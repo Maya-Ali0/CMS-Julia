@@ -17,6 +17,9 @@ using .errorChecker
 using .pixelGPUDetails: SiPixelRawToClusterGPUKernel, WordFedAppender
 
 using .DataFormatsSiPixelDigiInterfacePixelErrors: PixelErrorCompact, PixelFormatterErrors
+
+import .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper.get_cpu_product
+
 mutable struct SiPixelRawToClusterCUDA
     gpu_algo::SiPixelRawToClusterGPUKernel
     word_fed_appender::WordFedAppender

@@ -38,7 +38,7 @@ export SiPixelRawToClusterCUDA
 export MAX_NUM_MODULES
 export PixelErrorCompact, PixelFormatterErrors
 export has_quality, SiPixelFedCablingMapGPUWrapper
-
+export get_cpu_product
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
