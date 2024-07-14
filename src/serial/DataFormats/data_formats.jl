@@ -52,11 +52,9 @@ module dataFormats
         function FedRawData(id::Int32, dataa::Vector{UInt8})
             new(id,dataa)
         end
-
-        
-        function FedRawData(in::FedRawData) # Copy Constructor
-            new(copy(in.data))
-        end
+        # function FedRawData()
+        #     new(0,UInt8[])
+        # end
     end
 
     """
@@ -106,6 +104,7 @@ module dataFormats
         """
         FedRawDataCollection(in::FedRawDataCollection) = new(copy(in.data)) # copy constructor
         FedRawDataCollection(data::Vector{FedRawData}) = new(data)
+        FedRawDataCollection() = new(Vector{FedRawData}(undef,MAX_FED_ID))
     end
 
     """

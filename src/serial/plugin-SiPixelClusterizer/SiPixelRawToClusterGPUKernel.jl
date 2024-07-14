@@ -658,9 +658,9 @@ module pixelGPUDetails
         clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES)
 
         if word_counter != 0 # incase of empty event
-            assert(0 == word_counter % 2)
-            raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),xx(digis_d),yy(digis_d),adc(digis_d),
-            p_digi(digis_d), raw_id_arr(digis_d), module_ind(digis_d), error(digi_errors_d),use_quality_info,include_errors,debug)
+           @assert(0 == word_counter % 2)
+            raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
+            digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, digi_errors_d.error_d,use_quality_info,include_errors,debug)
         end # end for raw to digi
     end
 

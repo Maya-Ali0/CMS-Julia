@@ -22,8 +22,11 @@ See also [readall](@ref).
 """
 function readevent(io::IOStream)
     nfeds = read(io, Int32)
-    collectionRaw = [ readfed(io) for i in 1:nfeds]
-    collection::FedRawDataCollection = FedRawDataCollection(collectionRaw)
+    collection::FedRawDataCollection = FedRawDataCollection()
+    for i ∈ 1:nfeds
+        raw_data = readfed(io)
+        collection.data[raw_data.fedid] = raw_data
+    end
     return collection
 end
 
@@ -36,6 +39,7 @@ function readall(io::IOStream)
     events::Vector{FedRawDataCollection} = Vector{FedRawDataCollection}()
     while !eof(io)
         push!(events, readevent(io))
+        break
     end
     return events
 end

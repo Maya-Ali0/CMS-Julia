@@ -63,63 +63,66 @@ function produce(self:: SiPixelRawToClusterCUDA,event::FedRawDataCollection, iSe
     fed_counter:: Int = 0 
     errors_in_event:: Bool = false 
     error_check = ErrorChecker()
+    #open("testingDigis.txt","w") do file
 
-    for fed_id ∈ fed_ids
-
-        if(fed_id == 40) # Skipping Pilot Blade Data
-            continue
-        end
-
-        @assert(fed_id >= 1200)
-        fed_counter += 1
-        
-        raw_data = FedData(buffers,fed_id - 1200 + 1) 
-
-        # get event data for the following feds
-        # Im using the fedId in fedIds to get the rawData of that fedId which is in buffers the FedRawDataCollection
-
-        n_words = length(raw_data) ÷ sizeof(Int64)
-        if(n_words == 0)
-            continue
-        end
-        trailer_byte_start = length(raw_data) - 7
-        trailer::Vector{UInt8} = data(raw_data)[trailer_byte_start:trailer_byte_start+7] # The last 8 bytes
-
-        #FIXME
-        # if (!check_crc(error_check,errors_in_event, fed_id, trailer, self.errors)) 
-        #     continue
-        # end 
-        header_byte_start = 1 
-        header::Vector{UInt8} = data(raw_data)[header_byte_start:header_byte_start+7]
-
-        moreHeaders = true
-        while moreHeaders
-            headerStatus =  check_header(error_check,errors_in_event, fed_id, header, self.errors)
-            moreHeaders = headerStatus
-            if moreHeaders
-                header_byte_start += 8
-                header = data(rawData)[header_byte_start:header_byte_start+7]
+        for fed_id ∈ fed_ids
+            if(fed_id == 40) # Skipping Pilot Blade Data
+                continue
             end
-        end
+            # write(file,"Fed ID : ")
+            # write(file,string(fed_id)," ")
+            @assert(fed_id >= 1200)
+            fed_counter += 1
+            raw_data = FedData(buffers,fed_id) 
+            # write(file,string(raw_data.fedid)," ")
+            # write(file,string(length(raw_data.data)))
+            # write(file,"\n")
+            # get event data for the following feds
+            # Im using the fedId in fedIds to get the rawData of that fedId which is in buffers the FedRawDataCollection
 
-        moreTrailer = true
-        while (moreTrailer)
-            trailerStatus = check_trailer(error_check,errors_in_event, fed_id, n_words, trailer, self.errors)
-            moreTrailer = trailerStatus
-            if moreTrailer
-                trailer_byte_start -= 8
-                trailer = data(rawData)[trailer_byte_start:trailer_byte_start+7]
+            n_words = length(raw_data) ÷ sizeof(Int64)
+            if(n_words == 0)
+                continue
             end
+            trailer_byte_start = length(raw_data) - 7
+            trailer::Vector{UInt8} = data(raw_data)[trailer_byte_start:trailer_byte_start+7] # The last 8 bytes
+
+            #FIXME
+            # if (!check_crc(error_check,errors_in_event, fed_id, trailer, self.errors)) 
+            #     continue
+            # end 
+            header_byte_start = 1 
+            header::Vector{UInt8} = data(raw_data)[header_byte_start:header_byte_start+7]
+
+            moreHeaders = true
+            while moreHeaders
+                headerStatus =  check_header(error_check,errors_in_event, fed_id, header, self.errors)
+                moreHeaders = headerStatus
+                if moreHeaders
+                    header_byte_start += 8
+                    header = data(rawData)[header_byte_start:header_byte_start+7]
+                end
+            end
+
+            moreTrailer = true
+            while (moreTrailer)
+                trailerStatus = check_trailer(error_check,errors_in_event, fed_id, n_words, trailer, self.errors)
+                moreTrailer = trailerStatus
+                if moreTrailer
+                    trailer_byte_start -= 8
+                    trailer = data(rawData)[trailer_byte_start:trailer_byte_start+7]
+                end
+            end 
+            
+            begin_word32_index = header_byte_start + 8
+            end_word32_index = trailer_byte_start - 1 
+            @assert((end_word32_index - begin_word32_index + 1) % 4 == 0)
+            num_word32 = (end_word32_index - begin_word32_index + 1) ÷ sizeof(UInt32)
+            @assert (0 == num_word32 % 2) # Number of 32 bit words should be a multiple of 2
+            initialize_word_fed(self.word_fed_appender,fed_id,data(raw_data)[begin_word32_index:end_word32_index],word_counter_gpu)
+            word_counter_gpu += num_word32
         end 
-        
-        begin_word32_index = header_byte_start + 8
-        end_word32_index = trailer_byte_start - 1 
-        @assert((end_word32_index - begin_word32_index + 1) % 4 == 0)
-        num_word32 = (end_word32_index - begin_word32_index + 1) ÷ sizeof(UInt32)
-        @assert (0 == num_word32 % 2) # Number of 32 bit words should be a multiple of 2
-        initialize_word_fed(self.word_fed_appender,fed_id,data(raw_data)[begin_word32_index:end_word32_index],word_counter_gpu)
-        word_counter_gpu += num_word32
-    end 
+    # end
     make_clusters(self.gpu_algo,self.is_run2,
                         gpu_map, 
                         gpu_modules_to_unpack, 
