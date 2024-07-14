@@ -12,7 +12,7 @@ module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
 
 # Export the siPixelFedCablingMapGPU structure for use in other modules
 export SiPixelFedCablingMapGPU
-
+export MAX_LINK , MAX_ROC
 """
 Module containing constants related to Pixel GPU details.
 
@@ -24,7 +24,7 @@ Module containing constants related to Pixel GPU details.
 - MAX_SIZE_BYTE_BOOL: Maximum size in bytes for boolean arrays.
 """
 module pixelGPUDetails
-    export MAX_SIZE , MAX_FED , MAX_ROC , MAX_SIZE, MAX_SIZE_BYTE_BOOL
+    export MAX_SIZE , MAX_FED , MAX_ROC , MAX_SIZE, MAX_SIZE_BYTE_BOOL, MAX_LINK
     # Maximum number of FEDs for phase 1; not all are necessarily used
     const MAX_FED::UInt32 = 150
     # Maximum number of links/channels for Phase 1

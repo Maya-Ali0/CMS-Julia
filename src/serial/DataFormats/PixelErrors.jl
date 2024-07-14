@@ -21,6 +21,9 @@ module DataFormatsSiPixelDigiInterfacePixelErrors
       function PixelErrorCompact()
         new(zero(UInt32),zero(UInt32),zero(UInt8),zero(UInt8))
       end
+      function PixelErrorCompact(raw_id::UInt32,word::UInt32,erro_type::UInt8,fed_id::UInt8)
+        new(raw_id,word,erro_type,fed_id)
+      end
   end
 
   """
