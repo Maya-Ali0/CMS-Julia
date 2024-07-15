@@ -11,7 +11,7 @@ module fedTrailer
 
 
 
-    export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT, FED_EVSZ_EXTRACT, FED_CRCS_EXTRACT, FED_STAT_EXTRACT, FED_TTSI_EXTRACT, FED_MORE_TRAILERS_EXTRACT, FED_CRC_MODIFIED_EXTRACT, FED_SLINK_ERROR_EXTRACT, FED_WRONG_FEDID_EXTRACT
+    export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT, FED_EVSZ_EXTRACT, FED_CRCS_EXTRACT, FED_STAT_EXTRACT, FED_TTSI_EXTRACT, FED_MORE_TRAILERS_EXTRACT, FED_CRC_MODIFIED_EXTRACT, FED_SLINK_ERROR_EXTRACT, FED_WRONG_FEDID_EXTRACT, FedTrailer, check, fragment_length, more_trailers
 
 
     struct Fedt_t
@@ -182,34 +182,34 @@ module fedTrailer
         length::UInt32
     end
     function FedTrailer(trailer::Vector{UInt8})
-        cons_check::UInt32 = reinterpret(UInt32, trailer[1:4])
-        event_size::UInt32 = reinterpret(UInt32, trailer[5:8])
-        trailer_t = Fedt_t(consCheck,eventSize)
+        cons_check::UInt32 = reinterpret(UInt32, trailer[1:4])[1]
+        event_size::UInt32 = reinterpret(UInt32, trailer[5:8])[1]
+        trailer_t = Fedt_t(cons_check,event_size)
         FedTrailer(trailer_t,8)
     end
     """
     Functions for extracting fields
     """
-    fragment_length(self::FedTrailer)::UInt32 = FED_EVSZ_EXTRACT(self.theTrailer.eventsize)
+    fragment_length(self::FedTrailer)::UInt32 = FED_EVSZ_EXTRACT(self.theTrailer.event_size)
 
-    crc(self::FedTrailer)::UInt16 = FED_CRCS_EXTRACT(self.theTrailer.conscheck)
+    crc(self::FedTrailer)::UInt16 = FED_CRCS_EXTRACT(self.theTrailer.cons_check)
 
-    evt_status(self::FedTrailer)::UInt8 = FED_STAT_EXTRACT(self.theTrailer.conscheck)
+    evt_status(self::FedTrailer)::UInt8 = FED_STAT_EXTRACT(self.theTrailer.cons_check)
 
-    tts_bits(self::FedTrailer)::UInt8 = FED_TTSI_EXTRACT(self.theTrailer.conscheck)
+    tts_bits(self::FedTrailer)::UInt8 = FED_TTSI_EXTRACT(self.theTrailer.cons_check)
 
-    more_trailers(self::FedTrailer)::Bool = FED_MORE_TRAILERS_EXTRACT(self.theTrailer.conscheck) != 0
+    more_trailers(self::FedTrailer)::Bool = (FED_MORE_TRAILERS_EXTRACT(self.theTrailer.cons_check) != 0)
 
-    crc_modified(self::FedTrailer)::Bool = FED_CRC_MODIFIED_EXTRACT(self.theTrailer.conscheck) != 0
+    crc_modified(self::FedTrailer)::Bool = FED_CRC_MODIFIED_EXTRACT(self.theTrailer.cons_check) != 0
 
-    slink_error(self::FedTrailer)::Bool = FED_SLINK_ERROR_EXTRACT(self.theTrailer.conscheck) != 0
+    slink_error(self::FedTrailer)::Bool = FED_SLINK_ERROR_EXTRACT(self.theTrailer.cons_check) != 0
 
-    wrong_fedid(self::FedTrailer)::Bool = FED_WRONG_FEDID_EXTRACT(self.theTrailer.conscheck) != 0
+    wrong_fedid(self::FedTrailer)::Bool = FED_WRONG_FEDID_EXTRACT(self.theTrailer.cons_check) != 0
 
-    cons_check(self::FedTrailer)::UInt32 = self.theTrailer.conscheck
+    cons_check(self::FedTrailer)::UInt32 = self.theTrailer.cons_check
 
     """
     Checker to check whether it is a trailer or not
     """
-    check(self::FedTrailer)::Bool = FED_TCTRLID_EXTRACT(self.theTrailer.eventsize) == FED_SLINK_END_MARKER
+    check(self::FedTrailer)::Bool = FED_TCTRLID_EXTRACT(self.theTrailer.event_size) == FED_SLINK_END_MARKER
 end # module

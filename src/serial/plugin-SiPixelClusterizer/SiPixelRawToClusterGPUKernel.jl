@@ -4,7 +4,7 @@ using .prefix_scan:block_prefix_scan
 Phase 1 Geometry Constants
 """
 module pixelGPUDetails
-    export make_clusters, get_results
+    export make_clusters, get_results, initialize_word_fed
 
     using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
     
@@ -14,12 +14,13 @@ module pixelGPUDetails
 
     using ..recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU:SiPixelFedCablingMapGPU
 
-    using ..DataFormatsSiPixelDigiInterfacePixelErrors: PixelErrorCompact, PixelFormatterErrors
+    using ..DataFormatsSiPixelDigiInterfacePixelErrors
 
     using ..CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU:SiPixelGainForHLTonGPU
 
     using ..gpuClustering
 
+    using ..recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
     using Printf
     module pixelConstants
         export LAYER_START_BIT, LADDER_START_BIT, MODULE_START_BIT, PANEL_START_BIT, DISK_START_BIT, BLADE_START_BIT, 
@@ -27,7 +28,7 @@ module pixelGPUDetails
             LINK_BITS, ROC_BITS, DCOL_BITS, PXID_BITS, ADC_BITS, LINK_BITS_L1, ROC_BITS_L1, COL_BITS_L1, ROW_BITS_L1, OMIT_ERR_BITS,
             MAX_ROC_INDEX, NUM_ROWS_IN_ROC, NUM_COL_IN_ROC, MAX_WORD, ADC_SHIFT, PXID_SHIFT, DCOL_SHIFT, ROC_SHIFT, LINK_SHIFT,
             ROW_SHIFT, COL_SHIFT, OMIT_ERR_SHIFT, LINK_MASK, ROC_MASK, COL_MASK, ROW_MASK, DCOL_MASK, PXID_MASK, ADC_MASK,
-            ERROR_MASK, OMIT_ERR_MASK, MAX_FED, MAX_LINK, MAX_FED_WORDS
+            ERROR_MASK, OMIT_ERR_MASK, MAX_FED, MAX_FED_WORDS, initialize_word_fed
         const LAYER_START_BIT::UInt32 = 20 # 4 layers
         const LADDER_START_BIT::UInt32 = 12 # 148 ladders
         const MODULE_START_BIT::UInt32 = 2 # 1856 silicon modules each with 160 x 416 pixels connected to 16 ReadOut Chips (ROC) Used to determine on which side of the z-axis the pixel is on
@@ -61,31 +62,31 @@ module pixelGPUDetails
         [  6 bits  | 5 bits | 6 bits |  7 bits  | 8 bits  ]
         [  Link    |  ROC   |  COL   |  ROW     |   ADC   ]
         """
-        const LINK_BITS_L1::UInt32 = 6
-        const ROC_BITS_L1::UInt32 = 5
-        const COL_BITS_L1::UInt32 = 6
-        const ROW_BITS_L1::UInt32 = 7
-        const OMIT_ERR_BITS::UInt32 = 1 
+        const LINK_BITS_L1 = 6
+        const ROC_BITS_L1 = 5
+        const COL_BITS_L1 = 6
+        const ROW_BITS_L1 = 7
+        const OMIT_ERR_BITS = 1 
         """
         Each ROC is an 80x52 pixel unit cell 
         They are grouping columns by 2 : 26 DCOL
         """
-        const MAX_ROC_INDEX::UInt32 = 8 
-        const NUM_ROWS_IN_ROC::UInt32 = 80 
-        const NUM_COL_IN_ROC::UInt32 = 52 
+        const MAX_ROC_INDEX = 8 
+        const NUM_ROWS_IN_ROC = 80 
+        const NUM_COL_IN_ROC = 52 
 
-        const MAX_WORD::UInt32 = 2000 # maxword in what ?
+        const MAX_WORD = 2000 # maxword in what ?
 
-        const ADC_SHIFT::UInt32 = 0
-        const PXID_SHIFT::UInt32 = ADC_SHIFT + ADC_BITS
-        const DCOL_SHIFT::UInt32 = PXID_SHIFT + PXID_BITS
-        const ROC_SHIFT::UInt32 = DCOL_SHIFT + DCOL_BITS
-        const LINK_SHIFT::UInt32 = ROC_SHIFT + ROC_BITS
+        const ADC_SHIFT = 0
+        const PXID_SHIFT = ADC_SHIFT + ADC_BITS
+        const DCOL_SHIFT = PXID_SHIFT + PXID_BITS
+        const ROC_SHIFT = DCOL_SHIFT + DCOL_BITS
+        const LINK_SHIFT = ROC_SHIFT + ROC_BITS
         """
         Special For Layer 1 ROC
         """
         const ROW_SHIFT::UInt32 = ADC_SHIFT + ADC_BITS
-        const COL_shift::UInt32 = ROW_SHIFT + ROW_BITS_L1
+        const COL_SHIFT::UInt32 = ROW_SHIFT + ROW_BITS_L1
         const OMIT_ERR_shift::UInt32 = 20 # ?
 
         const LINK_MASK::UInt32 = ~(~UInt32(0) << LINK_BITS_L1)
@@ -112,9 +113,9 @@ module pixelGPUDetails
     Pixel Struct to store local coordinates inside ROC or global coordinates after mapping the local coordinates into its global coordinates within
     the module
     """
-    struct Pixel
-        row::UInt32
-        col::UInt32
+    mutable struct Pixel
+        row::Integer
+        col::Integer
     end
     """
     Packing struct used to pack a digi into a 32 bit word which contains information about the global coordinates of the pixel within the module:
@@ -166,7 +167,7 @@ module pixelGPUDetails
     """
     default outer constructor 
     """
-    Packing() = Packing(11,11,0,10)
+    Packing() = Packing(UInt32(11),UInt32(11),UInt32(0),UInt32(10))
 
     """
     returns 32 bit word containing the packed digi
@@ -174,7 +175,7 @@ module pixelGPUDetails
     @inline function pack(row::UInt32,col::UInt32,adc::UInt32)::UInt32
         the_packing::Packing = Packing()
         adc = min(adc,the_packing.max_adc)
-        return (row << the_packing.ROW_SHIFT) | (col << the_packing.column_shift) | (adc << the_packing.ADC_SHIFT);
+        return (row << the_packing.row_shift) | (col << the_packing.column_shift) | (adc << the_packing.adc_shift);
     end
     """
     pixel packing without adc
@@ -208,14 +209,15 @@ module pixelGPUDetails
         Every Consecutive 4 bytes are reinterpreted as one word UInt32
         the fed_ids array is filled with the fed_id value in the range ceiling((word_counter + 1) / 2) up to (wod_counter + length) ÷ 2
     """
-    function initialize_word_fed(word_fed_appender::WordFedAppender, fed_id::Int , word_counter_gpu::UInt , src::Vector{UInt8} , length::UInt)
-        for index ∈ word_counter_gpu+1:word_counter_gpu + length
+    function initialize_word_fed(word_fed_appender::WordFedAppender, fed_id::Integer , src::Vector{UInt8}, word_counter_gpu::Integer)
+        len = length(src) ÷ 4
+        for index ∈ (word_counter_gpu+1):(word_counter_gpu + len)
             counter = index-word_counter_gpu
             start_index_byte = 4*(counter-1) + 1
             word_32::Vector{UInt8} = src[start_index_byte:start_index_byte+3]
             get_word(word_fed_appender)[index] = reinterpret(UInt32,word_32)[1]
         end
-        get_fed_id(word_fed_appender)[(cld((word_counter_gpu+1),2):(word_counter_gpu + length) ÷ 2)] .= fed_id
+        get_fed_id(word_fed_appender)[(cld((word_counter_gpu+1),2):(word_counter_gpu + len) ÷ 2)] .= (fed_id - 1200)
     end
 
 
@@ -343,7 +345,7 @@ module pixelGPUDetails
         return global_pixel
     end
 
-    function conversion_error(fed_id::UInt8, status::UInt8, debug::Bool = false)::UInt8
+    function conversion_error(fed_id::Integer, status::Integer, debug::Bool = false)::Integer
         error_type::UInt8 = 0
     
         if debug
@@ -383,7 +385,7 @@ module pixelGPUDetails
     Checkers that check the range of the local row and column of a pixel
     """
     roc_row_col_is_valid(roc_row, roc_col)::Bool = (roc_row < NUM_ROWS_IN_ROC) & (roc_col < NUM_COL_IN_ROC)
-    dcol_is_valid(dcol::UInt32,px_id::UInt32) = (dcol < 26) & (2 <= pxid) & (pxid < 162)
+    dcol_is_valid(dcol,px_id) = (dcol < 26) & (2 <= px_id) & (px_id < 162)
 
     function check_roc(error_word::UInt32, fed_id::UInt8, link::UInt32, cabling_map::SiPixelFedCablingMapGPU, debug::Bool = false)::UInt8
 
@@ -528,13 +530,13 @@ module pixelGPUDetails
     end
 
 
-    function raw_to_digi_kernal(cabling_map::SiPixelFedCablingMapGPU , mod_to_unp :: Vector{UInt8} , word_counter::UInt32 , 
+    function raw_to_digi_kernal(cabling_map::SiPixelFedCablingMapGPU , mod_to_unp :: Vector{UInt8} , word_counter::Integer, 
                                 word::Vector{UInt32} , fed_ids::Vector{UInt8} , xx::Vector{UInt16} , yy::Vector{UInt16} ,
                                 adc::Vector{UInt16} , p_digi::Vector{UInt32} , raw_id_arr::Vector{UInt32} , module_id::Vector{UInt16},
                                 err::Vector{PixelErrorCompact} , use_quality_info::Bool , include_errors::Bool , debug::Bool)
         first::UInt32 = 1
         n_end = word_counter
-        
+        open("ycoordinates.txt","w") do file
         for i_loop ∈ first:n_end
             g_index = i_loop
             xx[g_index] = 0 
@@ -544,8 +546,8 @@ module pixelGPUDetails
             fed_id::UInt8 = fed_ids[cld(g_index,2)] # make sure to add +1200
             
             # initialize (too many continue below)
-            pdigi[g_index] = 0 
-            row_id_arr[g_index] = 0 
+            p_digi[g_index] = 0 
+            raw_id_arr[g_index] = 0 
             module_id[g_index] = 9999
 
             ww::UInt32 = word[g_index]
@@ -570,7 +572,7 @@ module pixelGPUDetails
             end
 
             raw_id::UInt32 = det_id.raw_id
-            roc_in_det_unit = det_id.roc_in_det
+            roc_id_in_det_unit = det_id.roc_in_det
             barrel = is_barrel(raw_id)
 
             index::UInt32 = fed_id * MAX_LINK * MAX_ROC + (link - 1) * MAX_ROC + roc
@@ -589,18 +591,17 @@ module pixelGPUDetails
 
             layer::UInt32 = barrel ? ((raw_id >> LAYER_START_BIT) & LAYER_MASK) : 0 
             the_module::UInt32 = barrel ? ((raw_id >> MODULE_START_BIT) & MODULE_MASK) : 0
-            side = barrel ? ((the_module < 5) ? -1 : 1) : ((panel == 1) ? -1 : 1)
             panel = barrel ? 0 : (raw_id >> PANEL_START_BIT) & PANEL_MASK
-            local_pixel::Pixel
-            row::UInt32
-            col::UInt32
-            error::UInt8
+            side = barrel ? ((the_module < 5) ? -1 : 1) : ((panel == 1) ? -1 : 1)
+            local_pixel::Pixel = Pixel(0,0)
+            row::Integer = 0
+            col::Integer = 0 
+            error::UInt8 = 0 
             if layer == 1 
                 col = (ww >> COL_SHIFT) & COL_MASK
                 row = (ww >> ROW_SHIFT) & ROW_MASK
                 local_pixel.row = row 
                 local_pixel.col = col
-
                 if include_errors
                     if ! roc_row_col_is_valid(row,col)
                         error = conversion_error(fed_id,3,debug) # use the device function and fill the arrays
@@ -613,11 +614,11 @@ module pixelGPUDetails
                 end
             else
                 # Conversion Rules for dcol and px_id
-                dcol::UInt32 = (ww >> DCOL_SHIFT) & DCOL_MASK
+                dcol::Int32 = (ww >> DCOL_SHIFT) & DCOL_MASK
                 """
                 px_id range is from 2 to 161
                 """
-                px_id::UInt32 = (ww >> PXID_SHIFT) & PXID_MASK
+                px_id::Int32 = (ww >> PXID_SHIFT) & PXID_MASK
                 """
                 I think in order for this to be consistent. The pixel_ids are numbered from 2 to 161 from the bottom of the strip (160x2)
                 """
@@ -635,13 +636,16 @@ module pixelGPUDetails
                     continue 
                 end
             end
-                global_pix::Pixel = frame_conversion(barrel,side,layer,roc_id_in_det_unit, local_pix)
+            
+                global_pix::Pixel = frame_conversion(barrel,side,layer,roc_id_in_det_unit, local_pixel)
                 xx[g_index] = global_pix.row
                 yy[g_index] = global_pix.col
+                write(file,string(yy[g_index]),'\n')
                 adc[g_index] = get_adc(ww)
-                p_digi[g_index] = pack(global_pix.row,global_pix.col,adc[g_index])
+                p_digi[g_index] = pack(global_pix.row,global_pix.col,UInt32(adc[g_index]))
                 module_id[g_index] = det_id.module_id
                 raw_id_arr[g_index] = raw_id
+        end
         end
     end
 
@@ -649,7 +653,7 @@ module pixelGPUDetails
     function make_clusters(gpu_algo::SiPixelRawToClusterGPUKernel,is_run_2::Bool , cabling_map::SiPixelFedCablingMapGPU , mod_to_unp::Vector{UInt8} , gains::SiPixelGainForHLTonGPU ,
                   word_fed::WordFedAppender , errors::PixelFormatterErrors , word_counter::Integer , fed_counter::Integer , use_quality_info::Bool,
                   include_errors::Bool , debug::Bool )
-        # @printf("decoding %s digis. Max is %i ",word_counter,MAX_FED_WORDS)
+        @printf("decoding %s digis. Max is %i ",word_counter,MAX_FED_WORDS)
         digis_d = gpu_algo.digis_d
         if include_errors
             digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors)
@@ -657,9 +661,9 @@ module pixelGPUDetails
         clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES)
 
         if word_counter != 0 # incase of empty event
-            assert(0 == word_counter % 2)
-            raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),xx(digis_d),yy(digis_d),adc(digis_d),
-            p_digi(digis_d), raw_id_arr(digis_d), module_ind(digis_d), error(digi_errors_d),use_quality_info,include_errors,debug)
+           @assert(0 == word_counter % 2)
+            raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
+            digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, digi_errors_d.error_d,use_quality_info,include_errors,debug)
         end # end for raw to digi
     end
 

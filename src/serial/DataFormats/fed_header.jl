@@ -11,7 +11,8 @@ This module provides constants and functions to extract various fields from the 
 """
 
 module fedHeader
-   
+
+    export FedHeader, check
 
     struct Fedh_t
         source_id::UInt32 # The Source Identifier
@@ -160,24 +161,24 @@ module fedHeader
         length::UInt32
     end
     function FedHeader(header::Vector{UInt8}) 
-        source_id::UInt32 = reinterpret(UInt32,header[1:4]) 
-        event_id::UInt32 =  reinterpret(UInt32,header[5:8])
-        header = fedh_t(sourceid,eventid)
+        source_id::UInt32 = reinterpret(UInt32,header[1:4])[1]
+        event_id::UInt32 =  reinterpret(UInt32,header[5:8])[1]
+        header = Fedh_t(source_id,event_id)
         FedHeader(header,8) # The size of a FEDHeader is 8 bytes
     end
     """
     Functions for extracting fields
     """
-    trigger_type(self::FedHeader)::UInt8 = FED_EVTY_EXTRACT(self.theHeader.eventid)
-    lvl1_id(self::FedHeader)::UInt32 = FED_LVL1_EXTRACT(self.theHeader.eventid)
-    bx_id(self::FedHeader)::UInt16 = FED_BXID_EXTRACT(self.theHeader.sourceid)
-    source_id(self::FedHeader)::UInt16 = FED_SOID_EXTRACT(self.theHeader.sourceid)
-    version(self::FedHeader)::Uint8 = FED_VERSION_EXTRACT(self.theHeader.sourceid)
-    more_headers(self::FedHeader)::Bool = FED_MORE_HEADERS_EXTRACT(self.theHeader.sourceid) != 0
+    trigger_type(self::FedHeader)::UInt8 = FED_EVTY_EXTRACT(self.theHeader.event_id)
+    lvl1_id(self::FedHeader)::UInt32 = FED_LVL1_EXTRACT(self.theHeader.event_id)
+    bx_id(self::FedHeader)::UInt16 = FED_BXID_EXTRACT(self.theHeader.source_id)
+    source_id(self::FedHeader)::UInt16 = FED_SOID_EXTRACT(self.theHeader.source_id)
+    version(self::FedHeader)::Uint8 = FED_VERSION_EXTRACT(self.theHeader.source_id)
+    more_headers(self::FedHeader)::Bool = FED_MORE_HEADERS_EXTRACT(self.theHeader.source_id) != 0
     
     """
     Checker to check whether it is a header or not
     """
-    check(self::FedHeader)::Bool = FED_HCTRLID_EXTRACT(self.theHeader.eventid) == FED_SLINK_START_MARKER
+    check(self::FedHeader)::Bool = FED_HCTRLID_EXTRACT(self.theHeader.event_id) == FED_SLINK_START_MARKER
     
 end

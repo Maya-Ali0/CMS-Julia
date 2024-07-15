@@ -1,9 +1,6 @@
 
 
-function f()
-    if(true)
-        x::UInt64 = 1
-    else
-        x::UInt64 = 1
-    end
-end
+# Output in a txt file
+# opening file with .txt extension and in write mode
+ 
+

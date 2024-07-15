@@ -44,7 +44,15 @@ export fed_ids
 export ErrorChecker
 export make_clusters
 export get_results
-
+export FedData
+export data
+export check_crc
+export FedHeader
+export FedTrailer
+export check
+export check_trailer
+export fragment_length, more_trailers
+export initialize_word_fed
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
