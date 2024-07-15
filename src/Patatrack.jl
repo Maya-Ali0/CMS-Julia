@@ -53,6 +53,7 @@ export check
 export check_trailer
 export fragment_length, more_trailers
 export initialize_word_fed
+export calib_digis
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")

@@ -1,6 +1,7 @@
 module CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
 
 module pixelGPUConstants
+export MAX_NUM_MODULES
     INV_ID::UInt16 = 9999 # must be > MaxNumModules
     MAX_NUM_CLUSTERS_PER_MODULES::Int32 = 1024
     MAX_NUM_CLUSTERS_PER_MODULES::Int32 = 1024
@@ -12,5 +13,7 @@ module pixelGPUConstants
         const MAX_NUMBER_OF_HITS::UInt32 = 48 * 1024 # data at pileup 50 has 18300 +/- 3500 hits; 40000 is around 6 sigma away
     end
 end # module pixelGPUConstants
+using .pixelGPUConstants
+export MAX_NUM_MODULES
 
 end # module CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants

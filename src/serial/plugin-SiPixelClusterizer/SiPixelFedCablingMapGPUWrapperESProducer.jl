@@ -56,7 +56,7 @@ function produce(producer::SiPixelFedCablingMapGPUWrapperESProducer, eventSetup:
 
     # Read cablingMap.bin
     cabling_map_file = joinpath(producer.data, "cablingMap.bin")
-
+    
     open(cabling_map_file, "r") do io
         readCablingMap(io,eventSetup)
     end

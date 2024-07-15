@@ -1,5 +1,6 @@
 module recoLocalTrackerSiPixelClusterizerPluginsGPUCalibPixel
 
+
 module gpuCalibPixel
 
 using ...condFormatsSiPixelObjectsSiPixelGainForHLTonGPU: SiPixelGainForHLTonGPU, get_ped_and_gain
@@ -7,6 +8,9 @@ using ...condFormatsSiPixelObjectsSiPixelGainForHLTonGPU: SiPixelGainForHLTonGPU
 using ...gpuConfig
 
 using ...CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
+using StaticArrays
+
+export calib_digis
 
 # using Pkg
 # Pkg.add("StaticArrays")
@@ -20,16 +24,16 @@ const v_calto_electron_gain_L1::Float32 = 50       # L1:   49.6 +- 2.6
 const v_calto_electron_offset::Float32 = -60       # L2-4: -60 +- 130
 const v_calto_electron_offset_L1::Float32 = -670   # L1: -670 +- 200
 
-function calib_digis(is_run_2::Bool, id::Vector{UInt16}, x::Vector{UInt16}, y::Vector{UInt16}, adc::Vector{UInt16}, ped::SiPixelGainForHLTonGPU, num_elements::Int32, module_start::Vector{UInt32}, n_clusters_in_module::Vector{UInt32}, clus_module_start::Vector{UInt32})
-    first = 0
+function calib_digis(is_run_2::Bool, id::Vector{UInt16}, x::Vector{UInt16}, y::Vector{UInt16}, adc::Vector{UInt16}, ped::SiPixelGainForHLTonGPU, num_elements::Integer, module_start::Vector{UInt32}, n_clusters_in_module::Vector{UInt32}, clus_module_start::Vector{UInt32})
+    first = 1
     
     # zero for next kernels
-    if first == 0
-        clus_module_start[0] = 0
-        module_start[0] = 0
+    if first == 1
+        clus_module_start[1] = 0
+        module_start[1] = 0
     end
 
-    for i in (first + 1):gpuClustering.MAX_NUM_MODULES
+    for i in (first + 1):MAX_NUM_MODULES
         n_clusters_in_module[i] = 0
     end
 
@@ -62,5 +66,8 @@ function calib_digis(is_run_2::Bool, id::Vector{UInt16}, x::Vector{UInt16}, y::V
 end
 
 end # module gpuCalibPixel
+
+using .gpuCalibPixel
+export calib_digis
 
 end # module recoLocalTrackerSiPixelClusterizerPluginsGPUCalibPixel
