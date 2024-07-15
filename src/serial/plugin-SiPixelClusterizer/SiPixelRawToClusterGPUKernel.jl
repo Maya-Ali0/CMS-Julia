@@ -21,6 +21,8 @@ module pixelGPUDetails
     using ..gpuClustering
 
     using ..recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
+
+    using ..recoLocalTrackerSiPixelClusterizerPluginsGPUCalibPixel
     using Printf
     module pixelConstants
         export LAYER_START_BIT, LADDER_START_BIT, MODULE_START_BIT, PANEL_START_BIT, DISK_START_BIT, BLADE_START_BIT, 
@@ -259,7 +261,7 @@ module pixelGPUDetails
     given as inputs the fed, link, and roc
     """
     function get_raw_id(cabling_map::SiPixelFedCablingMapGPU , fed::UInt8 , link::UInt32 , roc::UInt32)::DetIdGPU
-        index::UInt32 = fed*MAX_LINK*MAX_ROC + (link-1) * MAX_ROC + roc 
+        index::UInt32 = fed*MAX_LINK*MAX_ROC + (link-1) * MAX_ROC + roc + 1 
         det_id = DetIdGPU(cabling_map.raw_id[index],cabling_map.roc_in_det[index],cabling_map.module_id[index])
     end
 
@@ -574,9 +576,10 @@ module pixelGPUDetails
             raw_id::UInt32 = det_id.raw_id
             roc_id_in_det_unit = det_id.roc_in_det
             barrel = is_barrel(raw_id)
-
-            index::UInt32 = fed_id * MAX_LINK * MAX_ROC + (link - 1) * MAX_ROC + roc
-
+            #write(file,string(raw_id)," ",string(roc_id_in_det_unit),'\n')
+            index::UInt32 = fed_id * MAX_LINK * MAX_ROC + (link - 1) * MAX_ROC + roc +1
+            #write(file,string(index,'\n'))
+            #write(file,string(fed_id)," ",string(link-1)," ",string(roc),'\n')
             if(use_quality_info)
                 skip_roc = cabling_map.bad_rocs[index]
                 if skip_roc
@@ -636,11 +639,10 @@ module pixelGPUDetails
                     continue 
                 end
             end
-            
                 global_pix::Pixel = frame_conversion(barrel,side,layer,roc_id_in_det_unit, local_pixel)
                 xx[g_index] = global_pix.row
                 yy[g_index] = global_pix.col
-                write(file,string(yy[g_index]),'\n')
+                #write(file,string(global_pix.col),"\n")
                 adc[g_index] = get_adc(ww)
                 p_digi[g_index] = pack(global_pix.row,global_pix.col,UInt32(adc[g_index]))
                 module_id[g_index] = det_id.module_id
@@ -659,12 +661,24 @@ module pixelGPUDetails
             digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors)
         end
         clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES)
-
+        
         if word_counter != 0 # incase of empty event
            @assert(0 == word_counter % 2)
             raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
             digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, digi_errors_d.error_d,use_quality_info,include_errors,debug)
+
+            open("outputDigis.txt","w") do file
+                for i ∈ 0:48315
+                    write(file,"xx[",string(i), "] = ", string(digis_d.xx_d[i+1])," yy[",string(i), "] = ", string(digis_d.yy_d[i+1])," adc[",string(i), "] = ", string(digis_d.adc_d[i+1], " moduleid[",string(i),"] = ",digis_d.module_ind_d[i+1]," pdigi[",string(i),"] = ",string(digis_d.pdigi_d[i+1])," rawidarr[",string(i),"] = ",digis_d.raw_id_arr_d[i+1],'\n'))
+                end
+            end
         end # end for raw to digi
+        calib_digis(is_run_2,digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,gains,word_counter,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.clus_module_star_d)
+        count_modules(digis_d.module_ind_d,clusters_d.module_start_d,digis_d.clus_d,word_counter)
+        set_n_modules_digis(digis_d,clusters_d.module_start_d[1],word_counter)
+        find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
+        cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
+
     end
 
     function fill_hits_module_start(clu_start::Vector{UInt32}, module_start::Vector{UInt32})

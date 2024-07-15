@@ -58,6 +58,12 @@ function readCablingMap(io::IOStream,es::EventSetup)
     jump3 = mod_to_unp_def_size
 
     mod_to_unp_default.= reinterpret(UInt8, data[offset:offset + jump3 - 1])
+    open("testingCablingMap.txt","w") do file
+        for i ∈ 1:MAX_SIZE
+            write(file, string(cablingMap.roc_in_det[i]),'\n')
+        end
+    end
+
 
     put!(es,SiPixelFedCablingMapGPUWrapper(cablingMap,mod_to_unp_default))
 end
@@ -76,7 +82,7 @@ function produce(producer::SiPixelFedCablingMapGPUWrapperESProducer, eventSetup:
 
     # Read cablingMap.bin
     cabling_map_file = joinpath(producer.data, "cablingMap.bin")
-
+    
     open(cabling_map_file, "r") do io
         readCablingMap(io,eventSetup)
     end
