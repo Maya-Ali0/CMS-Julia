@@ -265,8 +265,7 @@ for kkk in 0:4
     for i in 0:max_num_modules-1
         if h_clusInModule[i+1] == max_num_clusters
             module_with_max_clusters = i
-            println(i)
-            println(max_num_clusters)
+            println("Number of clusters in Module ",i, ": ",max_num_clusters)
             break
         end
     end
