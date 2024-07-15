@@ -15,55 +15,29 @@ struct SiPixelFedCablingMapGPUWrapperESProducer <: ESProducer
     end
 end
 
+function readData(io::IOStream, type, size)
+    container = Vector{type}(undef, size)
+    return read!(io,container)
+end
+
 
 function readCablingMap(io::IOStream,es::EventSetup)
-    data = read(io)
 
-    cablingMap = SiPixelFedCablingMapGPU()
-    offset = 1
-    size_UInt32 = sizeof(UInt32)
-    size_UInt8 = sizeof(UInt8)
-    jump = size_UInt32 * recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU.pixelGPUDetails.MAX_SIZE
-    jump2 = size_UInt8 * recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU.pixelGPUDetails.MAX_SIZE
+    maxSize = recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU.pixelGPUDetails.MAX_SIZE
 
-    cablingMap.fed .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.link .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.roc .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.raw_id .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.roc_in_det .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.module_id .= reinterpret(UInt32, data[offset:offset + jump - 1])
-    offset += jump
-    
-    cablingMap.bad_rocs .= reinterpret(UInt8, data[offset:offset + jump2 - 1])
-    offset += size_UInt8 * jump2
+    fed = readData(io, UInt32, maxSize)
+    link = readData(io, UInt32, maxSize)
+    roc = readData(io, UInt32, maxSize)
+    raw_id = readData(io, UInt32, maxSize)
+    roc_in_det = readData(io, UInt32, maxSize)
+    module_id = readData(io, UInt32, maxSize)
+    bad_rocs = readData(io, UInt8, maxSize)
+    size = UInt32(0)
 
-    cablingMap.size = reinterpret(UInt32, data[offset:offset + 32*size_UInt32 - 1])[1]
-    # print(Base.size(data))
-    # print(offset)
-    offset += 128
+    cablingMap = SiPixelFedCablingMapGPU(fed, link, roc, raw_id, roc_in_det, module_id, bad_rocs, size)
 
-    mod_to_unp_def_size = reinterpret(UInt32, data[offset:offset + size_UInt32 - 1])[1]
-    offset += 4
-    mod_to_unp_default = Vector{UInt8}(undef, mod_to_unp_def_size)
-    jump3 = mod_to_unp_def_size
-
-    mod_to_unp_default.= reinterpret(UInt8, data[offset:offset + jump3 - 1])
-    open("testingCablingMap.txt","w") do file
-        for i ∈ 1:MAX_SIZE
-            write(file, string(cablingMap.roc_in_det[i]),'\n')
-        end
-    end
-
+    mod_to_unp_def_size = read(io,UInt32)
+    mod_to_unp_default = readData(io, UInt8, mod_to_unp_def_size)
 
     put!(es,SiPixelFedCablingMapGPUWrapper(cablingMap,mod_to_unp_default))
 end

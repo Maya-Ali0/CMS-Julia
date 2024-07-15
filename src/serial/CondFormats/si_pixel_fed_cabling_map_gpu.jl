@@ -90,6 +90,12 @@ mutable struct SiPixelFedCablingMapGPU
         size = UInt32(0)
         new(fed, link, roc, raw_id, roc_in_det, module_id, bad_rocs, size) # Zero-initialize all fields
     end
+
+      # Constructor to initialize the SiPixelFedCablingMapGPU structure
+    function SiPixelFedCablingMapGPU(fed_h, link_h,roc_h, raw_id_h, roc_in_det_h,module_id_h, bad_rocs_h, size_h)
+    
+        new(fed_h, link_h, roc_h, raw_id_h, roc_in_det_h, module_id_h, bad_rocs_h, size_h) # Zero-initialize all fields
+    end
 end
 
 end # module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU

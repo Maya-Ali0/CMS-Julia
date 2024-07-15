@@ -6,6 +6,9 @@ include("../plugin-SiPixelClusterizer/gpu_cluster_charge_cut.jl")
 using .gpuClusterCharge:cluster_charge_cut
 
 using DataStructures:SortedSet
+
+using Plots
+
 INV_ID = 9999
 
 const max_num_modules = 2000  # Assuming MaxNumModules is predefined
@@ -208,14 +211,45 @@ function generateClusters(kn)
             end
         end
     end
+    # println("x array: ",h_x)
+    # println("y array: ",h_y)
     return n, ncl
 end
+
+function plot_clusters(n, loop_num, module_id)
+    indices = findall(x -> x == module_id, h_id[1:n])
+    x_values = h_x[indices]
+    y_values = h_y[indices]
+    cluster_ids = h_clus[indices]
+
+    unique_clusters = unique(cluster_ids)
+
+    n_clusters = length(unique_clusters)
+    colors = distinguishable_colors(n_clusters)
+
+    color_dict = Dict(zip(unique_clusters, colors))
+
+    cluster_colors = [color_dict[id] for id in cluster_ids]
+
+    cluster_labels = string.(unique_clusters)
+
+    scatter(x_values, y_values, marker_z = cluster_ids, color = cluster_colors,
+            label = cluster_labels, legend=:topright, title="Graph for loop $loop_num",
+            xlabel="x", ylabel="y")
+    
+    ylims!(0, maximum(y_values) + 50)
+    
+    display(current())
+end
+
+
 
 for kkk in 0:4
     n = 0
     ncl = 0
     n,ncl = generateClusters(kkk)
-    
+  
+    println("Loop ", kkk)
     println("created ", n, " digis in ", ncl, " clusters")
     @assert n <= num_elements #512000
     nModules = 0
@@ -225,18 +259,37 @@ for kkk in 0:4
     nModules = h_moduleStart[1]  
     nclus = h_clusInModule
     
-    println("before charge cut found ", sum(nclus), " clusters")
-    for i in max_num_modules-1:-1:0
-        if nclus[i+1] > 0
-            println("last module is ", i, ' ', nclus[i+1])
+    max_num_clusters = maximum(h_clusInModule)
+    module_with_max_clusters = 0
+
+    for i in 0:max_num_modules-1
+        if h_clusInModule[i+1] == max_num_clusters
+            module_with_max_clusters = i
+            println("Number of clusters in Module ",i, ": ",max_num_clusters)
             break
         end
     end
-    println("ncl: ", ncl, " nclus from function: ", sum(nclus))
+
+    # println("before charge cut found ", sum(nclus), " clusters")
+    for i in max_num_modules-1:-1:0
+        if nclus[i+1] > 0
+            # println("last module is ", i, ' ', nclus[i+1])
+            break
+        end
+    end
+    println("Actual Number of Clusters: ", ncl, " Number of clusters from function: ", sum(nclus))
     @assert ncl == sum(nclus)
     cluster_charge_cut(h_id, h_adc, h_moduleStart,nclus, h_moduleId, h_clus, n)
     
-    println("found ", nModules, " Modules active")
+
+    if h_clusInModule[module_with_max_clusters + 1] > 0
+        plot_clusters(n, kkk, module_with_max_clusters)
+    else
+        println("No clusters found for module id $module_with_max_clusters in loop $kkk")
+    end
+
+
+    # println("found ", nModules, " Modules active")
     clids = SortedSet{UInt}()
     for i in 1:n
         @assert h_id[i] != 666  # only noise
@@ -268,10 +321,10 @@ for kkk in 0:4
         @assert nc == pnc + 1
     end
     
-    println("found ", sum(nclus), ' ', length(clids), " clusters")
+    # println("found ", sum(nclus), ' ', length(clids), " clusters")
     for i in max_num_modules-1:-1:0  
         if nclus[i+1] > 0
-            println("last module is ", i, ' ', nclus[i+1])
+            # println("last module is ", i, ' ', nclus[i+1])
             break
         end
     end

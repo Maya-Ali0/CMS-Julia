@@ -1,7 +1,8 @@
 using Patatrack
 
 
-raw_events = readall(open((@__DIR__) * "/data/raw.bin")) # Reads 1000 events
+raw_events = readall(open((@__DIR__) * "/data/raw.bin")) # Reads 1000 event
+
 
 es::EventSetup = EventSetup()
 
@@ -18,3 +19,8 @@ for event ∈ raw_events
     rawToCluster = SiPixelRawToClusterCUDA()
     produce(rawToCluster,event,es)
 end
+
+
+
+
+
