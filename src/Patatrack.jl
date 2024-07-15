@@ -54,7 +54,7 @@ export check_trailer
 export fragment_length, more_trailers
 export initialize_word_fed
 export calib_digis
-
+export count_modules,find_clus
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
@@ -93,5 +93,5 @@ include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterGPUKernel.jl")
 include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.jl")
 # include("serial/plugin-SiPixelClusterizer/testClustering.jl")
 include("serial/bin/ReadRAW.jl")
-include("serial/DataFormats/BeamSpotPOD.jl")
+# include("serial/DataFormats/BeamSpotPOD.jl")
 end
