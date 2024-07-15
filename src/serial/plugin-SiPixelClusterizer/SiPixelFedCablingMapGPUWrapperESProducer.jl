@@ -39,34 +39,6 @@ function readCablingMap(io::IOStream,es::EventSetup)
     mod_to_unp_def_size = read(io,UInt32)
     mod_to_unp_default = readData(io, UInt8, mod_to_unp_def_size)
 
-    open("output.txt", "w") do file
-        for x ∈ fed
-            write(file,string(x))
-        end
-        for x ∈ link
-            write(file,string(x))
-        end
-        for x ∈ roc
-            write(file,string(x))
-        end
-        for x ∈ raw_id
-            write(file,string(x))
-        end
-        for x ∈ roc_in_det
-            write(file,string(x))
-        end
-        for x ∈ module_id
-            write(file,string(x))
-        end
-        for x ∈ bad_rocs
-            write(file,string(x))
-        end
-        write(file,string(mod_to_unp_def_size))
-        for x ∈ mod_to_unp_default
-            write(file,string(x))
-        end
-    end
-
     put!(es,SiPixelFedCablingMapGPUWrapper(cablingMap,mod_to_unp_default))
 end
 
