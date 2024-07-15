@@ -1,4 +1,5 @@
 module gpuClusterCharge
+
     include("../CUDACore/cuda_assert.jl")
     using .gpuConfig
     include("../CUDACore/prefix_scan.jl")

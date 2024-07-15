@@ -1,6 +1,6 @@
 module gpuClustering
 
-export MAX_NUM_MODULES
+export MAX_NUM_MODULES, count_modules, find_clus
 
 using Printf
 include("../CUDADataFormats/gpu_clustering_constants.jl")
@@ -49,7 +49,7 @@ INV_ID::UInt16 = 9999 # must be > MaxNumModules
 * Changes since julia is indexed at 1
 * Note: Each word in the main wordfedappender array is given a clusterid
 """
-function count_modules(id::Vector{UInt16}, module_start::Vector{Int}, cluster_id::Vector{Int64}, num_elements::Int64)
+function count_modules(id::Vector{T}, module_start::Vector{J}, cluster_id::Vector{K}, num_elements::Integer) where {T <: Integer, J <: Integer, K <: Signed}
     first = 1
     for i ∈ first:num_elements
         cluster_id[i] = i
@@ -132,7 +132,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             if id[i] == INV_ID
                 continue
             end
-            count!(hist, y[i])
+            count!(hist, Int16(y[i]))
         end
         finalize!(hist)
         
@@ -141,7 +141,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
                 continue 
             end
             
-            fill!(hist, y[i], type_I(hist)((i - first_pixel)))
+            fill!(hist, Int16(y[i]), type_I(hist)((i - first_pixel)))
         end
 
         # println(hist)
@@ -160,7 +160,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             i = val(hist,p) + first_pixel # index of 32bit word (digi)
             @assert id[i] != INV_ID
             @assert id[i] == this_module_id
-            be = bin(hist, y[i] + Int16(1)) 
+            be = bin(hist, Int16(y[i]) + Int16(1)) 
             e = end_h(hist, be)
             p += 1
             @assert nnn[k] == 0 

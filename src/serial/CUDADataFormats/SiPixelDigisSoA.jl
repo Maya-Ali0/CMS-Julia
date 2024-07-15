@@ -11,14 +11,14 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 
   # Structure to hold SiPixel digis data
   
-  struct SiPixelDigisSoA
+  mutable struct SiPixelDigisSoA
       pdigi_d::Vector{UInt32}      # Digis data
       raw_id_arr_d::Vector{UInt32}   # Raw ID array
       xx_d::Vector{UInt16}         # Local X-coordinates of each pixel
       yy_d::Vector{UInt16}         # Local Y-coordinates of each pixel
       adc_d::Vector{UInt16}        # ADC values of each pixel
       module_ind_d::Vector{UInt16}  # Module IDs of each pixel
-      clus_d::Vector{UInt32}       # Cluster IDs of each pixel
+      clus_d::Vector{Int32}       # Cluster IDs of each pixel
       view_d::DeviceConstView      # "Me" pointer, a constant view of the device data
       n_modules_h::UInt32           # Number of modules
       n_digis_h::UInt32             # Number of digis
@@ -131,7 +131,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
   Outputs:
     - None (modifies the instance in-place)
   """
-  function set_n_modules_digis(self::SiPixelDigisSoA, n_modules::UInt32, n_digis::UInt32)
+  function set_n_modules_digis(self::SiPixelDigisSoA, n_modules::Integer, n_digis::Integer)
       self.n_modules_h = n_modules
       self.n_digis_h = n_digis
   end

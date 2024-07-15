@@ -25,15 +25,15 @@ const v_calto_electron_offset::Float32 = -60       # L2-4: -60 +- 130
 const v_calto_electron_offset_L1::Float32 = -670   # L1: -670 +- 200
 
 function calib_digis(is_run_2::Bool, id::Vector{UInt16}, x::Vector{UInt16}, y::Vector{UInt16}, adc::Vector{UInt16}, ped::SiPixelGainForHLTonGPU, num_elements::Integer, module_start::Vector{UInt32}, n_clusters_in_module::Vector{UInt32}, clus_module_start::Vector{UInt32})
-    first = 1
+    first = 0
     
     # zero for next kernels
-    if first == 1
+    if first == 0
         clus_module_start[1] = 0
         module_start[1] = 0
     end
 
-    for i in (first + 1):MAX_NUM_MODULES
+    for i in 1:MAX_NUM_MODULES
         n_clusters_in_module[i] = 0
     end
 

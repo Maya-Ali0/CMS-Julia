@@ -8,7 +8,7 @@ module pixelGPUDetails
 
     using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
     
-    using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA
+    using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA,set_n_modules_digis
     
     using ..cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA:SiPixelDigiErrorsSoA
 
@@ -23,6 +23,9 @@ module pixelGPUDetails
     using ..recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
 
     using ..recoLocalTrackerSiPixelClusterizerPluginsGPUCalibPixel
+
+    using .. gpuClusterCharge:cluster_charge_cut
+    
     using Printf
     module pixelConstants
         export LAYER_START_BIT, LADDER_START_BIT, MODULE_START_BIT, PANEL_START_BIT, DISK_START_BIT, BLADE_START_BIT, 
