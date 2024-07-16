@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 struct BeamSpotToPOD <: EDProducer
     bsPutToken_::EDPutTokenT{BeamSpotPOD}
 
@@ -15,4 +13,3 @@ end
 
 
 
->>>>>>> 6b1107a5244da37532040fb8a7979f35c003b5ed
