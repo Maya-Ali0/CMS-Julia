@@ -9,12 +9,12 @@ struct SOARotation{T}
     R32::T
     R33::T
 
-    function SOARotation{T}() where {T}
-        return new{T}(one(Int32), zero(Int32), zero(Int32), zero(Int32), one(Int32), zero(Int32), zero(Int32), zero(Int32), one(Int32))
-    end
+    # function SOARotation{T}() where {T}
+    #     return new{T}(one(Int32), zero(Int32), zero(Int32), zero(Int32), one(Int32), zero(Int32), zero(Int32), zero(Int32), one(Int32))
+    # end
 
     function SOARotation{T}(v::T) where {T}
-        return new{T}(one(T), zero(T), zero(T), zero(T), one(T), zero(T), zero(T), zero(T), one(T))
+        return new{T}(one(Int32), zero(Int32), zero(Int32), zero(Int32), one(Int32), zero(Int32), zero(Int32), zero(Int32), one(Int32))
     end
 
     function SOARotation{T}(xx::T, xy::T, xz::T, yx::T, yy::T, yz::T, zx::T, zy::T, zz::T) where {T}
@@ -64,3 +64,89 @@ yz(r::SOARotation) = r.R23
 zx(r::SOARotation) = r.R31
 zy(r::SOARotation) = r.R32
 zz(r::SOARotation) = r.R33
+
+
+#####################################################################################################################
+#####################################################################################################################
+#####################################################################################################################
+
+struct SOAFrame{T}
+    px::T
+    py::T
+    pz::T
+    rot::SOARotation{T}
+
+    function SOAFrame{T}() where {T}
+        return new{T}()
+    end
+
+    function SOAFrame{T}(ix::T, iy::T, iz::T, irot::SOARotation{T}) where {T}
+        return new{T}(ix, iy, iz, irot)
+    end
+end
+
+function rotation(frame::SOAFrame{T}) where {T}
+    return frame.rot
+end
+
+function toLocal(frame::SOAFrame{T}, vx::T, vy::T, vz::T) where {T}
+    multiply(frame.rot,vx - frame.px, vy - frame.py, vz - frame.pz)
+end
+
+function toGlobal(frame::SOAFrame{T}, vx::T, vy::T, vz::T) where {T}
+    ux, uy, uz = multiplyInverse(frame.rot,vx, vy, vz)
+    ux += frame.px
+    uy += frame.py
+    uz += frame.pz
+    return ux, uy, uz
+end
+
+function toGlobal(frame::SOAFrame{T}, vx::T, vy::T) where {T}
+    ux, uy, uz = multiplyInverse(frame.rot,vx, vy)
+    ux += frame.px
+    uy += frame.py
+    uz += frame.pz
+    return ux, uy, uz
+end
+
+function toGlobal(frame::SOAFrame{T}, cxx::T, cxy::T, cyy::T, gl::Vector{T}) where {T}
+    r = frame.rot
+    gl[1] = xx(r) * (xx(r) * cxx + yx(r) * cxy) + yx(r) * (xx(r) * cxy + yx(r) * cyy)
+    gl[2] = xx(r) * (xy(r) * cxx + yy(r) * cxy) + yx(r) * (xy(r) * cxy + yy(r) * cyy)
+    gl[3] = xy(r) * (xy(r) * cxx + yy(r) * cxy) + yy(r) * (xy(r) * cxy + yy(r) * cyy)
+    gl[4] = xx(r) * (xz(r) * cxx + yz(r) * cxy) + yx(r) * (xz(r) * cxy + yz(r) * cyy)
+    gl[5] = xy(r) * (xz(r) * cxx + yz(r) * cxy) + yy(r) * (xz(r) * cxy + yz(r) * cyy)
+    gl[6] = xz(r) * (xz(r) * cxx + yz(r) * cxy) + yz(r) * (xz(r) * cxy + yz(r) * cyy)
+end
+
+function toLocal(frame::SOAFrame{T}, ge::Vector{T}) where {T}
+    r = frame.rot
+
+    cxx = ge[1]
+    cyx = ge[2]
+    cyy = ge[3]
+    czx = ge[4]
+    czy = ge[5]
+    czz = ge[6]
+
+    lxx = xx(r) * (xx(r) * cxx + xy(r) * cyx + xz(r) * czx) +
+          xy(r) * (xx(r) * cyx + xy(r) * cyy + xz(r) * czy) + xz(r) * (xx(r) * czx + xy(r) * czy + xz(r) * czz)
+    lxy = yx(r) * (xx(r) * cxx + xy(r) * cyx + xz(r) * czx) +
+          yy(r) * (xx(r) * cyx + xy(r) * cyy + xz(r) * czy) + yz(r) * (xx(r) * czx + xy(r) * czy + xz(r) * czz)
+    lyy = yx(r) * (yx(r) * cxx + yy(r) * cyx + yz(r) * czx) +
+          yy(r) * (yx(r) * cyx + yy(r) * cyy + yz(r) * czy) + yz(r) * (yx(r) * czx + yy(r) * czy + yz(r) * czz)
+
+    return lxx, lxy, lyy
+end
+
+function x(frame::SOAFrame{T}) where {T}
+    return frame.px
+end
+
+function y(frame::SOAFrame{T}) where {T}
+    return frame.py
+end
+
+function z(frame::SOAFrame{T}) where {T}
+    return frame.pz
+end

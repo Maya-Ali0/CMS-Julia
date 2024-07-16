@@ -94,6 +94,8 @@ include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterGPUKernel.jl")
 include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.jl")
 # include("serial/plugin-SiPixelClusterizer/testClustering.jl")
 include("serial/bin/ReadRAW.jl")
-include("serial/DataFormats/BeamSpotPOD.jl")
-include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
+# include("serial/DataFormats/BeamSpotPOD.jl")
+# include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
+# include("serial/plugin-BeamSpotProducer/BeamSpotESProducer.jl")
+
 end

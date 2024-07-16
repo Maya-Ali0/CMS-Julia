@@ -29,7 +29,7 @@ end
 function produce(producer::BeamSpotESProducer, eventSetup::EventSetup)
     beam_file = joinpath(producer.data, "beamspot.bin")
     
-    #read gain.bin
+    #read beamspot.bin
     open(beam_file, "r") do io
         readBeam(io,eventSetup)        
     end
