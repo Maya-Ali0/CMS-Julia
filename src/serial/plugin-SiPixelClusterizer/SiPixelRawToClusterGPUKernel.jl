@@ -541,8 +541,12 @@ module pixelGPUDetails
                                 err::Vector{PixelErrorCompact} , use_quality_info::Bool , include_errors::Bool , debug::Bool)
         first::UInt32 = 1
         n_end = word_counter
-        open("ycoordinates.txt","w") do file
+        #open("modtounp.txt","w") do file
         for i_loop ∈ first:n_end
+            if i_loop == 412
+                println("debugging in raw to digi kernal")
+                println("debugging in raw to digi kernal")
+            end
             g_index = i_loop
             xx[g_index] = 0 
             yy[g_index] = 0 
@@ -590,10 +594,10 @@ module pixelGPUDetails
                 end
             end
             skip_roc = mod_to_unp[index]
-
-            if(skip_roc)
-                continue
-            end
+            #write(file,string(skip_roc))
+            # if(skip_roc)
+            #     continue
+            # end
 
             layer::UInt32 = barrel ? ((raw_id >> LAYER_START_BIT) & LAYER_MASK) : 0 
             the_module::UInt32 = barrel ? ((raw_id >> MODULE_START_BIT) & MODULE_MASK) : 0
@@ -651,33 +655,39 @@ module pixelGPUDetails
                 module_id[g_index] = det_id.module_id
                 raw_id_arr[g_index] = raw_id
         end
-        end
+       # end
     end
 
 
     function make_clusters(gpu_algo::SiPixelRawToClusterGPUKernel,is_run_2::Bool , cabling_map::SiPixelFedCablingMapGPU , mod_to_unp::Vector{UInt8} , gains::SiPixelGainForHLTonGPU ,
                   word_fed::WordFedAppender , errors::PixelFormatterErrors , word_counter::Integer , fed_counter::Integer , use_quality_info::Bool,
                   include_errors::Bool , debug::Bool )
-        @printf("decoding %s digis. Max is %i ",word_counter,MAX_FED_WORDS)
+        @printf("decoding %s digis. Max is %i '\n'",word_counter,MAX_FED_WORDS)
         digis_d = gpu_algo.digis_d
         if include_errors
             digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors)
         end
         clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES)
         
-        if word_counter != 0 # incase of empty event
+        # if word_counter != 0 # incase of empty event
+        #     open("outputDigis.txt","w") do file
+        #         for i ∈ 0:48315
+        #             write(file,string(word_fed.words[i+1]),'\n')
+        #         end
+        #     end
            @assert(0 == word_counter % 2)
             raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
             digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, digi_errors_d.error_d,use_quality_info,include_errors,debug)
-
-            open("outputDigis.txt","w") do file
-                for i ∈ 0:48315
-                    write(file,"xx[",string(i), "] = ", string(digis_d.xx_d[i+1])," yy[",string(i), "] = ", string(digis_d.yy_d[i+1])," adc[",string(i), "] = ", string(digis_d.adc_d[i+1], " moduleid[",string(i),"] = ",digis_d.module_ind_d[i+1]," pdigi[",string(i),"] = ",string(digis_d.pdigi_d[i+1])," rawidarr[",string(i),"] = ",digis_d.raw_id_arr_d[i+1],'\n'))
-                end
-            end
-        end # end for raw to digi
+        #end # end for raw to digi
+        
         calib_digis(is_run_2,digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,gains,word_counter,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.clus_module_star_d)
+        open("outputDigis.txt","w") do file
+            for i ∈ 0:48315
+                write(file,"xx[",string(i), "] = ", string(digis_d.xx_d[i+1])," yy[",string(i), "] = ", string(digis_d.yy_d[i+1])," adc[",string(i), "] = ", string(digis_d.adc_d[i+1], " moduleid[",string(i),"] = ",digis_d.module_ind_d[i+1]," pdigi[",string(i),"] = ",string(digis_d.pdigi_d[i+1])," rawidarr[",string(i),"] = ",digis_d.raw_id_arr_d[i+1],'\n'))
+            end
+        end
         count_modules(digis_d.module_ind_d,clusters_d.module_start_d,digis_d.clus_d,word_counter)
+        print(clusters_d.module_start_d[1])
         set_n_modules_digis(digis_d,clusters_d.module_start_d[1],word_counter)
         find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
