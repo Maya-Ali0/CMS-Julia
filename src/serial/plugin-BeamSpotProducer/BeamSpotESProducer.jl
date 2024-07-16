@@ -1,5 +1,3 @@
-
-
 struct BeamSpotESProducer <: ESProducer
     data::String  # Use String to represent the path
 
