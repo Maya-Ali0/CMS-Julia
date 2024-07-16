@@ -1,5 +1,5 @@
 struct BeamSpotToPOD <: EDProducer
-    bsPutToken_::EDPutTokenT<BeamSpotPOD>
+    bsPutToken_::EDPutTokenT{BeamSpotPOD}
 
     function BeamSpotToPOD(reg::ProductRegistry)
         new(produces(reg,BeamSpotPOD))
@@ -7,8 +7,8 @@ struct BeamSpotToPOD <: EDProducer
 end
 
 
-function produce(iEvent::Event, iSetup::EventSetup)
-    iEvent.emplace(bsPutToken_, iSetup.get<BeamSpotPOD>())
+function produce(bs::BeamSpotToPOD , iEvent::Event, iSetup::EventSetup)
+    emplace(iEvent,bs.bsPutToken_,get(iSetup,BeamSpotPOD))
 end
 
 
