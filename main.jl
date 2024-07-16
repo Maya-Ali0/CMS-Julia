@@ -17,7 +17,7 @@ produce(gain_Calibration_producer,es);
 
 for event ∈ raw_events
     rawToCluster = SiPixelRawToClusterCUDA()
-    produce(rawToCluster,event,es)
+    # produce(rawToCluster,event,es)
 end
 
 
