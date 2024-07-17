@@ -536,8 +536,8 @@ module pixelGPUDetails
 
 
     function raw_to_digi_kernal(cabling_map::SiPixelFedCablingMapGPU , mod_to_unp :: Vector{UInt8} , word_counter::Integer, 
-                                word::Vector{UInt32} , fed_ids::Vector{UInt8} , xx::Vector{UInt16} , yy::Vector{UInt16} ,
-                                adc::Vector{UInt16} , p_digi::Vector{UInt32} , raw_id_arr::Vector{UInt32} , module_id::Vector{UInt16},
+                                word::Vector{UInt32} , fed_ids::Vector{UInt8} , xx::Vector{Int16} , yy::Vector{Int16} ,
+                                adc::Vector{Int32} , p_digi::Vector{UInt32} , raw_id_arr::Vector{UInt32} , module_id::Vector{Int16},
                                 err::Vector{PixelErrorCompact} , use_quality_info::Bool , include_errors::Bool , debug::Bool)
         first::UInt32 = 1
         n_end = word_counter
@@ -681,17 +681,37 @@ module pixelGPUDetails
         #end # end for raw to digi
         
         calib_digis(is_run_2,digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,gains,word_counter,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.clus_module_star_d)
-        open("outputDigis.txt","w") do file
-            for i ∈ 0:48315
-                write(file,"xx[",string(i), "] = ", string(digis_d.xx_d[i+1])," yy[",string(i), "] = ", string(digis_d.yy_d[i+1])," adc[",string(i), "] = ", string(digis_d.adc_d[i+1], " moduleid[",string(i),"] = ",digis_d.module_ind_d[i+1]," pdigi[",string(i),"] = ",string(digis_d.pdigi_d[i+1])," rawidarr[",string(i),"] = ",digis_d.raw_id_arr_d[i+1],'\n'))
-            end
-        end
+        # open("outputDigis.txt","w") do file
+        #     for i ∈ 0:48315
+        #         write(file,"xx[",string(i), "] = ", string(digis_d.xx_d[i+1])," yy[",string(i), "] = ", string(digis_d.yy_d[i+1])," adc[",string(i), "] = ", string(digis_d.adc_d[i+1], " moduleid[",string(i),"] = ",digis_d.module_ind_d[i+1]," pdigi[",string(i),"] = ",string(digis_d.pdigi_d[i+1])," rawidarr[",string(i),"] = ",digis_d.raw_id_arr_d[i+1],'\n'))
+        #     end
+        # end
         count_modules(digis_d.module_ind_d,clusters_d.module_start_d,digis_d.clus_d,word_counter)
         print(clusters_d.module_start_d[1])
         set_n_modules_digis(digis_d,clusters_d.module_start_d[1],word_counter)
         find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
+        # open("testingNumClusters.txt","w") do file
+        #     for i ∈ 1:2000
+        #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
+        #     end
+        # end
+        
         cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
-
+        # open("testingClustersDigisIds.txt","w") do file
+        #     for i ∈ 1:word_counter
+        #         if(digis_d.clus_d[i] == 9999 || digis_d.clus_d[i] == -9999 )
+        #             write(file,string(digis_d.clus_d[i]),'\n')
+        #         else
+        #             write(file,string(digis_d.clus_d[i]-1),'\n')
+        #         end
+                
+        #     end
+        # end
+        open("testingNumClusters.txt","w") do file
+            for i ∈ 1:2000
+                write(file,string(clusters_d.clus_in_module_d[i]),'\n')
+            end
+        end
     end
 
     function fill_hits_module_start(clu_start::Vector{UInt32}, module_start::Vector{UInt32})

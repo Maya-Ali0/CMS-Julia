@@ -24,7 +24,7 @@ const v_calto_electron_gain_L1::Float32 = 50       # L1:   49.6 +- 2.6
 const v_calto_electron_offset::Float32 = -60       # L2-4: -60 +- 130
 const v_calto_electron_offset_L1::Float32 = -670   # L1: -670 +- 200
 
-function calib_digis(is_run_2::Bool, id::Vector{UInt16}, x::Vector{UInt16}, y::Vector{UInt16}, adc::Vector{UInt16}, ped::SiPixelGainForHLTonGPU, num_elements::Integer, module_start::Vector{UInt32}, n_clusters_in_module::Vector{UInt32}, clus_module_start::Vector{UInt32})
+function calib_digis(is_run_2::Bool, id::Vector{Int16}, x::Vector{Int16}, y::Vector{Int16}, adc::Vector{Int32}, ped::SiPixelGainForHLTonGPU, num_elements::Integer, module_start::Vector{UInt32}, n_clusters_in_module::Vector{UInt32}, clus_module_start::Vector{UInt32})
     first = 0
     
     # zero for next kernels
@@ -52,9 +52,9 @@ function calib_digis(is_run_2::Bool, id::Vector{UInt16}, x::Vector{UInt16}, y::V
         ret = get_ped_and_gain(ped, id[i], col, row, is_dead_column_is_noisy_column)
         pedestal = ret[1]
         gain = ret[2]
-        open("pedAndFed.txt","a") do file
-            write(file,string(pedestal)," ",string(gain),'\n')
-        end
+        # open("pedAndFed.txt","a") do file
+        #     write(file,string(pedestal)," ",string(gain),'\n')
+        # end
         # float pedestal = 0, float gain = 1
         if is_dead_column_is_noisy_column[1] || is_dead_column_is_noisy_column[2]
             id[i] = inv_id
