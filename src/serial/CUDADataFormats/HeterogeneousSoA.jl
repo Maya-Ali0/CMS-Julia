@@ -137,13 +137,12 @@ end
 
 HeterogeneousSoACPU{T} = HeterogeneousSoAImpl{T, CPUTraits}
 
-# Test function for HeterogeneousSoAImpl
 function test_heterogeneous_soa_impl()
     cpu_traits = CPUTraits{Int}()
     cpu_traits_string = CPUTraits{string}()
 
-    # soa_default = HeterogeneousSoAImpl{Int, CPUTraits}()
-    # println(get(soa_default))
+    soa_default = HeterogeneousSoAImpl{Int, CPUTraits}()
+    println(get(soa_default))
 
     soa_value = HeterogeneousSoAImpl{Int, CPUTraits}(42)
     stream = "dummy stream" 
@@ -151,6 +150,6 @@ function test_heterogeneous_soa_impl()
     soa_cpu_default = HeterogeneousSoACPU{Int}()
 end
 
-# test_heterogeneous_soa_impl()
+test_heterogeneous_soa_impl()
 
 end
