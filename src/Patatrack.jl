@@ -1,6 +1,5 @@
 module Patatrack
 
-
 export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT,
 FED_EVSZ_EXTRACT, FED_CRCS_EXTRACT, FED_STAT_EXTRACT, FED_TTSI_EXTRACT,
 FED_MORE_TRAILERS_EXTRACT, FED_CRC_MODIFIED_EXTRACT, FED_SLINK_ERROR_EXTRACT,
@@ -55,6 +54,9 @@ export fragment_length, more_trailers
 export initialize_word_fed
 export calib_digis
 export count_modules,find_clus
+export HisToContainer
+export MaxNumClusters
+export AverageGeometry
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
@@ -94,6 +96,12 @@ include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterGPUKernel.jl")
 include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.jl")
 # include("serial/plugin-SiPixelClusterizer/testClustering.jl")
 include("serial/bin/ReadRAW.jl")
-include("serial/DataFormats/BeamSpotPOD.jl")
-include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
+# include("serial/DataFormats/BeamSpotPOD.jl")
+# include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
+# include("serial/plugin-BeamSpotProducer/BeamSpotESProducer.jl")
+include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
+include("serial/CUDADataFormats/HeterogeneousSoA.jl")
+include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
+include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
+
 end

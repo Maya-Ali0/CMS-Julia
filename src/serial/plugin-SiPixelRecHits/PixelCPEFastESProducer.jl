@@ -1,12 +1,12 @@
-struct BeamSpotESProducer <: ESProducer
+struct PixelCPEFastESProducer <: ESProducer
     data::String  # Use String to represent the path
 
-    function BeamSpotESProducer(datadir::String)
+    function PixelCPEFastESProducer(datadir::String)
         new(datadir)
     end
 end
 
-function readBeam(io::IOStream,es::EventSetup)
+function readCpeFast(io::IOStream,es::EventSetup)
 
     x = read(io,Float32)
     y = read(io,Float32)
@@ -26,12 +26,12 @@ function readBeam(io::IOStream,es::EventSetup)
 end
 
 
-function produce(producer::BeamSpotESProducer, eventSetup::EventSetup)
-    beam_file = joinpath(producer.data, "beamspot.bin")
+function produce(producer::PixelCPEFastESProducer, eventSetup::EventSetup)
+    cpe_file = joinpath(producer.data, "cpefast.bin")
     
     #read beamspot.bin
-    open(beam_file, "r") do io
-        readBeam(io,eventSetup)        
+    open(cpe_file, "r") do io
+        readCpeFast(io,eventSetup)
     end
 end
 

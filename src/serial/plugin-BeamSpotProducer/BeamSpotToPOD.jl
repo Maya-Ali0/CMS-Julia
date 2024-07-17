@@ -6,7 +6,6 @@ struct BeamSpotToPOD <: EDProducer
     end
 end
 
-
 function produce(bs::BeamSpotToPOD , iEvent::Event, iSetup::EventSetup)
     emplace(iEvent,bs.bsPutToken_,get(iSetup,BeamSpotPOD))
 end

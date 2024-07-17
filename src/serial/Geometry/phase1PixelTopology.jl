@@ -1,6 +1,7 @@
 module Geometry_TrackerGeometryBuilder_phase1PixelTopology_h
 
 module phase1PixelTopology
+export AverageGeometry
     # Constants defining the dimensions of ROCs and modules
     const num_rows_in_ROC = 80
     const num_cols_in_ROC = 52
@@ -18,7 +19,7 @@ module phase1PixelTopology
     const num_pixs_in_module = num_rows_in_module * num_cols_in_module
 
     const number_of_modules = 1856
-    const number_of_layers = 10
+    const number_of_layers = UInt32(10)
     
     # Starting indices for each layer
     const layer_start = [
@@ -300,14 +301,27 @@ module phase1PixelTopology
     """
     struct AverageGeometry
         number_of_ladders_in_barrel::Int
-        ladderZ::SVector{number_of_ladders_in_barrel, Float32}
-        ladderX::SVector{number_of_ladders_in_barrel, Float32}
-        ladderY::SVector{number_of_ladders_in_barrel, Float32}
-        ladderR::SVector{number_of_ladders_in_barrel, Float32}
-        ladderMinZ::SVector{number_of_ladders_in_barrel, Float32}
-        ladderMaxZ::SVector{number_of_ladders_in_barrel, Float32}
+        ladderZ::Vector{Float32}
+        ladderX::Vector{Float32}
+        ladderY::Vector{Float32}
+        ladderR::Vector{Float32}
+        ladderMinZ::Vector{Float32}
+        ladderMaxZ::Vector{Float32}
         endCapZ::NTuple{2, Float32}  # just for pos and neg Layer1
+        
+        function AverageGeometry()
+            number_of_ladders_in_barrel = 0
+            ladderZ = Float32[]
+            ladderX = Float32[]
+            ladderY = Float32[]
+            ladderR = Float32[]
+            ladderMinZ = Float32[]
+            ladderMaxZ = Float32[]
+            endCapZ = (0.0f0, 0.0f0)
+            new(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
+        end
     end
+    
 
 end
 
