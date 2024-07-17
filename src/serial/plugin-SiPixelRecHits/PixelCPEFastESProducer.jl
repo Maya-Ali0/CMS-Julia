@@ -27,11 +27,11 @@ end
 
 
 function produce(producer::PixelCPEFastESProducer, eventSetup::EventSetup)
-    cpe_file = joinpath(producer.data, "beamspot.bin")
+    cpe_file = joinpath(producer.data, "cpefast.bin")
     
     #read beamspot.bin
     open(cpe_file, "r") do io
-        readBeam(io,eventSetup)        
+        readCpeFast(io,eventSetup)
     end
 end
 

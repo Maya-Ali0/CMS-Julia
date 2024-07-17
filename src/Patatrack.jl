@@ -57,6 +57,7 @@ export count_modules,find_clus
 export HisToContainer
 export MaxNumClusters
 export AverageGeometry
+export SOARotation, SOAFrame
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
@@ -99,5 +100,10 @@ include("serial/bin/ReadRAW.jl")
 # include("serial/DataFormats/BeamSpotPOD.jl")
 # include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
 # include("serial/plugin-BeamSpotProducer/BeamSpotESProducer.jl")
+include("serial/DataFormats/SOARotation.jl")
+include("serial/CondFormats/pixelCPEforGPU.jl")
+include("serial/CondFormats/PixelCPEFast.jl")
+
+
 
 end

@@ -19,7 +19,7 @@ export AverageGeometry
     const num_pixs_in_module = num_rows_in_module * num_cols_in_module
 
     const number_of_modules = 1856
-    const number_of_layers = 10
+    const number_of_layers = UInt32(10)
     
     # Starting indices for each layer
     const layer_start = [
