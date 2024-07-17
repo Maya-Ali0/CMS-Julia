@@ -101,5 +101,6 @@ include("serial/bin/ReadRAW.jl")
 # include("serial/plugin-BeamSpotProducer/BeamSpotESProducer.jl")
 include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
 include("serial/CUDADataFormats/HeterogeneousSoA.jl")
+include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
 
 end
