@@ -99,5 +99,6 @@ include("serial/bin/ReadRAW.jl")
 # include("serial/DataFormats/BeamSpotPOD.jl")
 # include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
 # include("serial/plugin-BeamSpotProducer/BeamSpotESProducer.jl")
+include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
 
 end

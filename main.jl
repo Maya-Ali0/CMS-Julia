@@ -14,13 +14,13 @@ produce(cabling_map_producer,es)
 produce(gain_Calibration_producer,es);
 
 
-for event ∈ raw_events
-    rawToCluster = SiPixelRawToClusterCUDA()
-    # produce(rawToCluster,event,es)
-end
+# for event ∈ raw_events
+#     rawToCluster = SiPixelRawToClusterCUDA()
+#     # produce(rawToCluster,event,es)
+# end
 
 
 
-produce(beamSpotProducer,es)
+# produce(beamSpotProducer,es)
 
 
