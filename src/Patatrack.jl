@@ -57,6 +57,7 @@ export count_modules,find_clus
 export HisToContainer
 export MaxNumClusters
 export AverageGeometry
+export ParamsOnGPU
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
@@ -102,5 +103,5 @@ include("serial/bin/ReadRAW.jl")
 include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
 include("serial/CUDADataFormats/HeterogeneousSoA.jl")
 include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
-
+include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
 end
