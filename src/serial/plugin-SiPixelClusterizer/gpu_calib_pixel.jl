@@ -8,7 +8,7 @@ using ...condFormatsSiPixelObjectsSiPixelGainForHLTonGPU: SiPixelGainForHLTonGPU
 using ...gpuConfig
 
 using ...CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
-using StaticArrays
+using StaticArrays: MVector
 
 export calib_digis
 
@@ -16,7 +16,7 @@ export calib_digis
 # Pkg.add("StaticArrays")
 # using StaticArrays
 
-const inv_id::UInt16 = 9999 # must be > MaxNumModules
+const inv_id = 9999 # must be > MaxNumModules
 
 # valid for run 2
 const v_calto_electron_gain::Float32 = 47          # L2-4: 47 +- 4.7
@@ -24,7 +24,7 @@ const v_calto_electron_gain_L1::Float32 = 50       # L1:   49.6 +- 2.6
 const v_calto_electron_offset::Float32 = -60       # L2-4: -60 +- 130
 const v_calto_electron_offset_L1::Float32 = -670   # L1: -670 +- 200
 
-function calib_digis(is_run_2::Bool, id::Vector{UInt16}, x::Vector{UInt16}, y::Vector{UInt16}, adc::Vector{UInt16}, ped::SiPixelGainForHLTonGPU, num_elements::Integer, module_start::Vector{UInt32}, n_clusters_in_module::Vector{UInt32}, clus_module_start::Vector{UInt32})
+function calib_digis(is_run_2::Bool, id, x, y, adc, ped::SiPixelGainForHLTonGPU, num_elements::Integer, module_start, n_clusters_in_module, clus_module_start)
     first = 0
     
     # zero for next kernels
@@ -42,8 +42,8 @@ function calib_digis(is_run_2::Bool, id::Vector{UInt16}, x::Vector{UInt16}, y::V
             continue
         end
 
-        conversion_factor = (is_run_2) ? (id[i] < 96 ? v_calto_electron_gain_L1 : v_calto_electron_gain) : 1.0f0
-        offset = (is_run_2) ? (id[i] < 96 ? v_calto_electron_offset_L1 : v_calto_electron_offset) : 0.0f0
+        conversion_factor = (is_run_2) ? (id[i] < 96 ? v_calto_electron_gain_L1 : v_calto_electron_gain) : 1.0
+        offset = (is_run_2) ? (id[i] < 96 ? v_calto_electron_offset_L1 : v_calto_electron_offset) : 0.0
 
         is_dead_column_is_noisy_column = MVector(false, false)
 
@@ -61,8 +61,8 @@ function calib_digis(is_run_2::Bool, id::Vector{UInt16}, x::Vector{UInt16}, y::V
             adc[i] = 0
             println("bad pixel at $i in $(id[i])")
         else
-            vcal = (Int(adc[i]) - pedestal) * gain
-            adc[i] = max(100, floor(Int,vcal * conversion_factor + offset))
+            vcal = (adc[i] - pedestal) * gain
+            adc[i] = max(100, floor(Int, vcal * conversion_factor + offset))
         end
     end
 end
