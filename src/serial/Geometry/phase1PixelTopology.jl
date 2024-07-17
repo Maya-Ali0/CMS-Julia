@@ -301,14 +301,27 @@ export AverageGeometry
     """
     struct AverageGeometry
         number_of_ladders_in_barrel::Int
-        ladderZ::SVector{number_of_ladders_in_barrel, Float32}
-        ladderX::SVector{number_of_ladders_in_barrel, Float32}
-        ladderY::SVector{number_of_ladders_in_barrel, Float32}
-        ladderR::SVector{number_of_ladders_in_barrel, Float32}
-        ladderMinZ::SVector{number_of_ladders_in_barrel, Float32}
-        ladderMaxZ::SVector{number_of_ladders_in_barrel, Float32}
+        ladderZ::Vector{Float32}
+        ladderX::Vector{Float32}
+        ladderY::Vector{Float32}
+        ladderR::Vector{Float32}
+        ladderMinZ::Vector{Float32}
+        ladderMaxZ::Vector{Float32}
         endCapZ::NTuple{2, Float32}  # just for pos and neg Layer1
+        
+        function AverageGeometry()
+            number_of_ladders_in_barrel = 0
+            ladderZ = Float32[]
+            ladderX = Float32[]
+            ladderY = Float32[]
+            ladderR = Float32[]
+            ladderMinZ = Float32[]
+            ladderMaxZ = Float32[]
+            endCapZ = (0.0f0, 0.0f0)
+            new(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
+        end
     end
+    
 
 end
 
