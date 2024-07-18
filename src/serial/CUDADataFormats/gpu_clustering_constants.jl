@@ -2,7 +2,7 @@ module CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
 
 module pixelGPUConstants
 export MAX_NUM_MODULES
-export MaxNumClusters
+export MaxNumClusters, MAX_HITS_IN_MODULE
     maxNumberOfHits = 48 * 1024
     MaxNumClusters = maxNumberOfHits
     INV_ID::UInt16 = 9999 # must be > MaxNumModules
@@ -17,6 +17,6 @@ export MaxNumClusters
     end
 end # module pixelGPUConstants
 using .pixelGPUConstants
-export MAX_NUM_MODULES
+export MAX_NUM_MODULES, MAX_HITS_IN_MODULE
 
 end # module CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants

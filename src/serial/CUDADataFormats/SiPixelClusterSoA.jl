@@ -60,7 +60,7 @@ module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     """
     Struct to hold the cluster data in a CUDA-compatible structure.
     """
-    struct SiPixelClustersSoA
+    mutable struct SiPixelClustersSoA
         module_start_d::Vector{UInt32}       # Pointer to the module start data
         clus_in_module_d::Vector{UInt32}      # Pointer to the number of clusters in each module
         module_id_d::Vector{UInt32}          # Pointer to the module ID data

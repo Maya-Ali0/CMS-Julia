@@ -225,6 +225,7 @@ module histogram
         end
     end
     
+    
     @inline function for_each_in_bins(hist::Hist,value::V,n::Int,func::Function) where {Hist,V}
         """
         find the bin number of v call it b and then goes over all values in bins bs till bin be where 
