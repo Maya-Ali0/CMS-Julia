@@ -7,6 +7,10 @@ struct PixelCPEFast
     cpuData_::ParamsOnGPU
 end
 
+
+
+
+
 # Define the getCPUProduct method
 function getCPUProduct(pixelCPE::PixelCPEFast)::ParamsOnGPU
     return pixelCPE.cpuData_

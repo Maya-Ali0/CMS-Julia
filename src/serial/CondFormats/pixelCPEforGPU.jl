@@ -32,8 +32,8 @@ end
 # const AverageGeometry = Phase1PixelTopology.AverageGeometry
 
 struct LayerGeometry
-    layerStart::NTuple{Int64(phase1PixelTopology.number_of_layers + 1), UInt32}
-    layer::NTuple{Int64(phase1PixelTopology.layer_index_size), UInt8}
+    layerStart::Vector{UInt32}
+    layer::Vector{UInt8}
 end
 
 struct ParamsOnGPU
