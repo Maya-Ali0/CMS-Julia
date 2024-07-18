@@ -1,4 +1,5 @@
 
+using .prefix_scan:block_prefix_scan
 
 """
 Phase 1 Geometry Constants
@@ -6,7 +7,7 @@ Phase 1 Geometry Constants
 module pixelGPUDetails
     export make_clusters, get_results, initialize_word_fed
 
-    using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA, setNClusters!
+    using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
     
     using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA,set_n_modules_digis
     
@@ -26,9 +27,6 @@ module pixelGPUDetails
 
     using .. gpuClusterCharge:cluster_charge_cut
     
-    using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
-
-    using ..prefix_scan:block_prefix_scan
     using Printf
     module pixelConstants
         export LAYER_START_BIT, LADDER_START_BIT, MODULE_START_BIT, PANEL_START_BIT, DISK_START_BIT, BLADE_START_BIT, 
@@ -705,6 +703,7 @@ module pixelGPUDetails
                 
         #     end
         # end
+<<<<<<< HEAD
         # open("testingNumClusters.txt","w") do file
         #     for i ∈ 1:2000
         #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
@@ -717,26 +716,36 @@ module pixelGPUDetails
         #     end
         # end
         open("testingNumClusters.txt","a") do file
+=======
+        open("testingNumClusters.txt","w") do file
+>>>>>>> 26952003553c1d4629f893f2585568aa2e5cbb18
             for i ∈ 1:2000
                 write(file,string(clusters_d.clus_in_module_d[i]),'\n')
             end
         end
-        setNClusters!(clusters_d,clusters_d.clus_module_star_d[MAX_NUM_MODULES+1])
     end
 
-    function fill_hits_module_start(clus_start::Vector{UInt32}, module_start::Vector{UInt32})
+    function fill_hits_module_start(clu_start::Vector{UInt32}, module_start::Vector{UInt32})
         @assert (gpuClustering.MAX_NUM_MODULES < 2048)
-        @assert module_start[1] == 0
+
         for i in 1:gpuClustering.MAX_NUM_MODULES
-            module_start[i + 1] = min(MAX_HITS_IN_MODULE, clus_start[i])
+            module_start[i + 1] = min(gpuClustering.max_hits_in_module(), clus_start[i])
         end
-        block_prefix_scan(view(module_start,2:length(module_start)), view(module_start,2:length(module_start)),length(module_start)-1)
-        MAX_HITS = gpuClustering.MAX_NUM_CLUSTERS
-        for i ∈ 1:gpuClustering.MAX_NUM_MODULES + 1
+        
+        ws = Vector{UInt32}(undef, 32)
+        cms.cuda.block_prefix_scan(module_start[2:end], 10241)
+        cms.cuda.block_prefix_scan(module_start[1026:end], gpuClustering.max_hits_in_module() - 1024)
+
+        for i in 1026:gpuClustering.MAX_NUM_MODULES + 1
+            module_start[i] += module_start[1025]
+        end
+        MAX_HITS = gpuClustering.Max_
+        for i in first:gpuClustering.MAX_NUM_MODULES + 1
             if module_start[i] > MAX_HITS
                 module_start[i] = MAX_HITS
             end
         end
+        
     end
 
 

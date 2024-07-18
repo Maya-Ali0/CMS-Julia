@@ -1,5 +1,5 @@
+
 module histogram
-    export HisToContainer
     import Base.fill!
     include("../CUDACore/prefix_scan.jl")
     using .prefix_scan:block_prefix_scan
@@ -224,7 +224,6 @@ module histogram
             fill(h,v[i],i,ih)
         end
     end
-    
     
     @inline function for_each_in_bins(hist::Hist,value::V,n::Int,func::Function) where {Hist,V}
         """

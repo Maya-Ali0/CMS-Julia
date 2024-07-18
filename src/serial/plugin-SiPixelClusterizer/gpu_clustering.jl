@@ -1,6 +1,6 @@
 module gpuClustering
 
-export  count_modules, find_clus
+export MAX_NUM_MODULES, count_modules, find_clus
 
 using Printf
 include("../CUDADataFormats/gpu_clustering_constants.jl")
@@ -154,6 +154,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         nn = zeros(Int, max_iter, max_neighbours)
         nnn = zeros(Int, max_iter)
         # fill NN
+        testing = 0 
         for (j, k) in zip(0:size(hist)-1, 1:size(hist)) # j is the index of the digi within the hist
             @assert k <= max_iter
             p = begin_h(hist) + j
@@ -174,6 +175,9 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
                 if abs(x[m] - x[i]) > 1
                     p += 1
                     continue
+                end
+                if this_module_id == 510 && i == 15187
+                    testing = k 
                 end
                 nnn[k] += 1
                 l = nnn[k]

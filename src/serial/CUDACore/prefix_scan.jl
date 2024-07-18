@@ -10,7 +10,7 @@ module prefix_scan
     - `co::Vector{T}`: Output vector of type `T`.
     - `size::UInt32`: Number of elements to scan.
     """
-    function block_prefix_scan(ci, co, size)
+    function block_prefix_scan(ci::Vector{T}, co::Vector{T}, size) where T
         co[1] = ci[1]
         for i in 2:size
             co[i] = ci[i] + co[i - 1]
