@@ -1,5 +1,5 @@
+
 module histogram
-    export HisToContainer
     import Base.fill!
     include("../CUDACore/prefix_scan.jl")
     using .prefix_scan:block_prefix_scan
