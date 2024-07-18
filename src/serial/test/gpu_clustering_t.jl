@@ -7,7 +7,6 @@ using .gpuClusterCharge:cluster_charge_cut
 
 using DataStructures:SortedSet
 
-using Plots
 
 INV_ID = 9999
 
@@ -216,31 +215,31 @@ function generateClusters(kn)
     return n, ncl
 end
 
-function plot_clusters(n, loop_num, module_id)
-    indices = findall(x -> x == module_id, h_id[1:n])
-    x_values = h_x[indices]
-    y_values = h_y[indices]
-    cluster_ids = h_clus[indices]
+# function plot_clusters(n, loop_num, module_id)
+#     indices = findall(x -> x == module_id, h_id[1:n])
+#     x_values = h_x[indices]
+#     y_values = h_y[indices]
+#     cluster_ids = h_clus[indices]
 
-    unique_clusters = unique(cluster_ids)
+#     unique_clusters = unique(cluster_ids)
 
-    n_clusters = length(unique_clusters)
-    colors = distinguishable_colors(n_clusters)
+#     n_clusters = length(unique_clusters)
+#     colors = distinguishable_colors(n_clusters)
 
-    color_dict = Dict(zip(unique_clusters, colors))
+#     color_dict = Dict(zip(unique_clusters, colors))
 
-    cluster_colors = [color_dict[id] for id in cluster_ids]
+#     cluster_colors = [color_dict[id] for id in cluster_ids]
 
-    cluster_labels = string.(unique_clusters)
+#     cluster_labels = string.(unique_clusters)
 
-    scatter(x_values, y_values, marker_z = cluster_ids, color = cluster_colors,
-            label = cluster_labels, legend=:topright, title="Graph for loop $loop_num",
-            xlabel="x", ylabel="y")
+#     scatter(x_values, y_values, marker_z = cluster_ids, color = cluster_colors,
+#             label = cluster_labels, legend=:topright, title="Graph for loop $loop_num",
+#             xlabel="x", ylabel="y")
     
-    ylims!(0, maximum(y_values) + 50)
+#     ylims!(0, maximum(y_values) + 50)
     
-    display(current())
-end
+#     display(current())
+# end
 
 
 
@@ -258,7 +257,6 @@ for kkk in 0:4
     find_clus(h_id, h_x, h_y, h_moduleStart, h_clusInModule, h_moduleId, h_clus, n)
     nModules = h_moduleStart[1]  
     nclus = h_clusInModule
-    
     max_num_clusters = maximum(h_clusInModule)
     module_with_max_clusters = 0
 
@@ -282,11 +280,11 @@ for kkk in 0:4
     cluster_charge_cut(h_id, h_adc, h_moduleStart,nclus, h_moduleId, h_clus, n)
     
 
-    if h_clusInModule[module_with_max_clusters + 1] > 0
-        plot_clusters(n, kkk, module_with_max_clusters)
-    else
-        println("No clusters found for module id $module_with_max_clusters in loop $kkk")
-    end
+    # if h_clusInModule[module_with_max_clusters + 1] > 0
+    #     plot_clusters(n, kkk, module_with_max_clusters)
+    # else
+    #     println("No clusters found for module id $module_with_max_clusters in loop $kkk")
+    # end
 
 
     # println("found ", nModules, " Modules active")

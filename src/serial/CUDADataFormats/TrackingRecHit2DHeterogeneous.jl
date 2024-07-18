@@ -1,32 +1,33 @@
 module CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 
-using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: pixelCPEforGPU, HisToContainer, AverageGeometry
-using ..CUDADataFormatsCommonHeterogeneousSoA_H
+using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView, ParamsOnGPU, HisToContainer, AverageGeometry
+# using ..CUDADataFormatsCommonHeterogeneousSoA_H
 
 struct TrackingRecHit2DHeterogeneous
     n16::UInt32
     n32::UInt32
-    m_store16::Union{nothing, Vector{Vector{UInt16}}} 
-    m_store32::Union{nothing, Vector{Vector{Float64}}}
-    m_HistStore::Union{nothing, Vector{HisToContainer}}
-    m_AverageGeometryStore::Union{nothing, Vector{AverageGeometry}}
-    m_view::Union{nothing, Vector{TrackingRecHit2DSOAView}}
+    m_store16::Union{Nothing, Vector{Vector{UInt16}}} 
+    m_store32::Union{Nothing, Vector{Vector{Float64}}}
+    m_HistStore::Union{Nothing, Vector{HisToContainer}}
+    m_AverageGeometryStore::Union{Nothing, Vector{AverageGeometry}}
+    m_view::Union{Nothing, Vector{TrackingRecHit2DSOAView}}
     m_nHits::UInt32
     m_hitsModuleStart::Vector{UInt32}
-    m_hist::Union{nothing, HisToContainer}
-    m_hitsLayerStart::Union{nothing, Vector{UInt32}}
-    m_iphi::Union{nothing, Vector{UInt16}}
+    m_hist::Union{Nothing, HisToContainer}
+    m_hitsLayerStart::Union{Nothing, Vector{UInt32}}
+    m_iphi::Union{Nothing, Vector{UInt16}}
 
-    function TrackingRecHit2DHeterogeneous(nHits::UInt32, cpe_params::pixelCPEforGPU.ParamsOnGPU, hitsModuleStart::Vector{UInt32})
+    function TrackingRecHit2DHeterogeneous(nHits::Integer, cpe_params::ParamsOnGPU, hitsModuleStart::Vector{UInt32})
         n16 = 4
         n32 = 9
 
         if nHits == 0
-            return new(n16, n32, nothing, nothing, nothing, nothing, nothing, nHits, hitsModuleStart, nothing, nothing, nothing)
+            return new(n16, n32, Nothing, Nothing, Nothing, Nothing, Nothing, nHits, hitsModuleStart, Nothing, Nothing, Nothing)
         end
 
-        m_store16 = Vector{Vector{UInt16}}(undef, nHits * n16)
-        m_store32 = Vector{Vector{Float64}}(undef, nHits * n32 + 11)
+        # Initialize the m_store16 and m_store32 vectors with default values
+        m_store16 = [Vector{UInt16}(undef, n16) for _ in 1:(nHits * n16)]
+        m_store32 = [Vector{Float64}(undef, n32) for _ in 1:(nHits * n32 + 11)]
 
         m_HistStore = Vector{HisToContainer}(undef, 1)
         m_AverageGeometryStore = Vector{AverageGeometry}(undef, 1)

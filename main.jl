@@ -12,15 +12,13 @@ gain_Calibration_producer::SiPixelGainCalibrationForHLTGPUESProducer = SiPixelGa
 CPE_Producer = PixelCPEFastESProducer(dataDir)
 
 produce(cabling_map_producer,es)
-produce(gain_Calibration_producer,es)
-produce(CPE_Producer,es)
+produce(gain_Calibration_producer,es);
 
 
-
-# for event ∈ raw_events
-#     # rawToCluster = SiPixelRawToClusterCUDA()
-#     # produce(rawToCluster,event,es)
-# end
+for event ∈ raw_events
+    rawToCluster = SiPixelRawToClusterCUDA()
+    # produce(rawToCluster,event,es)
+end
 
 
 

@@ -1,3 +1,5 @@
+module BeamSpotPOD_h
+export BeamSpotPOD
 struct BeamSpotPOD
     x::Float32  # position x
     y::Float32  # position y
@@ -10,4 +12,5 @@ struct BeamSpotPOD
     emittanceX::Float32
     emittanceY::Float32
     betaStar::Float32
+end
 end

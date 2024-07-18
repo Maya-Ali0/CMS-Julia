@@ -40,7 +40,7 @@ module gpuClusterCharge
                     if id[i] != thisModuleId
                         break
                     end
-                    if clusterId[i] >= MAX_NUM_CLUSTERS_PER_MODULES
+                    if clusterId[i] > MAX_NUM_CLUSTERS_PER_MODULES
                         id[i] = INV_ID 
                         clusterId[i] = INV_ID 
                     end
@@ -50,7 +50,7 @@ module gpuClusterCharge
 
             @assert nClus <= MAX_NUM_CLUSTERS_PER_MODULES
 
-            
+            fill!(charge,0)
 
             for i in first:numElements
                 if id[i] == INV_ID | id[i] == -INV_ID 
@@ -82,14 +82,14 @@ module gpuClusterCharge
             end
 
             for i in first:numElements
-                if id[i] == INV_ID 
+                if id[i] == INV_ID
                     continue
                 end
                 if id[i] != thisModuleId
                     break
                 end
                 clusterId[i] = newclusId[clusterId[i]]
-                if clusterId[i] == INV_ID 
+                if clusterId[i] == INV_ID || clusterId[i] == -INV_ID 
                     id[i] = INV_ID 
                 end
             end

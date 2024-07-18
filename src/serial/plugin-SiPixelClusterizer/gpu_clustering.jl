@@ -96,9 +96,10 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     # julia is 1 indexed
     first_module = 1
     end_module = module_start[1]
-    for mod ∈ first_module:end_module
-        first_pixel = module_start[mod + 1]
-        this_module_id = id[first_pixel]
+    
+    for mod ∈ first_module:end_module # Go over all modules
+        first_pixel = module_start[mod + 1] # access index of starting pixel within module
+        this_module_id = id[first_pixel] # get module id
         @assert this_module_id < MAX_NUM_MODULES
         first = first_pixel
         msize = num_elements
@@ -124,7 +125,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             msize = max_pix_in_module + first_pixel
         end
         @assert msize - first_pixel <= max_pix_in_module
-        if(msize == num_elements)
+        if(msize == num_elements && id[msize] == this_module_id)
             msize+=1
         end
         # fill histo
@@ -146,15 +147,15 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
 
         # println(hist)
         
-        max_iter = size(hist)
+        max_iter = size(hist) # number of digis added to hist
         max_neighbours = 10
         
         # nearest neighbour 
         nn = zeros(Int, max_iter, max_neighbours)
         nnn = zeros(Int, max_iter)
-        
         # fill NN
-        for (j, k) in zip(0:size(hist)-1, 1:size(hist))
+        testing = 0 
+        for (j, k) in zip(0:size(hist)-1, 1:size(hist)) # j is the index of the digi within the hist
             @assert k <= max_iter
             p = begin_h(hist) + j
             i = val(hist,p) + first_pixel # index of 32bit word (digi)
@@ -175,6 +176,9 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
                     p += 1
                     continue
                 end
+                if this_module_id == 510 && i == 15187
+                    testing = k 
+                end
                 nnn[k] += 1
                 l = nnn[k]
                 @assert l <= max_neighbours
@@ -182,7 +186,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
                 p += 1
             end
         end
-        
+
         more = true
         n_loops = 0
         while more
@@ -198,15 +202,16 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
                 end
             else
                 more = false
+                
                 for (j, k) ∈ zip(0:size(hist)-1, 1:size(hist))
                     p = begin_h(hist) + j 
-                    i = val(hist, p) + first_pixel
+                    i::Int = val(hist, p) + first_pixel
                     for kk ∈ 1:nnn[k]
                         l = nn[k, kk]
                         m = l + first_pixel
                         @assert m != i
-                        old = min(cluster_id[m], cluster_id[i])
-                        cluster_id[m] = old
+                        old = cluster_id[m]
+                        cluster_id[m] = min(cluster_id[m], cluster_id[i])
                         if old != cluster_id[i]
                             more = true
                         end
