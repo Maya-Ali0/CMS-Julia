@@ -39,7 +39,6 @@ function readall(io::IOStream)
     events::Vector{FedRawDataCollection} = Vector{FedRawDataCollection}()
     while !eof(io)
         push!(events, readevent(io))
-        break
     end
     return events
 end

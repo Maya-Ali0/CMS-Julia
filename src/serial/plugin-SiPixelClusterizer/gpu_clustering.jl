@@ -125,7 +125,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             msize = max_pix_in_module + first_pixel
         end
         @assert msize - first_pixel <= max_pix_in_module
-        if(msize == num_elements)
+        if(msize == num_elements && id[msize] == this_module_id)
             msize+=1
         end
         # fill histo
@@ -153,7 +153,6 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         # nearest neighbour 
         nn = zeros(Int, max_iter, max_neighbours)
         nnn = zeros(Int, max_iter)
-        
         # fill NN
         for (j, k) in zip(0:size(hist)-1, 1:size(hist)) # j is the index of the digi within the hist
             @assert k <= max_iter

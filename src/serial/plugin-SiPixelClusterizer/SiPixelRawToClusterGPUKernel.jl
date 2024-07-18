@@ -546,10 +546,6 @@ module pixelGPUDetails
         n_end = word_counter
         #open("modtounp.txt","w") do file
         for i_loop ∈ first:n_end
-            if i_loop == 412
-                println("debugging in raw to digi kernal")
-                println("debugging in raw to digi kernal")
-            end
             g_index = i_loop
             xx[g_index] = 0 
             yy[g_index] = 0 
@@ -596,7 +592,7 @@ module pixelGPUDetails
                     continue 
                 end
             end
-            skip_roc = mod_to_unp[index]
+            # skip_roc = mod_to_unp[index]
             #write(file,string(skip_roc))
             # if(skip_roc)
             #     continue
@@ -690,7 +686,6 @@ module pixelGPUDetails
         #     end
         # end
         count_modules(digis_d.module_ind_d,clusters_d.module_start_d,digis_d.clus_d,word_counter)
-        print(clusters_d.module_start_d[1])
         set_n_modules_digis(digis_d,clusters_d.module_start_d[1],word_counter)
         find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         # open("testingNumClusters.txt","w") do file
@@ -716,9 +711,14 @@ module pixelGPUDetails
         #     end
         # end
         fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_star_d)
-        open("fill_hits_module.txt","w") do file
-            for i ∈ 1:MAX_NUM_MODULES+1
-                write(file,string(clusters_d.clus_module_star_d[i]),'\n')
+        # open("fill_hits_module.txt","w") do file
+        #     for i ∈ 1:MAX_NUM_MODULES+1
+        #         write(file,string(clusters_d.clus_module_star_d[i]),'\n')
+        #     end
+        # end
+        open("testingNumClusters.txt","a") do file
+            for i ∈ 1:2000
+                write(file,string(clusters_d.clus_in_module_d[i]),'\n')
             end
         end
         setNClusters!(clusters_d,clusters_d.clus_module_star_d[MAX_NUM_MODULES+1])
