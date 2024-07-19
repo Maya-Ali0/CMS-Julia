@@ -1,8 +1,14 @@
 const UNINITIALIZED_VALUE = UInt32(0xFFFFFFFF)
 
+"""
+EDGetToken with type Parameter
+"""
 struct EDGetTokenT{T}
     value::UInt32
-    EDGetTokenT() = new{T}(UNINITIALIZED_VALUE)
+    EDGetTokenT{T}() where T = new(UNINITIALIZED_VALUE)
+    function EDGetTokenT{T}(x::UInt32) where T
+        new(x)
+    end 
 end
 
 function index(token::EDGetTokenT{T}) where T 
@@ -13,11 +19,14 @@ function isUninitialized(token::EDGetTokenT{T}) where T
     return token.value == UNINITIALIZED_VALUE
 end
 
-
+"""
+EDGetToken without type Parameter
+"""
 struct EDGetToken
     value::UInt32
-    EDGetToken() = new(UNINITIALIZED_VALUE)
-    function EDGetToken(token::EDGetTokenT{T}) where T
+    EDGetToken() = new(UNINITIALIZED_VALUE) # Default Constructor
+
+    function EDGetToken(token::EDGetTokenT{T}) where T # Takes an EDGetToken with a type Parameter and initializes its index to the current EDGetToken
         new(token.value)
     end
 end
@@ -32,11 +41,10 @@ end
 
 struct EDPutTokenT{T}
     value::UInt32
-
-    EDPutTokenT() = new{T}(UNINITIALIZED_VALUE)
+    EDPutTokenT{T}() where T = new(UNINITIALIZED_VALUE)
 
     function EDPutTokenT{T}(x::UInt32) where T
-        new{T}(x)
+        new(x)
     end
 end
 
@@ -52,9 +60,9 @@ end
 struct EDPutToken
     value::UInt32
 
-    EDPutToken() = new(UNINITIALIZED_VALUE)
+    EDPutToken() = new(UNINITIALIZED_VALUE) # Default Constructor
 
-    function EDPutToken(token::EDPutTokenT{T}) where T
+    function EDPutToken(token::EDPutTokenT{T}) where T # Takes an EDPutToken with a type Parameter and initializes its index to the current EDPutToken
         new(token.value)
     end
 

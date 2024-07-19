@@ -55,7 +55,6 @@ export initialize_word_fed
 export calib_digis
 export count_modules,find_clus
 export HisToContainer
-export MaxNumClusters
 export AverageGeometry
 
 export ParamsOnGPU
