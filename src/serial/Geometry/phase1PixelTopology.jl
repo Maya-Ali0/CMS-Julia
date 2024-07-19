@@ -1,7 +1,7 @@
 module Geometry_TrackerGeometryBuilder_phase1PixelTopology_h
-
+export number_of_ladders_in_barrel, number_of_module_in_barrel, AverageGeometry
 module phase1PixelTopology
-export AverageGeometry
+export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel
     # Constants defining the dimensions of ROCs and modules
     const num_rows_in_ROC = 80
     const num_cols_in_ROC = 52
@@ -300,7 +300,7 @@ export AverageGeometry
     - `endCapZ::NTuple{2, Float32}`: Z-coordinates for the positive and negative endcap Layer1.
     """
     struct AverageGeometry
-        number_of_ladders_in_barrel::Int
+        number_of_ladders_in_barrel::UInt32
         ladderZ::Vector{Float32}
         ladderX::Vector{Float32}
         ladderY::Vector{Float32}
