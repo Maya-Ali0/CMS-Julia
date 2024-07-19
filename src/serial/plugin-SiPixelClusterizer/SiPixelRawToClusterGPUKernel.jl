@@ -725,7 +725,7 @@ module pixelGPUDetails
         @assert (gpuClustering.MAX_NUM_MODULES < 2048)
 
         for i in 1:gpuClustering.MAX_NUM_MODULES
-            module_start[i + 1] = min(gpuClustering.max_hits_in_module(), clus_start[i])
+            module_start[i + 1] = min(gpuClustering.MAX_HITS_IN_MODULE, clus_start[i])
         end
         
         ws = Vector{UInt32}(undef, 32)

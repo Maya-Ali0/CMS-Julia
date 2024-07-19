@@ -1,6 +1,6 @@
 using .CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 using .CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
-using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
+# using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 # more includes are missing (waiting on files to be done)
 
 struct SiPixelRecHitCUDA <: EDProducer

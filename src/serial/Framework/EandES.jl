@@ -7,10 +7,10 @@ end
 struct Event
     streamId::Int
     eventId::Int
-    products::Vector{Union{WrapperBase, Nothing}}  # Union type to allow for null elements
+    products::Vector{WrapperBase}  # Union type to allow for null elements
 
     function Event(streamIDD::Int,eventIDD::Int)
-        return new(streamIDD,eventIDD,Vector{Union{WrapperBase, Nothing}}())
+        return new(streamIDD,eventIDD,Vector{WrapperBase}())
     end
 end
 

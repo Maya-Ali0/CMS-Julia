@@ -1,7 +1,7 @@
 module CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
 
 using ..histogram: HisToContainer
-using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MaxNumClusters
+using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUM_CLUSTERS
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 export ParamsOnGPU
 
