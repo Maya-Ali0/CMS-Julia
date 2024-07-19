@@ -83,8 +83,8 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel
         n = 2
         while true
             all_divisible = true
-            for i in 1:10
-                if layer_start[i + 1] % n != 0
+            for i in 2:11
+                if layer_start[i] % n != 0
                     all_divisible = false
                     break
                 end
@@ -94,6 +94,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel
             end
             n *= 2
         end
+        return n/2
     end
 
     const max_module_stride = find_max_module_stride()
