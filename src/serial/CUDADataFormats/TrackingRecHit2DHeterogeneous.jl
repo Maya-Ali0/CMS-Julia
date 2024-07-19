@@ -17,30 +17,40 @@ struct TrackingRecHit2DHeterogeneous
     m_hitsLayerStart::Union{Nothing, Vector{UInt32}}
     m_iphi::Union{Nothing, Vector{UInt16}}
 
-    function TrackingRecHit2DHeterogeneous(nHits::Integer, cpe_params::ParamsOnGPU, hitsModuleStart::Vector{UInt32})
+    function TrackingRecHit2DHeterogeneous(nHits::Integer, cpe_params::ParamsOnGPU, hitsModuleStart::Vector{UInt32}, Hist::HisToContainer)
         n16 = 4
         n32 = 9
-
+    
         if nHits == 0
             return new(n16, n32, Nothing, Nothing, Nothing, Nothing, Nothing, nHits, hitsModuleStart, Nothing, Nothing, Nothing)
         end
-
-        # Initialize the m_store16 and m_store32 vectors with default values
-        m_store16 = [Vector{UInt16}(undef, n16) for _ in 1:(nHits * n16)]
-        m_store32 = [Vector{Float64}(undef, n32) for _ in 1:(nHits * n32 + 11)]
-
-        m_HistStore = Vector{HisToContainer}(undef, 1)
-        m_AverageGeometryStore = Vector{AverageGeometry}(undef, 1)
-
-        get16(i) = m_store16[(i + 1) * nHits]
-        get32(i) = m_store32[(i + 1) * nHits]
-
-        m_view = Vector{TrackingRecHit2DSOAView}(undef, 1)
-
-        hits_layer_start = reinterpret(UInt32, get32(n32)) # vector will be doubled since each Float64 will be reinterpreted as 2 UInt32
-        m_iphi = reinterpret(Int16, get16(0))
-
-        m_view[1] = TrackingRecHit2DSOAView(
+    
+        m_store16 = [Vector{UInt16}(undef, 0) for _ in 1:(nHits * n16)]
+        m_store32 = [Vector{Float64}(undef, 0) for _ in 1:(nHits * n32 + 11)]
+    
+    
+       
+        obj2 = AverageGeometry()
+        m_HistStore = Vector{HisToContainer}()
+        push!(m_HistStore, Hist)
+        m_AverageGeometryStore = Vector{AverageGeometry}()
+        push!(m_AverageGeometryStore, obj2)
+    
+        
+        function get16(i)
+            println("get16 called")
+            return  m_store16[i + 1]
+        end
+        function get32(i) 
+            println("get32 called")
+            return m_store32[i + 1] 
+        end
+    
+        hits_layer_start = reinterpret(UInt32, get32(n32))
+        m_iphi = reinterpret(UInt16, get16(0))
+    
+        println("calling the constructor here")
+        obj = TrackingRecHit2DSOAView(
             get32(0),
             get32(1),
             get32(2),
@@ -49,21 +59,28 @@ struct TrackingRecHit2DHeterogeneous
             get32(5),
             get32(6),
             get32(7),
-            m_iphi, 
-            reinterpret(Int32, get32(8)), # vector will be doubled since each Float64 will be reinterpreted as 2 Int32
+            m_iphi,
+            reinterpret(Int32, get32(8)),
             reinterpret(Int16, get16(2)),
             reinterpret(Int16, get16(3)),
             get16(1),
-            m_AverageGeometryStore[1],
+            obj2,
             cpe_params,
             hitsModuleStart,
-            m_hitsLayerStart,
-            m_HistStore[1],
+            hits_layer_start,
+            m_HistStore,
             nHits
         )
+        println("finished constructor")
+    
+        m_view = Vector{TrackingRecHit2DSOAView}()
+        push!(m_view, obj)
 
+        println(m_view)
+    
         return new(n16, n32, m_store16, m_store32, m_HistStore, m_AverageGeometryStore, m_view, nHits, hitsModuleStart, m_HistStore[1], hits_layer_start, m_iphi)
     end
+    
 end
 
 view(hit::TrackingRecHit2DHeterogeneous) = hit.m_view
@@ -77,5 +94,21 @@ hits_layer_start(hit::TrackingRecHit2DHeterogeneous) = hit.m_hitsLayerStart
 phi_binner(hit::TrackingRecHit2DHeterogeneous) = hit.m_hist
 
 iphi(hit::TrackingRecHit2DHeterogeneous) = hit.m_iphi
+
+
+function test_tracking_rec_hit()
+    hitsModuleStart = UInt32[1, 2, 3]  # Ensure hitsModuleStart is of type Vector{UInt32}
+    cpe_params = ParamsOnGPU()
+    Hist = HisToContainer{UInt16, 128, 10, 8 * sizeof(UInt16), UInt16, 10}()
+    hits = TrackingRecHit2DHeterogeneous(3, cpe_params, hitsModuleStart, Hist)
+    
+    println("Number of hits: ", n_hits(hits))
+    println("Hits module start: ", hits_module_start(hits))
+    
+    if !isempty(view(hits))
+        println("First view element: ", view(hits)[1])
+    end
+end
+test_tracking_rec_hit()
 
 end

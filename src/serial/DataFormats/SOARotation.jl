@@ -1,3 +1,6 @@
+
+export SOAFrame
+
 struct SOARotation{T}
     R11::T
     R12::T

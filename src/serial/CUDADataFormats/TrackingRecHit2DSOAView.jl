@@ -1,12 +1,10 @@
 module CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
 
+include("../CondFormats/pixelCPEforGPU.jl")
 using ..histogram: HisToContainer
-using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUM_CLUSTERS
+using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MaxNumClusters
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
-export ParamsOnGPU
-
-struct ParamsOnGPU
-end
+using ..ParamsOnGPU
 
 struct TrackingRecHit2DSOAView
     m_xl::Vector{Float64}
@@ -24,36 +22,62 @@ struct TrackingRecHit2DSOAView
     m_detInd::Vector{UInt16}
     m_averageGeometry::AverageGeometry
     m_cpeParams::ParamsOnGPU
-    m_hitsModuleStart::UInt
-    m_hitsLayerStart::UInt
+    m_hitsModuleStart::Vector{Integer}
+    m_hitsLayerStart::Vector{Integer}
     m_hist::HisToContainer
     m_nHits::UInt32
-end
 
-# Constructor for TrackingRecHit2DSOAView
-function TrackingRecHit2DSOAView(
-        m_xl::Vector{Float64},
-        m_yl::Vector{Float64},
-        m_xerr::Vector{Float64},
-        m_yerr::Vector{Float64},
-        m_xg::Vector{Float64},
-        m_yg::Vector{Float64},
-        m_zg::Vector{Float64},
-        m_rg::Vector{Float64},
-        m_iphi::Vector{UInt16},
-        m_charge::Vector{UInt32},
-        m_xsize::Vector{UInt16},
-        m_ysize::Vector{UInt16},
-        m_detInd::Vector{UInt16},
-        m_averageGeometry::AverageGeometry,
-        m_cpeParams::ParamsOnGPU,
-        m_hitsModuleStart::UInt32,
-        m_hitsLayerStart::UInt32,
-        m_hist::HisToContainer,
-        m_nHits::UInt32
-    )
+
+    function TrackingRecHit2DSOAView()
+        empty__float_vector = Vector{Float64}()
+        empty_int_vector = Vector{Integer}()
+
+       return  new(empty__float_vector,
+            empty__float_vector, 
+            empty__float_vector,
+            empty__float_vector,
+            empty__float_vector,
+            empty__float_vector,
+            empty__float_vector,
+            empty__float_vector,
+            empty_int_vector,
+            empty_int_vector,
+            empty_int_vector,
+            empty_int_vector,
+            empty_int_vector,
+            AverageGeometry(),
+            ParamsOnGPU(),
+            0,
+            0,
+            HisToContainer{T,N_BINS,SIZE,S,I}(),
+            0)
+    end
+
+
     
-    return TrackingRecHit2DSOAView(
+    function TrackingRecHit2DSOAView(
+            m_xl::Vector{Float64},
+            m_yl::Vector{Float64},
+            m_xerr::Vector{Float64},
+            m_yerr::Vector{Float64},
+            m_xg::Vector{Float64},
+            m_yg::Vector{Float64},
+            m_zg::Vector{Float64},
+            m_rg::Vector{Float64},
+            m_iphi::Vector{UInt16},
+            m_charge::Vector{UInt32},
+            m_xsize::Vector{UInt16},
+            m_ysize::Vector{UInt16},
+            m_detInd::Vector{UInt16},
+            m_averageGeometry::AverageGeometry,
+            m_cpeParams::ParamsOnGPU,
+            m_hitsModuleStart::Vector{Integer},
+            m_hitsLayerStart::Vector{Integer},
+            m_hist::HisToContainer,
+            m_nHits::UInt32
+        )
+
+    return new(
         m_xl,
         m_yl,
         m_xerr,
@@ -73,7 +97,9 @@ function TrackingRecHit2DSOAView(
         m_hitsLayerStart,
         m_hist,
         m_nHits
-    )
+        )
+end
+
 end
 
 function maxHits()
@@ -157,7 +183,7 @@ end
 end
 
 end
-# test case
+# # test case
 # using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:TrackingRecHit2DSOAView,ParamsOnGPU,maxHits,nHits,xLocal,ylocal,xerrLocal,yerrLocal,xGlobal,yGlobal,zGlobal,rGlobal,iphi,charge,clusterSizeX,clusterSizeY,detectorIndex,cpeParams,hitsModuleStart,hitsLayerStart,phiBinner,averageGeometry
 # using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology:AverageGeometry
 # using .histogram:HisToContainer
@@ -184,10 +210,10 @@ end
 #     rand(UInt16, number_Hits),   # m_detInd
 #     avg_geom,              # m_averageGeometry
 #     params_gpu,            # m_cpeParams
-#     0,                     # m_hitsModuleStart
-#     0,                     # m_hitsLayerStart
+#     Vector{Integer}(rand(Int64, number_Hits)),   # m_hitsModuleStart
+#     Vector{Integer}(rand(Int64, number_Hits)),   # m_hitsLayerStart
 #     Hist,                  # m_hist
-#     UInt32(number_Hits)          # m_nHits
+#     UInt32(number_Hits)    # m_nHits
 # )
 
 # println("Max Hits: ", maxHits())
