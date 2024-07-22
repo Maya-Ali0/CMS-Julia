@@ -1,6 +1,7 @@
 
 
 module Patatrack
+import Base.length
 
 export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT,
 FED_EVSZ_EXTRACT, FED_CRCS_EXTRACT, FED_STAT_EXTRACT, FED_TTSI_EXTRACT,
@@ -59,6 +60,10 @@ export count_modules,find_clus
 export HisToContainer
 export MAX_NUM_CLUSTERS
 export AverageGeometry
+<<<<<<< HEAD
+export ProductRegistry
+export Event, EDPutTokenT, produces, emplace, begin_module_construction
+=======
 
 
 export BeamSpotPOD
@@ -66,6 +71,7 @@ export SOAFrame
 export ParamsOnGPU
 
 
+>>>>>>> 13f5ec358bbdb4cb892dc7d13cf55008add158c9
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
@@ -88,10 +94,10 @@ include("serial/DataFormats/data_formats.jl")
 include("serial/DataFormats/fed_header.jl")
 include("serial/DataFormats/fed_trailer.jl")
 include("serial/Framework/EDTokens.jl")
+include("serial/Framework/ProductRegistry.jl")
 include("serial/Framework/EandES.jl")
 include("serial/Framework/ESProducer.jl")
 include("serial/Framework/EDProducer.jl")
-include("serial/Framework/ProductRegistry.jl")
 include("serial/Geometry/phase1PixelTopology.jl")
 include("serial/plugin-SiPixelClusterizer/adc_threshold.jl")
 include("serial/plugin-SiPixelClusterizer/Constants.jl")

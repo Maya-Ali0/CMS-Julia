@@ -6,7 +6,7 @@ EDGetToken with type Parameter
 struct EDGetTokenT{T}
     value::UInt32
     EDGetTokenT{T}() where T = new(UNINITIALIZED_VALUE)
-    function EDGetTokenT{T}(x::UInt32) where T
+    function EDGetTokenT{T}(x::Integer) where T
         new(x)
     end 
 end
@@ -45,6 +45,10 @@ struct EDPutTokenT{T}
 
     function EDPutTokenT{T}(x::UInt32) where T
         new(x)
+    end
+
+    function EDPutTokenT(token::EDPutTokenT{T}) where T # Takes an EDPutToken with a type Parameter and initializes its index to the current EDPutToken
+        new{T}(token.value)
     end
 end
 

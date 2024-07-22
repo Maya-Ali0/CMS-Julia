@@ -30,7 +30,13 @@ mutable struct SiPixelRawToClusterCUDA
     is_run2::Bool
     include_errors::Bool
     use_quality::Bool
-    function SiPixelRawToClusterCUDA()
+
+    raw_get_token::EDGetTokenT{FedRawDataCollection}
+    digi_put_token::EDPutTokenT{SiPixelDigisSoA}
+    digi_error_put_token::EDPutTokenT{SiPixelDigiErrorsSoA}
+    cluster_put_token::EDPutTokenT{SiPixelClustersSoA}
+
+    function SiPixelRawToClusterCUDA(reg::ProductRegistry)
         is_run2 = true
         include_errors = true
         use_quality = true
@@ -38,12 +44,13 @@ mutable struct SiPixelRawToClusterCUDA
         errors = PixelFormatterErrors()
         new(
             SiPixelRawToClusterGPUKernel(),
-            word_fed_appender, errors, is_run2, include_errors, use_quality)
+            word_fed_appender, errors, is_run2, include_errors, use_quality,
+            consumes(reg,FedRawDataCollection),produces(reg,SiPixelDigisSoA),produces(reg,SiPixelDigiErrorsSoA),produces(reg,SiPixelClustersSoA))
     end
 end
 
 
-function produce(self:: SiPixelRawToClusterCUDA,event::FedRawDataCollection, iSetup::EventSetup)
+function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup)
     hgpu_map = get(iSetup,SiPixelFedCablingMapGPUWrapper)   
     # if(has_quality(hgpu_map) != self.use_quality)
     #     error_message = "use_quality of the module ($self.use_quality) differs from SiPixelFedCablingMapGPUWrapper. Please fix your configuration."
@@ -51,11 +58,10 @@ function produce(self:: SiPixelRawToClusterCUDA,event::FedRawDataCollection, iSe
     # end
     gpu_map = get_cpu_product(hgpu_map)
     gpu_modules_to_unpack::Vector{UInt8} = get_mod_to_unp_all(hgpu_map)
-
     hgains = get(iSetup,SiPixelGainCalibrationForHLTGPU)
     gpu_gains = CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU.get_cpu_product(hgains)
     fed_ids::Vector{UInt} = get(iSetup,SiPixelFedIds)._fed_ids
-    buffers::FedRawDataCollection = event #fedData
+    buffers::FedRawDataCollection = get(event,self.raw_get_token) #fedData
     empty!(self.errors)
 
     # Data Extraction for Raw to Digi
