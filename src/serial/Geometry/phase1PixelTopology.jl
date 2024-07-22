@@ -325,6 +325,9 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel
             endCapZ = (0.0f0, 0.0f0)
             new(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
         end
+        function AverageGeometry(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
+            new(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
+        end
     end
     
 

@@ -10,6 +10,10 @@ struct CommonParams
     function CommonParams()
         new(0,0,0,0)
     end
+
+    function CommonParams(a, b, c, d)
+        new(a, b, c, d)
+    end
 end
 
 struct DetParams
@@ -62,6 +66,9 @@ struct LayerGeometry
     layerStart::Vector{UInt32}
     layer::Vector{UInt8}
 
+    function LayerGeometry(a, b)
+        new(a, b)
+    end
     function LayerGeometry()
         new(
             Vector{UInt32}(),  # Empty vector for layerStart
