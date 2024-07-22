@@ -46,10 +46,9 @@ function approx_atan2f_P(x::Float32, ::Val{15})
 end
 
 function unsafe_atan2f_impl(y::Float32, x::Float32, ::Val{DEGREE})::Float32 where {DEGREE}
-    pi4f = 3.1415926535897932384626434 ÷ 4
-    pi34f = 3 * 3.1415926535897932384626434 ÷ 4
-
-    r = (abs(x) - abs(y)) ÷ (abs(x) + abs(y))
+    pi4f = 3.1415926535897932384626434 / 4
+    pi34f = 3 * 3.1415926535897932384626434 / 4
+    r = (abs(x) - abs(y)) / (abs(x) + abs(y))
     if x < 0
         r = -r
     end
@@ -116,10 +115,10 @@ end
 
 function unsafe_atan2i_impl(y::Float32, x::Float32, ::Val{DEGREE})::Int32 where {DEGREE}
     maxint = (Int64(typemax(Int32)) + 1)
-    pi4 = Int32(maxint ÷ 4)
-    pi34 = Int32(3 * maxint ÷ 4)
+    pi4 = Int32(maxint / 4)
+    pi34 = Int32(3 * maxint / 4)
 
-    r = (abs(x) - abs(y)) ÷ (abs(x) + abs(y))
+    r = (abs(x) - abs(y)) / (abs(x) + abs(y))
     if x < 0
         r = -r
     end
@@ -164,10 +163,10 @@ end
 
 function unsafe_atan2s_impl(y::Float32, x::Float32, ::Val{DEGREE})::Int16 where {DEGREE}
     maxshort = Int32(typemax(Int16)) + 1
-    pi4 = Int16(maxshort ÷ 4)
-    pi34 = Int16(3 * maxshort ÷ 4)
+    pi4 = Int16(maxshort / 4)
+    pi34 = Int16(3 * maxshort / 4)
 
-    r = (abs(x) - abs(y)) ÷ (abs(x) + abs(y))
+    r = (abs(x) - abs(y)) / (abs(x) + abs(y))
     if x < 0
         r = -r
     end
@@ -185,88 +184,102 @@ end
 
 # Conversion functions
 
+using Printf
 
 function phi2int(x::Float32)::Int32
-    p2i = (Int64(typemax(Int32)) + 1) ÷ π
-    return round(Int32, x * p2i)
+    pi_val = Float64(Base.MathConstants.pi)
+    p2i = (Float64(typemax(Int32)) + 1.0) / pi_val
+    result = Float32(x * p2i)
+    return round(Int32, result)
 end
 
 function int2phi(x::Int32)::Float32
-    i2p = π ÷ (Int64(typemax(Int32)) + 1)
-    return Float32(x * i2p)
+    pi_val = Float64(Base.MathConstants.pi)    
+    i2p = pi_val / (Float64(typemax(Int32)) + 1.0)
+    result = Float32(x) * Float32(i2p)
+    return result
 end
 
 function int2dphi(x::Int32)::Float64
-    i2p = π ÷ (Int64(typemax(Int32)) + 1)
-    return Float64(x * i2p)
+    pi_val = Float64(Base.MathConstants.pi)    
+    i2p = pi_val / (Float64(typemax(Int32)) + 1.0)
+    result = Float64(x) * Float64(i2p)
+    return result
 end
 
 function phi2short(x::Float32)::Int16
-    p2i = (Int64(typemax(Int16)) + 1) ÷ π
-    return round(Int16, x * p2i)
+    pi_val = Float64(Base.MathConstants.pi)
+    p2i = (Float64(typemax(Int16)) + 1.0) / pi_val
+    result = x * Float32(p2i)
+    return round(Int16, result)
 end
 
 function short2phi(x::Int16)::Float32
-    i2p = π ÷ (Int(typemax(Int16)) + 1)
-    return Float32(x * i2p)
+    pi_val = Float64(Base.MathConstants.pi)
+    i2p = pi_val / (Float64(typemax(Int16)) + 1.0)
+    result = Float32(x) * Float32(i2p)
+    return result
 end
 
 
+# using Printf
+#
 # function test_functions()
-#     # Testing every approximation function
+#     Testing every approximation function
 #     println("Testing approx_atan2f_P")
-#     println(approx_atan2f_P(0.5f0, Val{3}()))
-#     println(approx_atan2f_P(0.5f0, Val{5}()))
-#     println(approx_atan2f_P(0.5f0, Val{7}()))
-#     println(approx_atan2f_P(0.5f0, Val{9}()))
-#     println(approx_atan2f_P(0.5f0, Val{11}()))
-#     println(approx_atan2f_P(0.5f0, Val{13}()))
-#     println(approx_atan2f_P(0.5f0, Val{15}()))
+#     @printf("%.15f\n",approx_atan2f_P(0.5f0, Val{3}()))
+#     @printf("%.15f\n",approx_atan2f_P(0.5f0, Val{5}()))
+#     @printf("%.15f\n",approx_atan2f_P(0.5f0, Val{7}()))
+#     @printf("%.15f\n",approx_atan2f_P(0.5f0, Val{9}()))
+#     @printf("%.15f\n",approx_atan2f_P(0.5f0, Val{11}()))
+#     @printf("%.15f\n",approx_atan2f_P(0.5f0, Val{13}()))
+#     @printf("%.15f\n",approx_atan2f_P(0.5f0, Val{15}()))
 #     println("Testing approx_atan2i_P")
-#     println(approx_atan2i_P(0.5f0, Val{3}()))
-#     println(approx_atan2i_P(0.5f0, Val{5}()))
-#     println(approx_atan2i_P(0.5f0, Val{7}()))
-#     println(approx_atan2i_P(0.5f0, Val{9}()))
-#     println(approx_atan2i_P(0.5f0, Val{11}()))
-#     println(approx_atan2i_P(0.5f0, Val{13}()))
-#     println(approx_atan2i_P(0.5f0, Val{15}()))
+#     @printf("%.15f\n",approx_atan2i_P(0.5f0, Val{3}()))
+#     @printf("%.15f\n",approx_atan2i_P(0.5f0, Val{5}()))
+#     @printf("%.15f\n",approx_atan2i_P(0.5f0, Val{7}()))
+#     @printf("%.15f\n",approx_atan2i_P(0.5f0, Val{9}()))
+#     @printf("%.15f\n",approx_atan2i_P(0.5f0, Val{11}()))
+#     @printf("%.15f\n",approx_atan2i_P(0.5f0, Val{13}()))
+#     @printf("%.15f\n",approx_atan2i_P(0.5f0, Val{15}()))
 #     println("Testing approx_atan2s_P")
-#     println(approx_atan2s_P(0.5f0, Val{3}()))
-#     println(approx_atan2s_P(0.5f0, Val{5}()))
-#     println(approx_atan2s_P(0.5f0, Val{7}()))
-#     println(approx_atan2s_P(0.5f0, Val{9}()))
+#     @printf("%.15f\n",approx_atan2s_P(0.5f0, Val{3}()))
+#     @printf("%.15f\n",approx_atan2s_P(0.5f0, Val{5}()))
+#     @printf("%.15f\n",approx_atan2s_P(0.5f0, Val{7}()))
+#     @printf("%.15f\n",approx_atan2s_P(0.5f0, Val{9}()))
 #     println("Testing unsafe_atan2f")
-#     println(unsafe_atan2f(0.5f0, 0.5f0, Val{3}()))
-#     println(unsafe_atan2f(0.5f0, 0.5f0, Val{5}()))
-#     println(unsafe_atan2f(0.5f0, 0.5f0, Val{7}()))
-#     println(unsafe_atan2f(0.5f0, 0.5f0, Val{9}()))
-#     println(unsafe_atan2f(0.5f0, 0.5f0, Val{11}()))
-#     println(unsafe_atan2f(0.5f0, 0.5f0, Val{13}()))
-#     println(unsafe_atan2f(0.5f0, 0.5f0, Val{15}()))
+#     @printf("%.15f\n",unsafe_atan2f(0.5f0, 0.5f0, Val{3}()))
+#     @printf("%.15f\n",unsafe_atan2f(0.5f0, 0.5f0, Val{5}()))
+#     @printf("%.15f\n",unsafe_atan2f(0.5f0, 0.5f0, Val{7}()))
+#     @printf("%.15f\n",unsafe_atan2f(0.5f0, 0.5f0, Val{9}()))
+#     @printf("%.15f\n",unsafe_atan2f(0.5f0, 0.5f0, Val{11}()))
+#     @printf("%.15f\n",unsafe_atan2f(0.5f0, 0.5f0, Val{13}()))
+#     @printf("%.15f\n",unsafe_atan2f(0.5f0, 0.5f0, Val{15}()))
 #     println("Testing unsafe_atan2i")
-#     println(unsafe_atan2i(0.5f0, 0.5f0, Val{3}()))
-#     println(unsafe_atan2i(0.5f0, 0.5f0, Val{5}()))
-#     println(unsafe_atan2i(0.5f0, 0.5f0, Val{7}()))
-#     println(unsafe_atan2i(0.5f0, 0.5f0, Val{9}()))
-#     println(unsafe_atan2i(0.5f0, 0.5f0, Val{11}()))
-#     println(unsafe_atan2i(0.5f0, 0.5f0, Val{13}()))
-#     println(unsafe_atan2i(0.5f0, 0.5f0, Val{15}()))
+#     @printf("%.15f\n",unsafe_atan2i(0.5f0, 0.5f0, Val{3}()))
+#     @printf("%.15f\n",unsafe_atan2i(0.5f0, 0.5f0, Val{5}()))
+#     @printf("%.15f\n",unsafe_atan2i(0.5f0, 0.5f0, Val{7}()))
+#     @printf("%.15f\n",unsafe_atan2i(0.5f0, 0.5f0, Val{9}()))
+#     @printf("%.15f\n",unsafe_atan2i(0.5f0, 0.5f0, Val{11}()))
+#     @printf("%.15f\n",unsafe_atan2i(0.5f0, 0.5f0, Val{13}()))
+#     @printf("%.15f\n",unsafe_atan2i(0.5f0, 0.5f0, Val{15}()))
 #     println("Testing unsafe_atan2s")
-#     println(unsafe_atan2s(0.5f0, 0.5f0, Val{3}()))
-#     println(unsafe_atan2s(0.5f0, 0.5f0, Val{5}()))
-#     println(unsafe_atan2s(0.5f0, 0.5f0, Val{7}()))
-#     println(unsafe_atan2s(0.5f0, 0.5f0, Val{9}()))
+#     @printf("%.15f\n",unsafe_atan2s(0.5f0, 0.5f0, Val{3}()))
+#     @printf("%.15f\n",unsafe_atan2s(0.5f0, 0.5f0, Val{5}()))
+#     @printf("%.15f\n",unsafe_atan2s(0.5f0, 0.5f0, Val{7}()))
+#     @printf("%.15f\n",unsafe_atan2s(0.5f0, 0.5f0, Val{9}()))
 #     println("Testing phi2int")
-#     println(phi2int(0.5f0))
+#     @printf("%.15f\n",phi2int(0.5f0))
 #     println("Testing int2phi")
-#     println(int2phi(Int32(402123)))
+#     @printf("%.15f\n",int2phi(Int32(402123)))
 #     println("Testing int2dphi")
-#     println(int2dphi(Int32(402123)))
+#     @printf("%.15f\n",int2dphi(Int32(402123)))
 #     println("Testing phi2short")
-#     println(phi2short(0.5f0))
+#     @printf("%.15f\n",phi2short(0.5f0))
 #     println("Testing short2phi")
-#     println(short2phi(Int16(257)))
+#     @printf("%.15f\n",short2phi(Int16(257)))
 # end
+#
 # test_functions()
 
-end # module
+end # module DataFormatsMathAPPROX_ATAN2_H
