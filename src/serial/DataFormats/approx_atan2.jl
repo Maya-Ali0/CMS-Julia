@@ -184,8 +184,6 @@ end
 
 # Conversion functions
 
-using Printf
-
 function phi2int(x::Float32)::Int32
     pi_val = Float64(Base.MathConstants.pi)
     p2i = (Float64(typemax(Int32)) + 1.0) / pi_val
