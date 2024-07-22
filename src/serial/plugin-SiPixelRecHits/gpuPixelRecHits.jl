@@ -6,6 +6,7 @@ using ..gpuConfig
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA: SiPixelClustersSoA, DeviceConstView
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA: SiPixelDigisSoA, DeviceConstView
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView
+using ..DataFormatsMathAPPROX_ATAN2_H
 
 function getHits(cpeParams::ParamsOnGPU, 
                  bs::BeamSpotPOD, 
@@ -147,8 +148,7 @@ function getHits(cpeParams::ParamsOnGPU,
 
                     
                     rGlobal(hits, h) = sqrt(xg * xg + yg * yg)
-                    # FIXME
-                    # iphi(hits, h) = unsafe_atan2s<7>(yg, xg)
+                    iphi(hits, h) = unsafe_atan2s<7>(yg, xg)
 
                 end
             end
