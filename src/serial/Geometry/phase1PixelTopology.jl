@@ -79,22 +79,27 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel
     ## Returns
     - `Int`: The maximum module stride.
     """
+    	
     function find_max_module_stride()
         n = 2
-        while true
-            all_divisible = true
-            for i in 1:10
-                if layer_start[i + 1] % n != 0
+        all_divisible = true
+        while all_divisible
+
+            for i in 2:11
+                if layer_start[i] % n != 0
                     all_divisible = false
                     break
                 end
             end
-            if all_divisible
-                return n
+            if !all_divisible
+                break
             end
             n *= 2
-        end
-    end
+            end
+       return n ÷ 2
+    end 
+
+
 
     const max_module_stride = find_max_module_stride()
 

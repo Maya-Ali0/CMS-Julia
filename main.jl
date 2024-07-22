@@ -29,6 +29,7 @@ gain_Calibration_producer::SiPixelGainCalibrationForHLTGPUESProducer = SiPixelGa
 
 produce(cabling_map_producer,es)
 produce(gain_Calibration_producer,es);
+<<<<<<< HEAD
 for collection ∈ raw_events
     reg = ProductRegistry()
     raw_token = produces(reg,FedRawDataCollection)
@@ -37,6 +38,14 @@ for collection ∈ raw_events
     emplace(event,raw_token,collection)
     produce(rawToCluster,event,es)
 end
+=======
+
+
+# for event ∈ raw_events
+#     rawToCluster = SiPixelRawToClusterCUDA()
+#     produce(rawToCluster,event,es)
+# end
+>>>>>>> 13f5ec358bbdb4cb892dc7d13cf55008add158c9
 
 
 

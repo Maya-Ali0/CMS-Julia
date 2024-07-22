@@ -1,10 +1,15 @@
-using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
+# using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
+include("../DataFormats/SOARotation.jl")
+using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 
 struct CommonParams
     theThicknessB::Float32
     theThicknessE::Float32
     thePitchX::Float32
     thePitchY::Float32
+    function CommonParams()
+        new(0,0,0,0)
+    end
 end
 
 struct DetParams
@@ -27,6 +32,28 @@ struct DetParams
     sy::NTuple{3, Float32}
 
     frame::SOAFrame{Float32}
+
+
+
+    function DetParams()
+        new(
+            false,          # isBarrel
+            false,          # isPosZ
+            0x0000,         # layer
+            0x0000,         # index
+            0x00000000,     # rawId
+            0.0f0,          # shiftX
+            0.0f0,          # shiftY
+            0.0f0,          # chargeWidthX
+            0.0f0,          # chargeWidthY
+            0.0f0,          # x0
+            0.0f0,          # y0
+            0.0f0,          # z0
+            (0.0f0, 0.0f0, 0.0f0),  # sx
+            (0.0f0, 0.0f0, 0.0f0),  # sy
+            SOAFrame{Float32}()  # frame
+        )
+    end
 end
 
 # const AverageGeometry = Phase1PixelTopology.AverageGeometry
@@ -34,6 +61,13 @@ end
 struct LayerGeometry
     layerStart::Vector{UInt32}
     layer::Vector{UInt8}
+
+    function LayerGeometry()
+        new(
+            Vector{UInt32}(),  # Empty vector for layerStart
+            Vector{UInt8}()    # Empty vector for layer
+        )
+    end
 end
 
 struct ParamsOnGPU
@@ -44,11 +78,15 @@ struct ParamsOnGPU
 
     function ParamsOnGPU(
         commonParams::CommonParams,
-        detParams::DetParams,
+        detParams::Vector{DetParams},
         layerGeometry::LayerGeometry,
         averageGeometry::AverageGeometry
     )
         new(commonParams, detParams, layerGeometry, averageGeometry)
+    end
+    function ParamsOnGPU()
+        temp_vec = [DetParams()]
+        new(CommonParams(),temp_vec,LayerGeometry(),AverageGeometry())
     end
 end
 
