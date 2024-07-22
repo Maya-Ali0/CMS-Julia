@@ -10,10 +10,9 @@ include("ReadRaw.jl")
 
 
 struct Source
-    maxEvents_::Int
-    runForMinutes_::Int
-    numEvents_::Int
-
+    max_events::Int
+    run_for_minutes::Int
+    num_events::Int
     rawToken_::EDPutTokenT{FedRawDataCollection}
     raw_::Vector{FedRawDataCollection}
     

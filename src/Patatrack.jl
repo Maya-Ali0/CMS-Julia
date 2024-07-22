@@ -1,4 +1,5 @@
 module Patatrack
+import Base.length
 
 export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT,
 FED_EVSZ_EXTRACT, FED_CRCS_EXTRACT, FED_STAT_EXTRACT, FED_TTSI_EXTRACT,
@@ -56,6 +57,8 @@ export calib_digis
 export count_modules,find_clus
 export HisToContainer
 export AverageGeometry
+export ProductRegistry
+export Event, EDPutTokenT, produces, emplace, begin_module_construction
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
@@ -78,10 +81,10 @@ include("serial/DataFormats/data_formats.jl")
 include("serial/DataFormats/fed_header.jl")
 include("serial/DataFormats/fed_trailer.jl")
 include("serial/Framework/EDTokens.jl")
+include("serial/Framework/ProductRegistry.jl")
 include("serial/Framework/EandES.jl")
 include("serial/Framework/ESProducer.jl")
 include("serial/Framework/EDProducer.jl")
-include("serial/Framework/ProductRegistry.jl")
 include("serial/Geometry/phase1PixelTopology.jl")
 include("serial/plugin-SiPixelClusterizer/adc_threshold.jl")
 include("serial/plugin-SiPixelClusterizer/Constants.jl")

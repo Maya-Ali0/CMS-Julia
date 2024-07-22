@@ -9,10 +9,11 @@ struct Event
     eventId::Int
     products::Vector{WrapperBase}  # Union type to allow for null elements
 
-    function Event(streamIDD::Int,eventIDD::Int)
-        return new(streamIDD,eventIDD,Vector{WrapperBase}())
+    function Event(streamIDD::Integer,eventIDD::Integer, reg::ProductRegistry)
+        return new(streamIDD,eventIDD,Vector{WrapperBase}(undef,length(reg)))
     end
 end
+Event(reg::ProductRegistry) = Event(0,0,reg)
 
 # Accessor functions for Event
 streamID(event::Event) = event.streamId
@@ -20,13 +21,13 @@ eventID(event::Event) = event.eventId
 
 # Function to retrieve a product of type T from Event
 function get(event::Event, token::EDGetTokenT{T})::T where T
-    wrapper = event.products[token.index]
+    wrapper = event.products[token.value+1]
     return wrapper.obj 
 end
 
 # Function to insert a product of type T into Event
 function emplace(event::Event, token::EDPutTokenT{T}, args...) where T
-    event.products[token.index] = Wrapper{T}(args...)
+    event.products[token.value+1] = Wrapper{T}(args...)
 end
 
 ########################################################################
