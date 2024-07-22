@@ -112,7 +112,7 @@ include("serial/DataFormats/BeamSpotPOD.jl")
 
 
 include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
-# include("serial/CUDADataFormats/TrackingRecHit2DHeterogeneous.jl")
+include("serial/CUDADataFormats/TrackingRecHit2DHeterogeneous.jl")
 # include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
 # include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
 # include("serial/CondFormats/pixelCPEforGPU.jl")
