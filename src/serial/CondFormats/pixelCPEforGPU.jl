@@ -1,4 +1,6 @@
 # using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
+include("../DataFormats/SOARotation.jl")
+using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 
 struct CommonParams
     theThicknessB::Float32
