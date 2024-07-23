@@ -6,7 +6,23 @@ using ..gpuConfig
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA: SiPixelClustersSoA, DeviceConstView
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA: SiPixelDigisSoA, DeviceConstView
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT
+""" getHits function
 
+ Processes pixel hit data from clusters and digis, adjusts for the beam spot position, 
+    and calculates hit positions and errors. This function operates in iterations over the modules and clusters.
+
+    **Inputs**:
+    - `cpeParams::ParamsOnGPU`: Parameters for the cluster position estimation on GPU.
+    - `bs::BeamSpotPOD`: Beam spot position and spread.
+    - `pdigis::DeviceConstView`: Device view for accessing pixel digi data.
+    - `numElements::Integer`: Number of elements in the digi data.
+    - `pclusters::DeviceConstView`: Device view for accessing pixel cluster data.
+    - `phits::Vector{TrackingRecHit2DSOAView}`: Vector of tracking hit views where results will be stored.
+
+    **Outputs**:
+    - `phits` is updated with the calculated hit positions, charges, sizes, and errors.
+
+"""
 function getHits(cpeParams::ParamsOnGPU, 
                  bs::BeamSpotPOD, 
                  pdigis::DeviceConstView, 
