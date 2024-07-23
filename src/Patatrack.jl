@@ -43,6 +43,7 @@ export fed_ids
 export ErrorChecker
 export make_clusters
 export get_results
+export gett
 export FedData
 export data
 export check_crc
@@ -55,8 +56,14 @@ export initialize_word_fed
 export calib_digis
 export count_modules,find_clus
 export HisToContainer
-export MaxNumClusters
+# export MaxNumClusters
+export PixelCPEFastESProducer
+export PixelCPEFast
 export AverageGeometry
+export number_of_layers
+export layer_index_size
+export DetParams
+export find_max_module_stride
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
@@ -92,17 +99,21 @@ include("serial/plugin-SiPixelClusterizer/gpu_cluster_charge_cut.jl")
 include("serial/plugin-SiPixelClusterizer/gpu_clustering.jl")
 include("serial/plugin-SiPixelClusterizer/SiPixelFedCablingMapGPUWrapperESProducer.jl")
 include("serial/plugin-SiPixelClusterizer/SiPixelGainCalibrationForHLTGPUESProducer.jl")
-include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterGPUKernel.jl")
-include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.jl")
+# include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterGPUKernel.jl")
+# include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.jl")
 # include("serial/plugin-SiPixelClusterizer/testClustering.jl")
 include("serial/bin/ReadRAW.jl")
 include("serial/DataFormats/BeamSpotPOD.jl")
 # include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
 # include("serial/plugin-BeamSpotProducer/BeamSpotESProducer.jl")
 # include("serial/CUDADataFormats/HeterogeneousSoA.jl")
-include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
-include("serial/CUDADataFormats/HeterogeneousSoA.jl")
-include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
-include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
+# include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
+# include("serial/CUDADataFormats/HeterogeneousSoA.jl")
+# include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
+# include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
+include("serial/DataFormats/SOARotation.jl")
+include("serial/CondFormats/pixelCPEforGPU.jl")
+include("serial/CondFormats/PixelCPEFast.jl")
+include("serial/plugin-SiPixelRecHits/PixelCPEFastESProducer.jl")
 
 end

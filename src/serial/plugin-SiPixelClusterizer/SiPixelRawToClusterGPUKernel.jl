@@ -25,7 +25,7 @@ module pixelGPUDetails
 
     using ..recoLocalTrackerSiPixelClusterizerPluginsGPUCalibPixel
 
-    using .. gpuClusterCharge:cluster_charge_cut
+    using ..gpuClusterCharge:cluster_charge_cut
     
     using Printf
     module pixelConstants
@@ -703,7 +703,6 @@ module pixelGPUDetails
                 
         #     end
         # end
-<<<<<<< HEAD
         # open("testingNumClusters.txt","w") do file
         #     for i ∈ 1:2000
         #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
@@ -716,9 +715,7 @@ module pixelGPUDetails
         #     end
         # end
         open("testingNumClusters.txt","a") do file
-=======
         open("testingNumClusters.txt","w") do file
->>>>>>> 26952003553c1d4629f893f2585568aa2e5cbb18
             for i ∈ 1:2000
                 write(file,string(clusters_d.clus_in_module_d[i]),'\n')
             end
@@ -751,3 +748,4 @@ module pixelGPUDetails
 
 
 end
+

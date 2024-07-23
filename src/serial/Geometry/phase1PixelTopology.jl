@@ -1,7 +1,7 @@
 module Geometry_TrackerGeometryBuilder_phase1PixelTopology_h
-export number_of_ladders_in_barrel, number_of_module_in_barrel, AverageGeometry
+export number_of_ladders_in_barrel, number_of_module_in_barrel, AverageGeometry, find_max_module_stride
 module phase1PixelTopology
-export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel
+export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel, number_of_layers, layer_index_size, find_max_module_stride
     # Constants defining the dimensions of ROCs and modules
     const num_rows_in_ROC = 80
     const num_cols_in_ROC = 52
@@ -79,22 +79,29 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel
     ## Returns
     - `Int`: The maximum module stride.
     """
+    	
+
+
     function find_max_module_stride()
-        n = 2
-        while true
-            all_divisible = true
-            for i in 1:10
-                if layer_start[i + 1] % n != 0
-                    all_divisible = false
+            n = 2
+     all_divisible = true
+            while all_divisible
+    
+                for i in 2:11
+                    if layer_start[i] % n != 0
+                        all_divisible = false
+                        break
+                    end
+                end
+                if !all_divisible
                     break
                 end
+                n *= 2
             end
-            if all_divisible
-                return n
-            end
-            n *= 2
-        end
-    end
+            return n ÷ 2
+        end 
+    
+    
 
     const max_module_stride = find_max_module_stride()
 
@@ -135,7 +142,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel
         return 11
     end
 
-    const layer_index_size = UInt32(number_of_modules ÷ max_module_stride)
+    const layer_index_size::UInt32 = number_of_modules ÷ max_module_stride
 
     # FIXME can do broadcasting
     const layer = map_to_array(layer_index_size, find_layer_from_compact)
@@ -309,17 +316,17 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel
         ladderMaxZ::Vector{Float32}
         endCapZ::NTuple{2, Float32}  # just for pos and neg Layer1
         
-        function AverageGeometry()
-            number_of_ladders_in_barrel = 0
-            ladderZ = Float32[]
-            ladderX = Float32[]
-            ladderY = Float32[]
-            ladderR = Float32[]
-            ladderMinZ = Float32[]
-            ladderMaxZ = Float32[]
-            endCapZ = (0.0f0, 0.0f0)
-            new(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
-        end
+        # function AverageGeometry()
+        #     number_of_ladders_in_barrel = 0
+        #     ladderZ = Float32[]
+        #     ladderX = Float32[]
+        #     ladderY = Float32[]
+        #     ladderR = Float32[]
+        #     ladderMinZ = Float32[]
+        #     ladderMaxZ = Float32[]
+        #     endCapZ = (0.0f0, 0.0f0)
+        #     new(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
+        # end
     end
     
 

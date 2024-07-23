@@ -50,7 +50,7 @@ function put!(es::EventSetup, prod::T) where T
     es.typeToProduct[T] = ESWrapper(prod)
 end
 
-function get(es::EventSetup, ::Type{T}) where T
+function gett(es::EventSetup, ::Type{T}) where T
     if haskey(es.typeToProduct, T)
         return es.typeToProduct[T].obj
     else

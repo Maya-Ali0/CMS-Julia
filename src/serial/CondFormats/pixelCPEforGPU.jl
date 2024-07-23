@@ -41,15 +41,6 @@ struct ParamsOnGPU
     m_detParams::Vector{DetParams}
     m_layerGeometry::LayerGeometry
     m_averageGeometry::AverageGeometry
-
-    function ParamsOnGPU(
-        commonParams::CommonParams,
-        detParams::DetParams,
-        layerGeometry::LayerGeometry,
-        averageGeometry::AverageGeometry
-    )
-        new(commonParams, detParams, layerGeometry, averageGeometry)
-    end
 end
 
 function commonParams(params::ParamsOnGPU)

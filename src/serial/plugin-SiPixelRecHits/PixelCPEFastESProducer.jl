@@ -12,7 +12,9 @@ function readDetParam(io::IOStream)
     isPosZ = read(io,Bool)
     layer = read(io,UInt16)
     index = read(io,UInt16)
+    read(io,2)
     rawId = read(io,UInt32)
+    # read(io,2)
 
     shiftX = read(io,Float32)
     shiftY = read(io,Float32)
@@ -53,14 +55,18 @@ end
 
 function readCpeFast(io::IOStream,es::EventSetup)
     theThicknessB = read(io,Float32)
+    println(bitstring(theThicknessB))
     theThicknessE = read(io,Float32)
+    println(bitstring(theThicknessE))
     thePitchX = read(io,Float32)
+    println(bitstring(thePitchX))
     thePitchY = read(io,Float32)
+    println(bitstring(thePitchY))
 
     cmParams = CommonParams(theThicknessB,theThicknessE,thePitchX,thePitchY)
 
     ndetParams = read(io,UInt32)
-    # print(ndetParams)
+    println(ndetParams)
 
     detParamsGPU = Vector{DetParams}()
 
@@ -76,7 +82,7 @@ function readCpeFast(io::IOStream,es::EventSetup)
     ladderR = readData(io,Float32,number_of_ladders_in_barrel)
     ladderMinZ = readData(io,Float32,number_of_ladders_in_barrel)
     ladderMaxZ = readData(io,Float32,number_of_ladders_in_barrel)
-    print(number_of_ladders_in_barrel)
+    println(number_of_ladders_in_barrel)
 
     endCapZ = NTuple{2, Float32}
     endCapZ = (read(io,Float32),read(io,Float32))
@@ -86,11 +92,10 @@ function readCpeFast(io::IOStream,es::EventSetup)
 
     layerStart = readData(io,UInt32,number_of_layers + 1)
     layer = readData(io,UInt8,layer_index_size)
-    print(layer_index_size)
 
     layerGeometry = LayerGeometry(layerStart,layer)
 
-    cpuData = ParamsOnGPU(CommonParams,detParamsGPU,layerGeometry,averageGeometry)
+    cpuData = ParamsOnGPU(cmParams,detParamsGPU,layerGeometry,averageGeometry)
 
     p_CPEFast = PixelCPEFast(detParamsGPU,cmParams,layerGeometry,averageGeometry,cpuData)
 
