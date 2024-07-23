@@ -165,13 +165,12 @@ function getHits(cpeParams::ParamsOnGPU,
                 for ic in 1:nClusterInIter
                     h = first + ic
 
-                    if h >= TrackingRecHit2DSOAView::macHits()
+                    if h >= TrackingRecHit2DSOAView::max_hits()
                         break
                     end
                     @assert h < n_hits(hits)
                     @assert h < clus_module_start(clusters, me + 1)
 
-                    # FIXME
                     pixelCPEforGPU::position(cpeParams.commonParams(), cpeParams.detParams(me), clusParams, ic);
                     pixelCPEforGPU::errorFromDB(cpeParams.commonParams(), cpeParams.detParams(me), clusParams, ic);
                     
