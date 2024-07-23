@@ -1,3 +1,5 @@
+using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
+
 struct PixelCPEFastESProducer <: ESProducer
     data::String  # Use String to represent the path
 
@@ -55,18 +57,13 @@ end
 
 function readCpeFast(io::IOStream,es::EventSetup)
     theThicknessB = read(io,Float32)
-    println(bitstring(theThicknessB))
     theThicknessE = read(io,Float32)
-    println(bitstring(theThicknessE))
     thePitchX = read(io,Float32)
-    println(bitstring(thePitchX))
     thePitchY = read(io,Float32)
-    println(bitstring(thePitchY))
 
     cmParams = CommonParams(theThicknessB,theThicknessE,thePitchX,thePitchY)
 
     ndetParams = read(io,UInt32)
-    println(ndetParams)
 
     detParamsGPU = Vector{DetParams}()
 
@@ -82,7 +79,6 @@ function readCpeFast(io::IOStream,es::EventSetup)
     ladderR = readData(io,Float32,number_of_ladders_in_barrel)
     ladderMinZ = readData(io,Float32,number_of_ladders_in_barrel)
     ladderMaxZ = readData(io,Float32,number_of_ladders_in_barrel)
-    println(number_of_ladders_in_barrel)
 
     endCapZ = NTuple{2, Float32}
     endCapZ = (read(io,Float32),read(io,Float32))
