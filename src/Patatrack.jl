@@ -1,4 +1,7 @@
+
+
 module Patatrack
+import Base.length
 
 export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT,
 FED_EVSZ_EXTRACT, FED_CRCS_EXTRACT, FED_STAT_EXTRACT, FED_TTSI_EXTRACT,
@@ -56,14 +59,8 @@ export initialize_word_fed
 export calib_digis
 export count_modules,find_clus
 export HisToContainer
-# export MaxNumClusters
-export PixelCPEFastESProducer
-export PixelCPEFast
+export MaxNumClusters
 export AverageGeometry
-export number_of_layers
-export layer_index_size
-export DetParams
-export find_max_module_stride
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
@@ -86,10 +83,10 @@ include("serial/DataFormats/data_formats.jl")
 include("serial/DataFormats/fed_header.jl")
 include("serial/DataFormats/fed_trailer.jl")
 include("serial/Framework/EDTokens.jl")
+include("serial/Framework/ProductRegistry.jl")
 include("serial/Framework/EandES.jl")
 include("serial/Framework/ESProducer.jl")
 include("serial/Framework/EDProducer.jl")
-include("serial/Framework/ProductRegistry.jl")
 include("serial/Geometry/phase1PixelTopology.jl")
 include("serial/plugin-SiPixelClusterizer/adc_threshold.jl")
 include("serial/plugin-SiPixelClusterizer/Constants.jl")
@@ -107,13 +104,9 @@ include("serial/DataFormats/BeamSpotPOD.jl")
 # include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
 # include("serial/plugin-BeamSpotProducer/BeamSpotESProducer.jl")
 # include("serial/CUDADataFormats/HeterogeneousSoA.jl")
-# include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
-# include("serial/CUDADataFormats/HeterogeneousSoA.jl")
-# include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
-# include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
-include("serial/DataFormats/SOARotation.jl")
-include("serial/CondFormats/pixelCPEforGPU.jl")
-include("serial/CondFormats/PixelCPEFast.jl")
-include("serial/plugin-SiPixelRecHits/PixelCPEFastESProducer.jl")
+include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
+include("serial/CUDADataFormats/HeterogeneousSoA.jl")
+include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
+include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
 
 end
