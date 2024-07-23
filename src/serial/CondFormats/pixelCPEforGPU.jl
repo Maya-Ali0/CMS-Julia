@@ -2,6 +2,14 @@
 include("../DataFormats/SOARotation.jl")
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 
+"""
+ Struct for common detector parameters including thickness, pitch, and default values.
+    
+    - `theThicknessB::Float32`: Thickness for barrel detectors.
+    - `theThicknessE::Float32`: Thickness for endcap detectors.
+    - `thePitchX::Float32`: Pitch in the x-direction.
+    - `thePitchY::Float32`: Pitch in the y-direction.
+"""
 struct CommonParams
     theThicknessB::Float32
     theThicknessE::Float32
@@ -15,6 +23,29 @@ struct CommonParams
         new(a, b, c, d)
     end
 end
+
+"""
+### DetParams
+    Struct for detector-specific parameters, including error values and positional offsets.
+
+    - `isBarrel::Bool`: Indicates if the detector is a barrel type.
+    - `isPosZ::Bool`: Indicates the z-position.
+    - `layer::UInt16`: Layer number.
+    - `index::UInt16`: Index within the layer.
+    - `rawId::UInt32`: Raw identifier for the detector.
+    - `shiftX::Float32`: X-offset.
+    - `shiftY::Float32`: Y-offset.
+    - `chargeWidthX::Float32`: Charge width in x-direction.
+    - `chargeWidthY::Float32`: Charge width in y-direction.
+    - `x0::Float32`: X-coordinate offset for position calculation.
+    - `y0::Float32`: Y-coordinate offset for position calculation.
+    - `z0::Float32`: Z-coordinate offset for position calculation.
+    - `sx::NTuple{3, Float32}`: Error values in x-direction.
+    - `sy::NTuple{3, Float32}`: Error values in y-direction.
+    - `frame::SOAFrame{Float32}`: Frame data structure.
+
+
+"""
 
 struct DetParams
     isBarrel::Bool
@@ -61,6 +92,14 @@ struct DetParams
 end
 
 # const AverageGeometry = Phase1PixelTopology.AverageGeometry
+""" 
+    ### LayerGeometry
+    Struct for layer geometry including start indices and layer numbers.
+
+    - `layerStart::Vector{UInt32}`: Vector of start indices for layers.
+    - `layer::Vector{UInt8}`: Vector of layer numbers.
+    
+"""
 
 struct LayerGeometry
     layerStart::Vector{UInt32}
@@ -76,7 +115,17 @@ struct LayerGeometry
         )
     end
 end
+"""
+ ### ParamsOnGPU
+    Struct for storing parameters needed on GPU, including common parameters, detector parameters, 
+    layer geometry, and average geometry.
 
+    - `m_commonParams::CommonParams`: Common parameters for the detector.
+    - `m_detParams::Vector{DetParams}`: Vector of detector parameters.
+    - `m_layerGeometry::LayerGeometry`: Layer geometry.
+    - `m_averageGeometry::AverageGeometry`: Average geometry data.
+
+"""
 struct ParamsOnGPU
     m_commonParams::CommonParams
     m_detParams::Vector{DetParams}
@@ -96,6 +145,7 @@ struct ParamsOnGPU
         new(CommonParams(),temp_vec,LayerGeometry(),AverageGeometry())
     end
 end
+
 
 function commonParams(params::ParamsOnGPU)
     return params.m_commonParams
@@ -118,6 +168,28 @@ function layer(params::ParamsOnGPU, id::UInt16)
 end
 
 # const MaxHitsInIter = GPUClustering.maxHitsInIter()
+
+"""
+   ### ClusParamsT{N}
+    Template struct for cluster parameters with a fixed size N.
+
+    - `minRow::NTuple{N, UInt32}`: Minimum row indices for clusters.
+    - `maxRow::NTuple{N, UInt32}`: Maximum row indices for clusters.
+    - `minCol::NTuple{N, UInt32}`: Minimum column indices for clusters.
+    - `maxCol::NTuple{N, UInt32}`: Maximum column indices for clusters.
+    - `Q_f_X::NTuple{N, Int32}`: First charge values in x-direction.
+    - `Q_l_X::NTuple{N, Int32}`: Last charge values in x-direction.
+    - `Q_f_Y::NTuple{N, Int32}`: First charge values in y-direction.
+    - `Q_l_Y::NTuple{N, Int32}`: Last charge values in y-direction.
+    - `charge::NTuple{N, Int32}`: Charge values.
+    - `xpos::NTuple{N, Float32}`: X positions.
+    - `ypos::NTuple{N, Float32}`: Y positions.
+    - `xerr::NTuple{N, Float32}`: X error values.
+    - `yerr::NTuple{N, Float32}`: Y error values.
+    - `xsize::NTuple{N, Int16}`: X sizes.
+    - `ysize::NTuple{N, Int16}`: Y sizes.
+
+"""
 
 struct ClusParamsT{N}
     minRow::NTuple{N, UInt32}
@@ -142,6 +214,20 @@ struct ClusParamsT{N}
     ysize::NTuple{N, Int16}
 end
 
+"""
+### computeAnglesFromDet
+    Computes the angles of a position relative to the detector.
+
+    **Inputs**:
+    - `detParams::DetParams`: Detector parameters including offsets and z-coordinate.
+    - `x::Float32`: X-coordinate of the position.
+    - `y::Float32`: Y-coordinate of the position.
+
+    **Outputs**:
+    - `cotalpha::Float32`: Cotangent of the alpha angle.
+    - `cotbeta::Float32`: Cotangent of the beta angle.
+
+"""
 
 function computeAnglesFromDet(detParams::DetParams, x::Float32, y::Float32)
     gvx = x - detParams.x0
@@ -153,6 +239,27 @@ function computeAnglesFromDet(detParams::DetParams, x::Float32, y::Float32)
     return cotalpha, cotbeta
 end
 
+"""
+### correction
+    Calculates the correction factor based on cluster size, charge values, and detector parameters.
+
+    **Inputs**:
+    - `sizeM1::Int32`: Size of the cluster minus one.
+    - `Q_f::Int32`: First charge value.
+    - `Q_l::Int32`: Last charge value.
+    - `upper_edge_first_pix::UInt16`: Index of the first pixel at the upper edge.
+    - `lower_edge_last_pix::UInt16`: Index of the last pixel at the lower edge.
+    - `lorentz_shift::Float32`: Lorentz shift correction.
+    - `theThickness::Float32`: Thickness of the detector.
+    - `cot_angle::Float32`: Cotangent of the angle.
+    - `pitch::Float32`: Pitch of the detector.
+    - `first_is_big::Bool`: Whether the first pixel is big.
+    - `last_is_big::Bool`: Whether the last pixel is big.
+
+    **Outputs**:
+    - `Float32`: Computed correction value.
+
+"""
 function correction(sizeM1::Int32, Q_f::Int32, Q_l::Int32, upper_edge_first_pix::UInt16, lower_edge_last_pix::UInt16,
                     lorentz_shift::Float32, theThickness::Float32, cot_angle::Float32, pitch::Float32,
                     first_is_big::Bool, last_is_big::Bool)::Float32
@@ -183,6 +290,20 @@ function correction(sizeM1::Int32, Q_f::Int32, Q_l::Int32, upper_edge_first_pix:
     return 0.5f0 * (Qdiff / Qsum) * W_eff
 end
 
+"""
+### position
+    Computes the position of a cluster in the detector and applies corrections.
+
+    **Inputs**:
+    - `comParams::CommonParams`: Common parameters including pitch and thickness.
+    - `detParams::DetParams`: Detector-specific parameters.
+    - `cp::ClusParamsT{N}`: Cluster parameters.
+    - `ic::UInt32`: Index of the cluster.
+
+    **Outputs**:
+    - Updates `cp.xpos[ic]` and `cp.ypos[ic]` with the corrected x and y positions.
+
+"""
 function position(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32) where {N}
     llx = cp.minRow[ic] + 1
     lly = cp.minCol[ic] + 1
@@ -247,6 +368,21 @@ function position(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT
     cp.ypos[ic] = yPos + ycorr
 end
 
+"""
+### errorFromSize
+    Updates error estimates based on cluster size and detector parameters.
+
+    **Inputs**:
+    - `comParams::CommonParams`: Common parameters for the detector.
+    - `detParams::DetParams`: Detector-specific parameters including error values.
+    - `cp::ClusParamsT{N}`: Cluster parameters.
+    - `ic::Int`: Index of the cluster.
+
+    **Outputs**:
+    - Updates `cp.xerr[ic]` and `cp.yerr[ic]` with the computed error values based on cluster size and position.
+
+"""
+
 function errorFromSize(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::Int) where {N}
     # Edge cluster errors
     cp.xerr[ic] = 0.0050f0
@@ -296,6 +432,20 @@ function errorFromSize(comParams::CommonParams, detParams::DetParams, cp::ClusPa
         end
     end
 end
+
+"""
+### errorFromDB
+    Computes error estimates based on cluster size and database parameters.
+
+    **Inputs**:
+    - `comParams::CommonParams`: Common parameters for the detector.
+    - `detParams::DetParams`: Detector-specific parameters including error values.
+    - `cp::ClusParamsT{N}`: Cluster parameters.
+    - `ic::Int`: Index of the cluster.
+
+    **Outputs**:
+    - Updates `cp.xerr[ic]` and `cp.yerr[ic]` with the error values based on the cluster size and position.
+"""
 
 function errorFromDB(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::Int) where {N}
     # Edge cluster errors
