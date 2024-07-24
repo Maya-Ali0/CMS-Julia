@@ -63,10 +63,12 @@ struct TrackingRecHit2DHeterogeneous
         end
     
         # Initialize storage vectors
-        m_store16 = [Vector{UInt16}(undef, 0) for _ in 1:(nHits)]
-        m_store32 = [Vector{Float64}(undef, 0) for _ in 1:(nHits + 11)]
-        m_store32_UInt32 = [Vector{UInt32}(undef, 0) for _ in 1:(nHits + 11)]
-        
+        m_store16 = [Vector{UInt16}(undef, nHits) for _ in 1:n16]
+        m_store32 = [Vector{Float64}(undef, nHits) for _ in 1:n32]
+        m_store32_UInt32 = [Vector{UInt32}(undef, nHits) for _ in 1:n32]
+        append!(m_store32, [Vector{Float64}(undef, 11)])
+        append!(m_store32_UInt32, [Vector{UInt32}(undef, 11)])
+
         # Initialize AverageGeometry and Histogram store
         obj2 = AverageGeometry()
         m_HistStore = Hist
