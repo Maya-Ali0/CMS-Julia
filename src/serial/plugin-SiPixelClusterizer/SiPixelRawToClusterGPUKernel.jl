@@ -719,7 +719,10 @@ module pixelGPUDetails
         #     end
         # end
     end
-
+    """
+    clus_start: Number of clusters within each module
+    
+    """
     function fill_hits_module_start(clus_start::Vector{UInt32}, module_start::Vector{UInt32})
         @assert (gpuClustering.MAX_NUM_MODULES < 2048)
         @assert module_start[1] == 0
