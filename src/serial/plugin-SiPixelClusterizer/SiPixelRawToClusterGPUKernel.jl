@@ -22,7 +22,7 @@ module pixelGPUDetails
 
     using ..recoLocalTrackerSiPixelClusterizerPluginsGPUCalibPixel
 
-    using .. gpuClusterCharge:cluster_charge_cut
+    using ..gpuClusterCharge:cluster_charge_cut
     
     using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
     using ..prefix_scan:block_prefix_scan
@@ -741,3 +741,4 @@ module pixelGPUDetails
 
 
 end
+

@@ -31,7 +31,7 @@ include("../CondFormats/pixelCPEforGPU.jl")
     - `m_hist::HisToContainer`: Histogram container for hits.
     - `m_nHits::UInt32`: Number of hits.
 """
-struct TrackingRecHit2DSOAView
+mutable struct TrackingRecHit2DSOAView
     m_xl::Vector{Float64}
     m_yl::Vector{Float64}
     m_xerr::Vector{Float64}
