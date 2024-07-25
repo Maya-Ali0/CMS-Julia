@@ -28,8 +28,7 @@ function makeHits(self::PixelRecHitGPUKernel,
                   bs_d::BeamSpotPOD, 
                   cpeParams::ParamsOnGPU)
     nHits = nClusters(clusters_d)
-    TrackingRecHit2DCPU = TrackingRecHit2DHeterogeneous{CPUTraits} 
-    hits_d = TrackingRecHit2DCPU(nHits, cpeParams, clus_module_star(clusters_d),null)
+    hits_d = TrackingRecHit2DHeterogeneous(nHits, cpeParams, clus_module_star(clusters_d),null)
 
 
     if n_modules(digis_d)

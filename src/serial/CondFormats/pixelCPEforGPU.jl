@@ -310,10 +310,10 @@ function position(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT
     urx = cp.maxRow[ic]
     ury = cp.maxCol[ic]
 
-    llxl = localX(llx)
-    llyl = localY(lly)
-    urxl = localX(urx)
-    uryl = localY(ury)
+    llxl = local_x(llx)
+    llyl = local_y(lly)
+    urxl = local_x(urx)
+    uryl = local_y(ury)
 
     mx = llxl + urxl
     my = llyl + uryl
