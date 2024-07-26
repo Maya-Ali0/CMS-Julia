@@ -119,8 +119,8 @@ module pixelGPUDetails
     the module
     """
     mutable struct Pixel
-        row::Integer
-        col::Integer
+        row::UInt32
+        col::UInt32
     end
     """
     Packing struct used to pack a digi into a 32 bit word which contains information about the global coordinates of the pixel within the module:
@@ -214,12 +214,12 @@ module pixelGPUDetails
         Every Consecutive 4 bytes are reinterpreted as one word UInt32
         the fed_ids array is filled with the fed_id value in the range ceiling((word_counter + 1) / 2) up to (wod_counter + length) ÷ 2
     """
-    function initialize_word_fed(word_fed_appender::WordFedAppender, fed_id::Integer , src::Vector{UInt8}, word_counter_gpu::Integer)
+    function initialize_word_fed(word_fed_appender::WordFedAppender, fed_id::Integer , src::AbstractArray, word_counter_gpu::Integer)
         len = length(src) ÷ 4
         for index ∈ (word_counter_gpu+1):(word_counter_gpu + len)
             counter = index-word_counter_gpu
             start_index_byte = 4*(counter-1) + 1
-            word_32::Vector{UInt8} = src[start_index_byte:start_index_byte+3]
+            word_32= view(src,start_index_byte:start_index_byte+3)
             get_word(word_fed_appender)[index] = reinterpret(UInt32,word_32)[1]
         end
         get_fed_id(word_fed_appender)[(cld((word_counter_gpu+1),2):(word_counter_gpu + len) ÷ 2)] .= (fed_id - 1200)
@@ -271,7 +271,7 @@ module pixelGPUDetails
     function frame_conversion(bpix::Bool,side::Int,layer::UInt32,roc_id_in_det_unit::UInt32,local_pixel::Pixel)
         slope_row = slope_col = 0
         row_offset = col_offset = 0
-
+        g_row = g_col = 0
         if bpix # if barrel pixel
             if side == -1 && layer != 1 # -Z side: 4 non flipped modules oriented like 'dddd', except Layer 1
                 """
@@ -343,9 +343,8 @@ module pixelGPUDetails
                 end
             end
         end
-        g_row::UInt32 = slope_row * local_pixel.row + row_offset
+        g_row = slope_row * local_pixel.row + row_offset
         g_col::UInt32 = slope_col * local_pixel.col + col_offset
-
         global_pixel::Pixel = Pixel(g_row,g_col)
         return global_pixel
     end
@@ -539,6 +538,7 @@ module pixelGPUDetails
                                 word::Vector{UInt32} , fed_ids::Vector{UInt8} , xx::Vector{Int16} , yy::Vector{Int16} ,
                                 adc::Vector{Int32} , p_digi::Vector{UInt32} , raw_id_arr::Vector{UInt32} , module_id::Vector{Int16},
                                 err::Vector{PixelErrorCompact} , use_quality_info::Bool , include_errors::Bool , debug::Bool)
+                                
         first::UInt32 = 1
         n_end = word_counter
         #open("modtounp.txt","w") do file
@@ -555,8 +555,8 @@ module pixelGPUDetails
             raw_id_arr[g_index] = 0 
             module_id[g_index] = 9999
 
-            ww::UInt32 = word[g_index]
-
+            ww::UInt32 = word[g_index] 
+            
             if ww == 0 # indication of noise or dead channel, skip this pixel during clusterization
                 continue 
             end
@@ -569,13 +569,14 @@ module pixelGPUDetails
             error_type::UInt8 = check_roc(ww,fed_id,link,cabling_map,debug)
 
             skip_roc = (roc < MAX_ROC_INDEX) ? false : ( error_type != 0 )
-
+            
             if include_errors && skip_roc
                 r_id::UInt32 = get_err_raw_id(fed_id,ww,error_type,cabling_map,debug)
                 push!(err,PixelErrorCompact(r_id,ww,error_type,fed_id))
                 continue 
             end
-
+            
+            
             raw_id::UInt32 = det_id.raw_id
             roc_id_in_det_unit = det_id.roc_in_det
             barrel = is_barrel(raw_id)
@@ -599,6 +600,7 @@ module pixelGPUDetails
             the_module::UInt32 = barrel ? ((raw_id >> MODULE_START_BIT) & MODULE_MASK) : 0
             panel = barrel ? 0 : (raw_id >> PANEL_START_BIT) & PANEL_MASK
             side = barrel ? ((the_module < 5) ? -1 : 1) : ((panel == 1) ? -1 : 1)
+            
             local_pixel::Pixel = Pixel(0,0)
             row::Integer = 0
             col::Integer = 0 
@@ -622,11 +624,11 @@ module pixelGPUDetails
                 # Conversion Rules for dcol and px_id
                 dcol::Int32 = (ww >> DCOL_SHIFT) & DCOL_MASK
                 """
-                px_id range is from 2 to 161
+                #px_id range is from 2 to 161
                 """
                 px_id::Int32 = (ww >> PXID_SHIFT) & PXID_MASK
                 """
-                I think in order for this to be consistent. The pixel_ids are numbered from 2 to 161 from the bottom of the strip (160x2)
+                #I think in order for this to be consistent. The pixel_ids are numbered from 2 to 161 from the bottom of the strip (160x2)
                 """
                 row = NUM_ROWS_IN_ROC - px_id ÷ 2 
                 
@@ -642,7 +644,8 @@ module pixelGPUDetails
                     continue 
                 end
             end
-                global_pix::Pixel = frame_conversion(barrel,side,layer,roc_id_in_det_unit, local_pixel)
+                
+                global_pix = frame_conversion(barrel,side,layer,roc_id_in_det_unit, local_pixel)
                 xx[g_index] = global_pix.row
                 yy[g_index] = global_pix.col
                 #write(file,string(global_pix.col),"\n")
@@ -661,9 +664,10 @@ module pixelGPUDetails
         @printf("decoding %s digis. Max is %i '\n'",word_counter,MAX_FED_WORDS)
         digis_d = gpu_algo.digis_d
         if include_errors
-            digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors)
+            digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors) # m
         end
-        clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES)
+        
+        clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES) # m
         
         # if word_counter != 0 # incase of empty event
         #     open("outputDigis.txt","w") do file
@@ -671,8 +675,9 @@ module pixelGPUDetails
         #             write(file,string(word_fed.words[i+1]),'\n')
         #         end
         #     end
-           @assert(0 == word_counter % 2)
-            raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
+        
+        @assert(0 == word_counter % 2)
+        raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
             digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, digi_errors_d.error_d,use_quality_info,include_errors,debug)
         #end # end for raw to digi
         
@@ -682,8 +687,11 @@ module pixelGPUDetails
         #         write(file,"xx[",string(i), "] = ", string(digis_d.xx_d[i+1])," yy[",string(i), "] = ", string(digis_d.yy_d[i+1])," adc[",string(i), "] = ", string(digis_d.adc_d[i+1], " moduleid[",string(i),"] = ",digis_d.module_ind_d[i+1]," pdigi[",string(i),"] = ",string(digis_d.pdigi_d[i+1])," rawidarr[",string(i),"] = ",digis_d.raw_id_arr_d[i+1],'\n'))
         #     end
         # end
+        
         count_modules(digis_d.module_ind_d,clusters_d.module_start_d,digis_d.clus_d,word_counter)
+        
         set_n_modules_digis(digis_d,clusters_d.module_start_d[1],word_counter)
+        
         find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         # open("testingNumClusters.txt","w") do file
         #     for i ∈ 1:2000
@@ -692,6 +700,7 @@ module pixelGPUDetails
         # end
         
         cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
+        
         # open("testingClustersDigisIds.txt","w") do file
         #     for i ∈ 1:word_counter
         #         if(digis_d.clus_d[i] == 9999 || digis_d.clus_d[i] == -9999 )

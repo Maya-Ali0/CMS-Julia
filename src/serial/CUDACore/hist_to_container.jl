@@ -3,6 +3,7 @@ module histogram
     import Base.fill!
     include("../CUDACore/prefix_scan.jl")
     using .prefix_scan:block_prefix_scan
+    using StaticArrays
     struct AtomicPairCounter
         n::UInt32
         m::UInt32
@@ -39,8 +40,8 @@ module histogram
     function to find floor(log2(n)) in loglog(32)
     """
     function i_log_2(v::UInt32)::UInt32
-        b::Vector{UInt32} = [0x2,0xC,0xF0,0xFF00,0xFFFF0000]
-        s::Vector{UInt32} = [ 1,2,4,8,16]
+        b = SVector(0x2,0xC,0xF0,0xFF00,0xFFFF0000)
+        s = SVector{5,UInt32}(1,2,4,8,16)
         r::UInt32 = 0 
         
         for i ∈ 5:-1:1

@@ -160,7 +160,7 @@ module fedHeader
         theHeader::Fedh_t
         length::UInt32
     end
-    function FedHeader(header::Vector{UInt8}) 
+    function FedHeader(header::AbstractArray) 
         source_id::UInt32 = reinterpret(UInt32,header[1:4])[1]
         event_id::UInt32 =  reinterpret(UInt32,header[5:8])[1]
         header = Fedh_t(source_id,event_id)

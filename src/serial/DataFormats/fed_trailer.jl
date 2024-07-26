@@ -181,7 +181,7 @@ module fedTrailer
         theTrailer::Fedt_t
         length::UInt32
     end
-    function FedTrailer(trailer::Vector{UInt8})
+    function FedTrailer(trailer::AbstractArray)
         cons_check::UInt32 = reinterpret(UInt32, trailer[1:4])[1]
         event_size::UInt32 = reinterpret(UInt32, trailer[5:8])[1]
         trailer_t = Fedt_t(cons_check,event_size)

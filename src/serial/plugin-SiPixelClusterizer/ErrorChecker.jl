@@ -79,9 +79,9 @@ module errorChecker
     Returns:
     - Bool: True if more headers follow, false otherwise.
     """
-    function check_header(self::ErrorChecker, errors_in_event::Bool, fed_id::Integer, header::Vector{UInt8}, errors::Errors)::Bool
-        the_header = FedHeader(header)
-        error_word::UInt64 = reinterpret(UInt64,header[1:8])[1]
+    function check_header(self::ErrorChecker, errors_in_event::Bool, fed_id::Integer, header::AbstractArray, errors::Errors)::Bool
+        the_header = FedHeader(header) # allocations caused by this
+        error_word::UInt64 = reinterpret(UInt64,header[1:8])[1] # allocations caused by this
         if(!fedHeader.check(the_header))
             return false
         end 
@@ -113,7 +113,7 @@ module errorChecker
     Returns:
     - Bool: True if more trailers follow, false otherwise.
     """
-    function check_trailer(self::ErrorChecker, errors_in_event::Bool, fed_id::Integer, num_words::Integer, trailer::Vector{UInt8}, errors::Errors)::Bool
+    function check_trailer(self::ErrorChecker, errors_in_event::Bool, fed_id::Integer, num_words::Integer, trailer::AbstractArray, errors::Errors)::Bool
         the_trailer = FedTrailer(trailer)
         error_word::UInt64 = reinterpret(UInt64,trailer[1:8])[1]
         if (!fedTrailer.check(the_trailer))

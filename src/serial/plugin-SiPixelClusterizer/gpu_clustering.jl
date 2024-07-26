@@ -96,13 +96,14 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     # julia is 1 indexed
     first_module = 1
     end_module = module_start[1]
-    
+    Hist{T, N, M, K, U} = HisToContainer{T, N, M, K, U} # was on line 120 question why did it cause a lot of memory allocation
     for mod ∈ first_module:end_module # Go over all modules
         first_pixel = module_start[mod + 1] # access index of starting pixel within module
         this_module_id = id[first_pixel] # get module id
         @assert this_module_id < MAX_NUM_MODULES
         first = first_pixel
         msize = num_elements
+        
         for i ∈ first:num_elements
             if id[i] == INV_ID 
                 continue
@@ -115,8 +116,10 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         
         max_pix_in_module = 4000
         nbins = num_cols_in_module + 2
-        Hist{T, N, M, K, U} = HisToContainer{T, N, M, K, U}
-        hist = HisToContainer{Int16, nbins, max_pix_in_module, 9, UInt16, 1}()
+        
+        
+        
+        hist = HisToContainer{Int16, nbins, max_pix_in_module, 9, UInt16, 1}() # why doesnt this cause allocations
         zero(hist)
         
         @assert msize == num_elements || (msize < num_elements && id[msize] != this_module_id)
@@ -129,30 +132,32 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             msize+=1
         end
         # fill histo
+        
         for i in first:msize-1
             if id[i] == INV_ID
                 continue
             end
             count!(hist, Int16(y[i]))
         end
-        finalize!(hist)
         
+        finalize!(hist)
         for i in first:msize-1
             if id[i] == INV_ID
                 continue 
             end
             
-            fill!(hist, Int16(y[i]), type_I(hist)((i - first_pixel)))
+            fill!(hist, Int16(y[i]), type_I(hist)((i - first_pixel))) # m
         end
-
+        
         # println(hist)
         
         max_iter = size(hist) # number of digis added to hist
         max_neighbours = 10
         
         # nearest neighbour 
-        nn = zeros(Int, max_iter, max_neighbours)
-        nnn = zeros(Int, max_iter)
+        nn = zeros(Int, max_iter, max_neighbours) # m
+        nnn = zeros(Int, max_iter) # m
+        
         # fill NN
         testing = 0 
         for (j, k) in zip(0:size(hist)-1, 1:size(hist)) # j is the index of the digi within the hist
@@ -186,7 +191,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
                 p += 1
             end
         end
-
+        
         more = true
         n_loops = 0
         while more

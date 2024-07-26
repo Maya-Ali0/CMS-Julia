@@ -8,9 +8,10 @@ module gpuClusterCharge
     using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants:INV_ID, MAX_NUM_CLUSTERS_PER_MODULES, MAX_NUM_MODULES
     using Printf
     function cluster_charge_cut(id, adc, moduleStart, nClustersInModule, moduleId, clusterId, numElements)
-        charge = fill(0,MAX_NUM_CLUSTERS_PER_MODULES)
-        ok = fill(0, MAX_NUM_CLUSTERS_PER_MODULES)
-        newclusId = fill(0, MAX_NUM_CLUSTERS_PER_MODULES)
+        charge = fill(0,MAX_NUM_CLUSTERS_PER_MODULES) # m
+        ok = fill(0, MAX_NUM_CLUSTERS_PER_MODULES) # m
+        newclusId = fill(0, MAX_NUM_CLUSTERS_PER_MODULES) # m 
+        
         firstModule = 1
         endModule = moduleStart[1]
         for mod ∈ firstModule:endModule

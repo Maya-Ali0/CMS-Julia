@@ -1,5 +1,5 @@
 using Patatrack
-
+using Profile, BenchmarkTools
 num_of_threads::Int = 1
 num_of_streams::Int = 0
 warm_up_events::Int = 0 # Number of events to process before starting the benchmark (default 0).
@@ -29,28 +29,23 @@ CPE_Producer = PixelCPEFastESProducer(dataDir)
 
 produce(cabling_map_producer,es)
 produce(gain_Calibration_producer,es);
-<<<<<<< HEAD
+
+function test(rawToCluster,event,es)
+    produce(rawToCluster,event,es)
+end
+function run()
 for collection ∈ raw_events
+    Profile.clear()
     reg = ProductRegistry()
     raw_token = produces(reg,FedRawDataCollection)
     rawToCluster = SiPixelRawToClusterCUDA(reg)
     event::Event = Event(reg)
     emplace(event,raw_token,collection)
-    produce(rawToCluster,event,es)
+    test(rawToCluster,event,es)
 end
-=======
-produce(CPE_Producer,es);
+end
 
-# for collection ∈ raw_events
-#     reg = ProductRegistry()
-#     raw_token = produces(reg,FedRawDataCollection)
-#     rawToCluster = SiPixelRawToClusterCUDA(reg)
-#     event::Event = Event(reg)
-#     emplace(event,raw_token,collection)
-#     produce(rawToCluster,event,es)
-# end
->>>>>>> 105c66bcff5f0a99fc28e502c5332957d7184b64
-
+@time run()
 
 
 # produce(beamSpotProducer,es)
