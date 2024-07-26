@@ -70,27 +70,30 @@ struct DetParams
 
     frame::SOAFrame{Float32}
 
+    function DetParams(isBarrel,isPosZ,layer,index,rawId,shiftX,shiftY,chargeWidthX,chargeWidthY,x0,y0,z0,sx,sy,frame)
+        return new(isBarrel,isPosZ,layer,index,rawId,shiftX,shiftY,chargeWidthX,chargeWidthY,x0,y0,z0,sx,sy,frame)
+    end
 
 
-    # function DetParams()
-    #     new(
-    #         false,          # isBarrel
-    #         false,          # isPosZ
-    #         0x0000,         # layer
-    #         0x0000,         # index
-    #         0x00000000,     # rawId
-    #         0.0f0,          # shiftX
-    #         0.0f0,          # shiftY
-    #         0.0f0,          # chargeWidthX
-    #         0.0f0,          # chargeWidthY
-    #         0.0f0,          # x0
-    #         0.0f0,          # y0
-    #         0.0f0,          # z0
-    #         (0.0f0, 0.0f0, 0.0f0),  # sx
-    #         (0.0f0, 0.0f0, 0.0f0),  # sy
-    #         SOAFrame{Float32}()  # frame
-    #     )
-    # end
+    function DetParams()
+        new(
+            false,          # isBarrel
+            false,          # is    PosZ
+            0x0000,         # layer
+            0x0000,         # index
+            0x00000000,     # rawId
+            0.0f0,          # shiftX
+            0.0f0,          # shiftY
+            0.0f0,          # chargeWidthX
+            0.0f0,          # chargeWidthY
+            0.0f0,          # x0
+            0.0f0,          # y0
+            0.0f0,          # z0
+            (0.0f0, 0.0f0, 0.0f0),  # sx
+            (0.0f0, 0.0f0, 0.0f0),  # sy
+            SOAFrame{Float32}()  # frame
+        )
+    end
 end
 
 # const AverageGeometry = Phase1PixelTopology.AverageGeometry
