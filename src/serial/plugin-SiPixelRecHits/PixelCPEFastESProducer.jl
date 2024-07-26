@@ -1,4 +1,6 @@
 using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
+using .PixelGPU_h
+using .SOA_h
 
 struct PixelCPEFastESProducer <: ESProducer
     data::String  # Use String to represent the path

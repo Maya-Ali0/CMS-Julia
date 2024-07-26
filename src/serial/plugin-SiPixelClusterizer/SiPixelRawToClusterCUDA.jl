@@ -141,5 +141,8 @@ function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup
                         self.include_errors, 
                         false) #make clusters
 
-    # tmp = get_results(self.gpu_algo) # return pair of digis and clusters
+    tmp = get_results(self.gpu_algo) # return pair of digis and clusters
+    emplace(event,self.digi_put_token,tmp[1])
+    emplace(event,self.cluster_put_token,tmp[2])
+
 end  # module SiPixelRawToClusterCUDA

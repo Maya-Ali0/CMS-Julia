@@ -1,3 +1,7 @@
+module SOA_h
+
+export SOARotation, SOAFrame
+
 struct SOARotation{T}
     R11::T
     R12::T
@@ -149,4 +153,6 @@ end
 
 function z(frame::SOAFrame{T}) where {T}
     return frame.pz
+end
+
 end

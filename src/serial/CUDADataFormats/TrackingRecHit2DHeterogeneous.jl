@@ -1,5 +1,7 @@
 module CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 
+export TrackingRecHit2DHeterogeneous
+
 # Import necessary types and functions from other modules
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView, ParamsOnGPU
 using ..histogram: HisToContainer

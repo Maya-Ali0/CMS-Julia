@@ -1,7 +1,9 @@
-# using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
-include("../DataFormats/SOARotation.jl")
-using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
+module PixelGPU_h
 
+using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
+using ..SOA_h
+
+export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT
 """
  Struct for common detector parameters including thickness, pitch, and default values.
     
@@ -470,4 +472,6 @@ function errorFromDB(comParams::CommonParams, detParams::DetParams, cp::ClusPara
     if !isEdgeY
         cp.yerr[ic] = detParams.sy[iy + 1]
     end
+end
+
 end

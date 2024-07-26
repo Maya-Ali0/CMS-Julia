@@ -3,8 +3,9 @@ module CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
 using ..histogram: HisToContainer
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUM_CLUSTERS
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
-include("../DataFormats/SOARotation.jl")
-include("../CondFormats/pixelCPEforGPU.jl")
+using ..SOA_h
+using ..PixelGPU_h
+export max_hits, TrackingRecHit2DSOAView
 
 
 """

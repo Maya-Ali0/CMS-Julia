@@ -4,7 +4,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
   struct DeviceConstView
     xx::Vector{Int16}         # X-coordinates of pixels
     yy::Vector{Int16}         # Y-coordinates of pixels
-    adc::Vector{Int16}        # ADC values of pixels
+    adc::Vector{Int32}        # ADC values of pixels
     module_ind::Vector{Int16}  # Module indices of pixels
     clus::Vector{Int32}       # Cluster indices of pixels
   end

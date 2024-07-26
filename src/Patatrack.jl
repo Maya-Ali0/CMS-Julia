@@ -1,5 +1,3 @@
-
-
 module Patatrack
 import Base.length
 
@@ -70,7 +68,9 @@ export SOAFrame
 export ParamsOnGPU
 
 export PixelCPEFastESProducer
-
+export BeamSpotESProducer
+export BeamSpotToPOD
+export SiPixelRecHitCUDA
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
@@ -112,22 +112,25 @@ include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.jl")
 # include("serial/plugin-SiPixelClusterizer/testClustering.jl")
 include("serial/bin/ReadRAW.jl")
 include("serial/DataFormats/BeamSpotPOD.jl")
-# include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
-# include("serial/plugin-BeamSpotProducer/BeamSpotESProducer.jl")
+include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
+include("serial/plugin-BeamSpotProducer/BeamSpotESProducer.jl")
+
 # include("serial/CUDADataFormats/HeterogeneousSoA.jl")
+include("serial/DataFormats/SOARotation.jl")
 
 
-# include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
-# include("serial/CUDADataFormats/TrackingRecHit2DHeterogeneous.jl")
-# include("serial/DataFormats/approx_atan2.jl")
+include("serial/CondFormats/pixelCPEforGPU.jl")
 
-# include("serial/CondFormats/pixelCPEforGPU.jl")
-# include("serial/plugin-SiPixelRecHits/gpuPixelRecHits.jl")
+include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
+include("serial/CUDADataFormats/TrackingRecHit2DHeterogeneous.jl")
+include("serial/DataFormats/approx_atan2.jl")
+
+include("serial/plugin-SiPixelRecHits/gpuPixelRecHits.jl")
 
 include("serial/CondFormats/PixelCPEFast.jl")
 
 include("serial/plugin-SiPixelRecHits/PixelCPEFastESProducer.jl")
 
-# include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
-# include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
+include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
+include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
 end
