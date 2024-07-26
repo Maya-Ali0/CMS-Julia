@@ -56,7 +56,7 @@ mutable struct TrackingRecHit2DHeterogeneous
         - `m_AverageGeometryStore`: Initialized with a vector containing one `AverageGeometry` object.
         - `m_view`: Initialized with one `TrackingRecHit2DSOAView` object.
     """
-    function TrackingRecHit2DHeterogeneous(nHits::Integer, cpe_params::ParamsOnGPU, hitsModuleStart::Vector{Integer}, Hist::HisToContainer)
+    function TrackingRecHit2DHeterogeneous(nHits::Integer, cpe_params::ParamsOnGPU, hitsModuleStart::Vector{UInt32})
         n16 = 4
         n32 = 9
     
