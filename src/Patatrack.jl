@@ -62,11 +62,7 @@ export MAX_NUM_CLUSTERS
 export AverageGeometry
 export ProductRegistry
 export Event, EDPutTokenT, produces, emplace, begin_module_construction
-<<<<<<< HEAD
-
-=======
 export number_of_ladders_in_barrel
->>>>>>> 105c66bcff5f0a99fc28e502c5332957d7184b64
 
 export BeamSpotPOD
 export SOAFrame
