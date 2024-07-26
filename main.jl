@@ -29,14 +29,11 @@ CPE_Producer = PixelCPEFastESProducer(dataDir)
 
 produce(cabling_map_producer,es)
 produce(gain_Calibration_producer,es);
-<<<<<<< HEAD
 
 function test(rawToCluster,event,es)
     produce(rawToCluster,event,es)
 end
 function run()
-=======
->>>>>>> 0b30dddeb50a8636b20723ca8ff30e2c2b92feef
 for collection ∈ raw_events
     Profile.clear()
     reg = ProductRegistry()
