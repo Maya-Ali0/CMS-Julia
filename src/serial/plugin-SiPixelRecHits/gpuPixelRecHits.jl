@@ -30,7 +30,7 @@ function getHits(cpeParams::ParamsOnGPU,
                  pdigis::CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA.DeviceConstView,
                  numElements::Integer,
                  pclusters::CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA.DeviceConstView,
-                 phits::Vector{TrackingRecHit2DSOAView})
+                 phits::TrackingRecHit2DSOAView)
 
         @assert(phits)
         @assert(cpeParams)
