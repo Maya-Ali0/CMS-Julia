@@ -32,7 +32,7 @@ function makeHits(digis_d::SiPixelDigisSoA,
     nHits = nClusters(clusters_d)
     hits_d = TrackingRecHit2DHeterogeneous(nHits, cpeParams, clus_module_star(clusters_d))
 
-
+    print(typeof(digiView(digis_d)))
     if (n_modules(digis_d) != 0)
         getHits(cpeParams, bs_d, digiView(digis_d), n_digis(digis_d), clusterView(clusters_d), histView(hits_d))
     end

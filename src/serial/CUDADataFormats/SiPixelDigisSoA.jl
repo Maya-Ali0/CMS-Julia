@@ -1,5 +1,5 @@
 module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
-export n_modules, SiPixelDigisSoA, digiView, n_digis
+export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView
   # Structure to hold a constant view of device data
   potato = 123
   struct DeviceConstView

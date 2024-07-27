@@ -3,8 +3,8 @@ module RecoLocalTracker_SiPixelRecHits_plugins_gpuPixelRecHits_h
 using ..BeamSpotPOD_h: BeamSpotPOD
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 using ..gpuConfig
-using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA: SiPixelClustersSoA, DeviceConstView
-using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA: SiPixelDigisSoA, DeviceConstView
+using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
+using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT
 
 export getHits
@@ -27,9 +27,9 @@ export getHits
 """
 function getHits(cpeParams::ParamsOnGPU, 
                  bs::BeamSpotPOD, 
-                 pdigis::DeviceConstView, 
+                 pdigis::CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA.DeviceConstView,
                  numElements::Integer,
-                 pclusters::DeviceConstView,
+                 pclusters::CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA.DeviceConstView,
                  phits::Vector{TrackingRecHit2DSOAView})
 
         @assert(phits)
