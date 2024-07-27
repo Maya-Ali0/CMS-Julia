@@ -32,7 +32,7 @@ function makeHits(digis_d::SiPixelDigisSoA,
     hits_d = TrackingRecHit2DHeterogeneous(nHits, cpeParams, clus_module_star(clusters_d))
 
 
-    if n_modules(digis_d)
+    if (n_modules(digis_d) != 0)
         gpuPixelRecHits::getHits(cpeParams, bs_d, view(digis_d), nDigis(digis_d), view(digis_d), view(digis_d))
     end
 
