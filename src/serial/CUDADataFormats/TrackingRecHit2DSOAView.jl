@@ -75,7 +75,7 @@ mutable struct TrackingRecHit2DSOAView
             ParamsOnGPU(),
             Vector{Integer}(),
             Vector{Integer}(),
-            HisToContainer{T,N_BINS,SIZE,S,I}(),
+            HisToContainer{0,0,0,0,UInt32}(), #added dummy values 
             zero(UInt32))
     end
 
