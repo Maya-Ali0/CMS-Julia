@@ -1,6 +1,6 @@
 module RecoLocalTracker_SiPixelRecHits_plugins_PixelRecHits_h
 using ..BeamSpotPOD_h
-using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA: SiPixelClustersSoA
+using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h: ParamsOnGPU
 using ..heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat
@@ -34,8 +34,7 @@ function makeHits(digis_d::SiPixelDigisSoA,
 
 
     if (n_modules(digis_d) != 0)
-        the_View = digiView(digis_d)
-        getHits(cpeParams, bs_d, the_View, n_digis(digis_d), the_View, the_View)
+        getHits(cpeParams, bs_d, digiView(digis_d), n_digis(digis_d), clusterView(clusters_d), the_View)
     end
 
     if nHits
