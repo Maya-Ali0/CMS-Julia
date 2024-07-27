@@ -35,7 +35,7 @@ function makeHits(digis_d::SiPixelDigisSoA,
 
     if (n_modules(digis_d) != 0)
         the_View = digiView(digis_d)
-        getHits(cpeParams, bs_d, the_View, nDigis(digis_d), the_View, the_View)
+        getHits(cpeParams, bs_d, the_View, n_digis(digis_d), the_View, the_View)
     end
 
     if nHits
