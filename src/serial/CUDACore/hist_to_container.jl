@@ -1,8 +1,7 @@
 
 module histogram
     import Base.fill!
-    include("../CUDACore/prefix_scan.jl")
-    using .prefix_scan:block_prefix_scan
+    using ..prefix_scan:block_prefix_scan
     using StaticArrays
     struct AtomicPairCounter
         n::UInt32

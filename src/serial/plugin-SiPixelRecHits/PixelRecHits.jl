@@ -29,7 +29,6 @@ function makeHits(digis_d::SiPixelDigisSoA,
                   bs_d::BeamSpotPOD, 
                   cpeParams::ParamsOnGPU)
     nHits = nClusters(clusters_d)
-    print(typeof(clus_module_star(clusters_d)))
     hits_d = TrackingRecHit2DHeterogeneous(nHits, cpeParams, clus_module_star(clusters_d))
 
 

@@ -73,10 +73,10 @@ mutable struct TrackingRecHit2DSOAView
             empty_int_vector,
             AverageGeometry(),
             ParamsOnGPU(),
-            0,
-            0,
+            Vector{Integer}(),
+            Vector{Integer}(),
             HisToContainer{T,N_BINS,SIZE,S,I}(),
-            0)
+            zero(UInt32))
     end
 
 
