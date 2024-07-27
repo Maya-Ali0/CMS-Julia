@@ -8,6 +8,7 @@ using ..pixelGPUDetails.pixelConstants
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
+using ..RecoLocalTracker_SiPixelRecHits_plugins_gpuPixelRecHits_h
 
 
 export makeHits
@@ -33,7 +34,7 @@ function makeHits(digis_d::SiPixelDigisSoA,
 
 
     if (n_modules(digis_d) != 0)
-        gpuPixelRecHits::getHits(cpeParams, bs_d, view(digis_d), nDigis(digis_d), view(digis_d), view(digis_d))
+        getHits(cpeParams, bs_d, view(digis_d), nDigis(digis_d), view(digis_d), view(digis_d))
     end
 
     if nHits
