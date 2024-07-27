@@ -1,7 +1,7 @@
 module RecoLocalTracker_SiPixelRecHits_plugins_PixelRecHits_h
 using ..BeamSpotPOD_h
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA: SiPixelClustersSoA
-using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA: SiPixelDigisSoA
+using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h: ParamsOnGPU
 using ..heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat
 using ..pixelGPUDetails.pixelConstants
