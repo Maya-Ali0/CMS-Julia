@@ -32,8 +32,7 @@ function getHits(cpeParams::ParamsOnGPU,
                  pclusters::CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA.DeviceConstView,
                  phits::TrackingRecHit2DSOAView)
 
-        @assert(phits)
-        @assert(cpeParams)
+                 
         hits = phits
         digis = pdigis
         clusters = pclusters
