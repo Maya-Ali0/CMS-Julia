@@ -1,5 +1,5 @@
 module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
-export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConstView
+export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConstView, module_start
     """
     Struct to represent a constant view of the device data.
     """
@@ -70,7 +70,6 @@ export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConst
         view_d::DeviceConstView             # Device view containing the data pointers
         nClusters_h::UInt32                 # Number of clusters (stored on host)
 
-        
     end
 
     """
