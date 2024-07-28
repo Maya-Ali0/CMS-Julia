@@ -96,7 +96,7 @@ mutable struct TrackingRecHit2DSOAView
             m_det_ind::Vector{UInt16},
             m_average_geometry::AverageGeometry,
             m_cpe_params::ParamsOnGPU,
-            m_hits_module_start::Vector{Integer},
+            m_hits_module_start::Vector{UInt32},
             m_hits_layer_start::Vector{Integer},
             m_hist::HisToContainer,
             m_nHits::UInt32

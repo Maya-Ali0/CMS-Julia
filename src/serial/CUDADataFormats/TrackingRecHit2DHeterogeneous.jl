@@ -29,12 +29,12 @@ mutable struct TrackingRecHit2DHeterogeneous
     n32::UInt32
     m_store16::Union{Nothing, Vector{Vector{UInt16}}}
     m_store32::Union{Nothing, Vector{Vector{Float64}}}
-    m_HistStore::Union{Nothing, Vector{HisToContainer}}
-    m_AverageGeometryStore::Union{Nothing, Vector{AverageGeometry}}
+    m_HistStore::HisToContainer
+    m_AverageGeometryStore::AverageGeometry
     m_view::TrackingRecHit2DSOAView
     m_nHits::UInt32
     m_hitsModuleStart::Vector{UInt32}
-    m_hist::Union{Nothing, HisToContainer}
+    m_hist::HisToContainer
     m_hitsLayerStart::Union{Nothing, Vector{UInt32}}
     m_iphi::Union{Nothing, Vector{UInt16}}
 
@@ -73,12 +73,8 @@ mutable struct TrackingRecHit2DHeterogeneous
         append!(m_store32_UInt32, [Vector{UInt32}(undef, 11)])
 
         # Initialize AverageGeometry and Histogram store
-        obj2 = AverageGeometry()
-        m_HistStore = Hist
-        m_HistStor_vector = Vector{HisToContainer}()
-        push!(m_HistStor_vector, m_HistStore)
-        m_AverageGeometryStore = Vector{AverageGeometry}()
-        push!(m_AverageGeometryStore, obj2)
+        m_AverageGeometryStore = AverageGeometry()
+        m_HistStore = HisToContainer{UInt32,0,0,0,UInt32}()
     
         # Define local functions to access storage
         function get16(i)
@@ -99,8 +95,7 @@ mutable struct TrackingRecHit2DHeterogeneous
         m_iphi =  get16(0)
     
         # Create and initialize the TrackingRecHit2DSOAView object
-        println("calling the constructor here")
-        obj = TrackingRecHit2DSOAView(
+        m_view = TrackingRecHit2DSOAView(
             get32(0),
             get32(1),
             get32(2),
@@ -114,21 +109,17 @@ mutable struct TrackingRecHit2DHeterogeneous
             get16(2),
             get16(3),
             get16(1),
-            obj2,
+            m_AverageGeometryStore,
             cpe_params,
             hitsModuleStart,
             hits_layer_start,
             m_HistStore,
             UInt32(nHits)
-        )
-        println("finished constructor")
-    
-        # Store the view object
-        m_view = Vector{TrackingRecHit2DSOAView}()
-        push!(m_view, obj)
+        )    
+        
 
         # Return a new instance of TrackingRecHit2DHeterogeneous
-        return new(n16, n32, m_store16, m_store32, m_HistStor_vector, m_AverageGeometryStore, m_view, nHits, hitsModuleStart, m_HistStor_vector[1], hits_layer_start, m_iphi)
+        return new(n16, n32, m_store16, m_store32, m_HistStore, m_AverageGeometryStore, m_view, nHits, hitsModuleStart, m_HistStore, hits_layer_start, m_iphi)
     end
 end
 
