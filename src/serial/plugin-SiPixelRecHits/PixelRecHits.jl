@@ -36,11 +36,11 @@ function makeHits(digis_d::SiPixelDigisSoA,
         getHits(cpeParams, bs_d, digiView(digis_d), n_digis(digis_d), clusterView(clusters_d), histView(hits_d))
     end
 
-    if nHits
+    if (nHits != 0)
         setHitsLayerStart(clus_module_star(clusters_d), cpeParams, hits_layer_start(hits_d))
     end
 
-    if nHits
+    if (nHits != 0)
         # HistoContainer::fillManyFromVector(phi_binner(hits_d), 10, iphi(hits_d), hits_layer_start(hits_d), nHits)
     end
 
