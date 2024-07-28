@@ -1,5 +1,5 @@
 module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
-export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind, clus
+export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind, clus, xx, yy
   # Structure to hold a constant view of device data
   potato = 123
   struct DeviceConstView
@@ -60,7 +60,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
   Outputs:
     - UInt16: The X-coordinate at the specified index
   """
-  @inline function xx(view::DeviceConstView, i::Int)::UInt16
+  @inline function xx(view::DeviceConstView, i::UInt32)::UInt16
       return view.xx[i]
   end
 
@@ -72,7 +72,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
   Outputs:
     - UInt16: The Y-coordinate at the specified index
   """
-  @inline function yy(view::DeviceConstView, i::Int)::UInt16
+  @inline function yy(view::DeviceConstView, i::UInt32)::UInt16
       return view.yy[i]
   end
 
