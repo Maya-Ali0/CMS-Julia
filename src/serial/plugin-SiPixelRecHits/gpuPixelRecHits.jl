@@ -109,9 +109,9 @@ function getHits(cpeParams::ParamsOnGPU,
                     x = xx(digis, i)
                     y = yy(digis, i)
 
-                    cl = cl - startClus
+                    cl = cl - startClus + 1
                     @assert cl >= 1 
-                    @assert cl < MaxHitsInIter
+                    @assert cl <= MaxHitsInIter  # will verify later
 
                     if clusParams.minRow[cl] > x
                         clusParams.minRow[cl] = x
