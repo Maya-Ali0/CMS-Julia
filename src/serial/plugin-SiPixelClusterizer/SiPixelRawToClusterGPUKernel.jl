@@ -4,7 +4,7 @@ Phase 1 Geometry Constants
 module pixelGPUDetails
     export make_clusters, get_results, initialize_word_fed
 
-    using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
+    using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     
     using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA,set_n_modules_digis
     
@@ -717,6 +717,8 @@ module pixelGPUDetails
         #     end
         # end
         fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_star_d)
+
+        setNClusters!(clusters_d,clusters_d.clus_module_star_d[gpuClustering.MAX_NUM_MODULES])
         # open("fill_hits_module.txt","w") do file
         #     for i ∈ 1:MAX_NUM_MODULES+1
         #         write(file,string(clusters_d.clus_module_star_d[i]),'\n')

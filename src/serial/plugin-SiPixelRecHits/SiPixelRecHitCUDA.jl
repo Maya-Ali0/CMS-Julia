@@ -26,7 +26,7 @@ function produce(self::SiPixelRecHitCUDA,iEvent::Event, es::EventSetup)
     digis = get(iEvent, self.tokenDigi)
     bs = get(iEvent, self.tBeamSpot)
     nHits = nClusters(clusters)
-    print(nHits)
+    # print(nHits)
     if nHits >= max_hits()
         println("Clusters/Hits Overflow ",nHits," >= ", TrackingRecHit2DSOAView::maxHits())
     end
