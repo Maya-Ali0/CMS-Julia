@@ -323,12 +323,12 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
 
         function AverageGeometry()
             number_of_ladders_in_barrel = 0
-            ladderZ = Float32[]
-            ladderX = Float32[]
-            ladderY = Float32[]
-            ladderR = Float32[]
-            ladderMinZ = Float32[]
-            ladderMaxZ = Float32[]
+            ladderZ = zeros(Float64, 148)
+            ladderX = zeros(Float64, 148)
+            ladderY = zeros(Float64, 148)
+            ladderR = zeros(Float64, 148)
+            ladderMinZ = zeros(Float64, 148)
+            ladderMaxZ = zeros(Float64, 148)
             endCapZ = (0.0f0, 0.0f0)
             new(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
         end
