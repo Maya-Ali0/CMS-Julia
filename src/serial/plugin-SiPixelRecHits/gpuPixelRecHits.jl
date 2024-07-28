@@ -55,7 +55,7 @@ function getHits(cpeParams::ParamsOnGPU,
         InvId = 9999
         MaxHitsInIter = PixelGPU_h.MaxHitsInIter
 
-        clusParams = ClusParamsT{10}
+        clusParams = ClusParamsT{10000}()
 
         firstModule = 1
         endModule = module_start(clusters, 1)
@@ -69,28 +69,27 @@ function getHits(cpeParams::ParamsOnGPU,
             
         endClus = nclus
 
-            for startClus in 1:MaxHitsInIter:(nclus)
+            for startClus in 1:MaxHitsInIter:(endClus)
                 first = module_start(clusters, mod + 1)
 
                 nClusterInIter = min(MaxHitsInIter, endClus - startClus + 1)
                 lastClus = startClus - 1 + nClusterInIter
                 @assert nClusterInIter <= nclus
                 @assert nClusterInIter > 0
-                println("MaxHitsInIter: ",MaxHitsInIter); println("startClus: ",startClus);  println("nClusterInIter: ",nClusterInIter);  println("nClus: ",nclus); println("lastClus: ",lastClus)
                 @assert lastClus <= nclus
                 @assert nclus > MaxHitsInIter || (1 == startClus && nClusterInIter == nclus && lastClus == nclus)
                 
 
-                for ic in 0:nClusterInIter
+                for ic in 1:nClusterInIter
                     clusParams.minRow[ic] = UInt32(typemax(UInt32))
-                    clusParams.maxRow[ic] = UInt32(0)
+                    clusParams.maxRow[ic] = zero(UInt32)
                     clusParams.minCol[ic] = UInt32(typemax(UInt32))
-                    clusParams.maxCol[ic] = UInt32(0)
-                    clusParams.charge[ic] = UInt32(0)
-                    clusParams.Q_f_X[ic] = UInt32(0)
-                    clusParams.Q_l_X[ic] = UInt32(0)
-                    clusParams.Q_f_Y[ic] = UInt32(0)
-                    clusParams.Q_l_Y[ic] = UInt32(0)
+                    clusParams.maxCol[ic] = zero(UInt32)
+                    clusParams.charge[ic] = zero(UInt32)
+                    clusParams.Q_f_X[ic] = zero(UInt32)
+                    clusParams.Q_l_X[ic] = zero(UInt32)
+                    clusParams.Q_f_Y[ic] = zero(UInt32)
+                    clusParams.Q_l_Y[ic] = zero(UInt32)
                 end
                 
 

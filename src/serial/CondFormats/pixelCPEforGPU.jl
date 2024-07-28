@@ -199,26 +199,33 @@ const MaxHitsInIter = MAX_HITS_IN_ITER()
 """
 
 struct ClusParamsT{N}
-    minRow::NTuple{N, UInt32}
-    maxRow::NTuple{N, UInt32}
-    minCol::NTuple{N, UInt32}
-    maxCol::NTuple{N, UInt32}
+    minRow::Vector{UInt32}
+    maxRow::Vector{UInt32}
+    minCol::Vector{UInt32}
+    maxCol::Vector{UInt32}
 
-    Q_f_X::NTuple{N, Int32}
-    Q_l_X::NTuple{N, Int32}
-    Q_f_Y::NTuple{N, Int32}
-    Q_l_Y::NTuple{N, Int32}
+    Q_f_X::Vector{Int32}
+    Q_l_X::Vector{Int32}
+    Q_f_Y::Vector{Int32}
+    Q_l_Y::Vector{Int32}
 
-    charge::NTuple{N, Int32}
+    charge::Vector{Int32}
 
-    xpos::NTuple{N, Float32}
-    ypos::NTuple{N, Float32}
+    xpos::Vector{Float32}
+    ypos::Vector{Float32}
 
-    xerr::NTuple{N, Float32}
-    yerr::NTuple{N, Float32}
+    xerr::Vector{Float32}
+    yerr::Vector{Float32}
 
-    xsize::NTuple{N, Int16}
-    ysize::NTuple{N, Int16}
+    xsize::Vector{Int16}
+    ysize::Vector{Int16}
+
+    function ClusParamsT{N}() where N
+        return new(zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),
+        zeros(Int32,N),zeros(Int32,N),zeros(Int32,N),zeros(Int32,N),zeros(Int32,N),
+        zeros(Float32,N),zeros(Float32,N),zeros(Float32,N),zeros(Float32,N),zeros(Int16,N),zeros(Int16,N))
+    end
+
 end
 
 """
