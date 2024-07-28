@@ -55,7 +55,7 @@ function getHits(cpeParams::ParamsOnGPU,
         InvId = 9999
         MaxHitsInIter = PixelGPU_h.MaxHitsInIter
 
-        clusParams:: pixelCPEforGPU::ClusParams
+        clusParams = ClusParamsT{10}
 
         firstModule = 1
         endModule = moduleStart(clusters, 1)
