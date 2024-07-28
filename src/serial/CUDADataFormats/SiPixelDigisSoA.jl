@@ -1,5 +1,5 @@
 module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
-export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind
+export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind, clus
   # Structure to hold a constant view of device data
   potato = 123
   struct DeviceConstView
@@ -108,7 +108,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
   Outputs:
     - UInt32: The cluster ID at the specified index
   """
-  @inline function clus(view::DeviceConstView, i::Int)::UInt32
+  @inline function clus(view::DeviceConstView, i::UInt32)::UInt32
       return view.clus[i]
   end
 
