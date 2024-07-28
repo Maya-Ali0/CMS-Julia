@@ -1,5 +1,5 @@
 module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
-export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConstView, module_start, setNClusters!, module_id
+export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConstView, module_start, setNClusters!, module_id, clus_in_module
     """
     Struct to represent a constant view of the device data.
     """
@@ -30,7 +30,7 @@ export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConst
     Outputs:
     - UInt32: The number of clusters in the specified module.
     """
-    @inline function clus_in_module(view::DeviceConstView, i::Int)::UInt32
+    @inline function clus_in_module(view::DeviceConstView, i::UInt32)::UInt32
         return view.clus_in_module[i]
     end
 
