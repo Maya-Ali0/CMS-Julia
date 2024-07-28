@@ -1,7 +1,7 @@
 module RecoLocalTracker_SiPixelRecHits_plugins_gpuPixelRecHits_h
 
 using ..BeamSpotPOD_h: BeamSpotPOD
-using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
+using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
 using ..gpuConfig
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
@@ -39,7 +39,7 @@ function getHits(cpeParams::ParamsOnGPU,
 
         agc = average_geometry(hits)
         ag = averageGeometry(cpeParams)
-        for il in 1:TrackingRecHit2DSOAView::AverageGeometry::numberOfLaddersInBarrel
+        for il in 1:number_of_ladders_in_barrel
             agc.ladderZ[il] = ag.ladderZ[il] - bs.z
             agc.ladderX[il] = ag.ladderX[il] - bs.x
             agc.ladderY[il] = ag.ladderY[il] - bs.y
