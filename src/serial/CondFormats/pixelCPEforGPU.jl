@@ -2,8 +2,10 @@ module PixelGPU_h
 
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 using ..SOA_h
+using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 
-export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry
+
+export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry, MaxHitsInIter
 """
  Struct for common detector parameters including thickness, pitch, and default values.
     
@@ -172,7 +174,7 @@ function layer(params::ParamsOnGPU, id::UInt16)
     return params.m_layerGeometry.layer[id ÷ Phase1PixelTopology.maxModuleStride]
 end
 
-# const MaxHitsInIter = GPUClustering.maxHitsInIter()
+const MaxHitsInIter = MAX_HITS_IN_ITER()
 
 """
    ### ClusParamsT{N}

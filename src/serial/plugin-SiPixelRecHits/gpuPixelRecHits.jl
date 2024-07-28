@@ -53,7 +53,7 @@ function getHits(cpeParams::ParamsOnGPU,
 
 
         InvId = 9999
-        MaxHitsInIter = pixelCPEforGPU::MaxHitsInIter
+        MaxHitsInIter = PixelGPU_h.MaxHitsInIter
 
         clusParams:: pixelCPEforGPU::ClusParams
 
