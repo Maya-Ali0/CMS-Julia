@@ -5,8 +5,7 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUM_CL
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 using ..SOA_h
 using ..PixelGPU_h
-export max_hits, TrackingRecHit2DSOAView
-
+export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT
 
 """
     Struct representing the 2D Structure of Arrays view of tracking hits.
@@ -436,7 +435,7 @@ end
     # Returns
     - `AverageGeometry`: The average geometry data (`m_average_geometry`).
 """
-@inline function average_geometry(self::TrackingRecHit2DSOAView)::AverageGeometry
+@inline function average_geometry(self::TrackingRecHit2DSOAView)
     return self.m_average_geometry
 end
 

@@ -3,7 +3,7 @@ module PixelGPU_h
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 using ..SOA_h
 
-export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT
+export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry
 """
  Struct for common detector parameters including thickness, pitch, and default values.
     

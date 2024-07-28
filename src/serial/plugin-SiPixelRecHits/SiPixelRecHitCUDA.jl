@@ -23,7 +23,6 @@ end
 function produce(self::SiPixelRecHitCUDA,iEvent::Event, es::EventSetup)
     fcpe = get(es, PixelCPEFast)
     clusters = get(iEvent, self.token)
-    print(self.tokenDigi.value)
     digis = get(iEvent, self.tokenDigi)
     bs = get(iEvent, self.tBeamSpot)
     nHits = nClusters(clusters)

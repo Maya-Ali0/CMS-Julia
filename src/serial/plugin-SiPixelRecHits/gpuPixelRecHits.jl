@@ -5,7 +5,8 @@ using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopolog
 using ..gpuConfig
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
-using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT
+using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
+using ..PixelGPU_h
 
 export getHits
 """ getHits function
@@ -32,10 +33,10 @@ function getHits(cpeParams::ParamsOnGPU,
                  pclusters::CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA.DeviceConstView,
                  phits::TrackingRecHit2DSOAView)
 
-                 
         hits = phits
         digis = pdigis
         clusters = pclusters
+
         agc = average_geometry(hits)
         ag = averageGeometry(cpeParams)
         for il in 1:TrackingRecHit2DSOAView::AverageGeometry::numberOfLaddersInBarrel
