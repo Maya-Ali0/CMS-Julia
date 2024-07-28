@@ -78,15 +78,12 @@ mutable struct TrackingRecHit2DHeterogeneous
     
         # Define local functions to access storage
         function get16(i)
-            println("get16 called")
             return  m_store16[i + 1]
         end
         function get32(i) 
-            println("get32 called")
             return m_store32[i + 1] 
         end
         function get32_uint(i)
-            println("get32 called")
             return m_store32_UInt32[i + 1] 
         end
     

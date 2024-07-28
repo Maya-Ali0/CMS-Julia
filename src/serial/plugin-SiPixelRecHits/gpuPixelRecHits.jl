@@ -60,7 +60,7 @@ function getHits(cpeParams::ParamsOnGPU,
         firstModule = 1
         endModule = module_start(clusters, 1)
         for mod in firstModule:endModule
-            me = moduleId(clusters, mod)
+            me = module_id(clusters, mod)
             nclus = clusInModule(clusters, me)
             
             if 0 == nclus
