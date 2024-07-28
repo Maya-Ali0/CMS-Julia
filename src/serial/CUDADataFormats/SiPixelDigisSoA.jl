@@ -1,5 +1,5 @@
 module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
-export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView
+export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind
   # Structure to hold a constant view of device data
   potato = 123
   struct DeviceConstView
@@ -96,7 +96,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView
   Outputs:
     - UInt16: The module ID at the specified index
   """
-  @inline function module_ind(view::DeviceConstView, i::Int)::UInt16
+  @inline function module_ind(view::DeviceConstView, i::UInt32)::UInt16
       return view.module_ind[i]  
   end
 

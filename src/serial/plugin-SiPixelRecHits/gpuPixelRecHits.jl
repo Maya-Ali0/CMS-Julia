@@ -94,7 +94,7 @@ function getHits(cpeParams::ParamsOnGPU,
                 
 
                 for i in first:numElements
-                    id = moduelInd(digis, i)
+                    id = module_ind(digis, i)
                     if id == InvId
                         continue
                     end
