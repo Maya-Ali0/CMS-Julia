@@ -68,9 +68,9 @@ function getHits(cpeParams::ParamsOnGPU,
             end
             
             for startClus in 1:MaxHitsInIter:(nclus)
-                first = moduleStart(clusters, mod + 1)
+                first = module_start(clusters, mod + 1)
 
-                nClusterInIter = min(maxHitsInIer, endClus - startClus)
+                nClusterInIter = min(MaxHitsInIter, endClus - startClus)
                 lastClus = startClus + nClusterInIter
                 @assert nClusterInIter <= nclus
                 @assert nClusterInIter > 0
