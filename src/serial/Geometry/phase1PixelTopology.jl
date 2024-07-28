@@ -314,7 +314,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
         ladderR::Vector{Float32}
         ladderMinZ::Vector{Float32}
         ladderMaxZ::Vector{Float32}
-        endCapZ::NTuple{2, Float32}  # just for pos and neg Layer1
+        endCapZ::Vector{Float32}  # just for pos and neg Layer1
         
 
         function AverageGeometry(number_of_ladders_in_barrel,ladderZ,ladderX,ladderY,ladderR,ladderMinZ,ladderMaxZ,endCapZ)
@@ -329,7 +329,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
             ladderR = zeros(Float64, 148)
             ladderMinZ = zeros(Float64, 148)
             ladderMaxZ = zeros(Float64, 148)
-            endCapZ = (0.0f0, 0.0f0)
+            endCapZ = zeros(Float64, 2)
             new(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
         end
     end

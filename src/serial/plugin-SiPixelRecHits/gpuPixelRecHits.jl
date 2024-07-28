@@ -51,6 +51,7 @@ function getHits(cpeParams::ParamsOnGPU,
         agc.endCapZ[2] = ag.endCapZ[2] - bs.z
 
 
+
         InvId = 9999
         MaxHitsInIter = pixelCPEforGPU::MaxHitsInIter
 
