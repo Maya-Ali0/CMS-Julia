@@ -7,6 +7,7 @@ using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
 using ..PixelGPU_h
+using ..SOA_h
 
 export getHits
 """ getHits function
