@@ -541,7 +541,7 @@ module pixelGPUDetails
                                 
         first::UInt32 = 1
         n_end = word_counter
-        #open("modtounp.txt","w") do file
+        #open("modtounp.txt","w") do filer
         for i_loop ∈ first:n_end
             g_index = i_loop
             xx[g_index] = 0 
@@ -698,7 +698,7 @@ module pixelGPUDetails
         #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
         #     end
         # end
-        
+        """
         cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         
         # open("testingClustersDigisIds.txt","w") do file
@@ -727,6 +727,7 @@ module pixelGPUDetails
         #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
         #     end
         # end
+        """
     end
     """
     clus_start: Number of clusters within each module

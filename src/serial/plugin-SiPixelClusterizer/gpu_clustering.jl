@@ -96,7 +96,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     # julia is 1 indexed
     first_module = 1
     end_module = module_start[1]
-    Hist{T, N, M, K, U} = HisToContainer{T, N, M, K, U} # was on line 120 question why did it cause a lot of memory allocation
+    #Hist{T, N, M, K, U} = HisToContainer{T, N, M, K, U} # was on line 120 question why did it cause a lot of memory allocation
     for mod ∈ first_module:end_module # Go over all modules
         first_pixel = module_start[mod + 1] # access index of starting pixel within module
         this_module_id = id[first_pixel] # get module id
@@ -141,6 +141,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         end
         
         finalize!(hist)
+        """
         for i in first:msize-1
             if id[i] == INV_ID
                 continue 
@@ -258,6 +259,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         end
         n_clusters_in_module[this_module_id+1] = found_clusters
         moduleId[mod] = this_module_id
+        """
     end
   
 end
