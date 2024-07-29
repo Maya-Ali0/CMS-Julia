@@ -1,11 +1,11 @@
 module PixelGPU_h
 
-using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry, local_x, local_y, is_big_pix_y, is_big_pix_x
+using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry, local_x, local_y, is_big_pix_y, is_big_pix_x,  last_row_in_module, last_col_in_module, x_offset, y_offset
 using ..SOA_h
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 
 
-export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry, MaxHitsInIter, commonParams, detParams, position_corr
+export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry, MaxHitsInIter, commonParams, detParams, position_corr, errorFromDB
 """
  Struct for common detector parameters including thickness, pitch, and default values.
     
@@ -217,8 +217,8 @@ struct ClusParamsT{N}
     xerr::Vector{Float32}
     yerr::Vector{Float32}
 
-    xsize::Vector{Integer}
-    ysize::Vector{Integer}
+    xsize::Vector{Any}
+    ysize::Vector{Any}
 
     function ClusParamsT{N}() where N
         return new(zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),
@@ -274,7 +274,7 @@ end
     - `Float32`: Computed correction value.
 
 """
-function correction(sizeM1::Int32, Q_f::Int32, Q_l::Int32, upper_edge_first_pix::UInt16, lower_edge_last_pix::UInt16,
+function correction(sizeM1, Q_f, Q_l, upper_edge_first_pix, lower_edge_last_pix,
                     lorentz_shift::Float32, theThickness::Float32, cot_angle::Float32, pitch::Float32,
                     first_is_big::Bool, last_is_big::Bool)::Float32
     if sizeM1 == 0
@@ -360,25 +360,25 @@ function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusPa
     cp.xsize[ic] = UInt32(min(xsize, 1023))
     cp.ysize[ic] = UInt32(min(ysize, 1023))
 
-    if cp.minRow[ic] == 0 || cp.maxRow[ic] == lastRowInModule
+    if cp.minRow[ic] == 0 || cp.maxRow[ic] == last_row_in_module
         cp.xsize[ic] = -cp.xsize[ic]
     end
-    if cp.minCol[ic] == 0 || cp.maxCol[ic] == lastColInModule
+    if cp.minCol[ic] == 0 || cp.maxCol[ic] == last_col_in_module
         cp.ysize[ic] = -cp.ysize[ic]
     end
 
-    xPos = detParams.shiftX + comParams.thePitchX * (0.5f0 * Float32(mx) + Float32(xOffset))
-    yPos = detParams.shiftY + comParams.thePitchY * (0.5f0 * Float32(my) + Float32(yOffset))
+    xPos = detParams.shiftX + comParams.thePitchX * (0.5f0 * Float32(mx) + Float32(x_offset))
+    yPos = detParams.shiftY + comParams.thePitchY * (0.5f0 * Float32(my) + Float32(y_offset))
 
     cotalpha, cotbeta = computeAnglesFromDet(detParams, xPos, yPos)
 
     thickness = detParams.isBarrel ? comParams.theThicknessB : comParams.theThicknessE
 
     xcorr = correction(cp.maxRow[ic] - cp.minRow[ic], cp.Q_f_X[ic], cp.Q_l_X[ic], llxl, urxl, detParams.chargeWidthX,
-                       thickness, cotalpha, comParams.thePitchX, isBigPixX(cp.minRow[ic]), isBigPixX(cp.maxRow[ic]))
+                       thickness, cotalpha, comParams.thePitchX, is_big_pix_x(cp.minRow[ic]), is_big_pix_x(cp.maxRow[ic]))
 
     ycorr = correction(cp.maxCol[ic] - cp.minCol[ic], cp.Q_f_Y[ic], cp.Q_l_Y[ic], llyl, uryl, detParams.chargeWidthY,
-                       thickness, cotbeta, comParams.thePitchY, isBigPixY(cp.minCol[ic]), isBigPixY(cp.maxCol[ic]))
+                       thickness, cotbeta, comParams.thePitchY, is_big_pix_y(cp.minCol[ic]), is_big_pix_y(cp.maxCol[ic]))
 
     cp.xpos[ic] = xPos + xcorr
     cp.ypos[ic] = yPos + ycorr
@@ -422,8 +422,8 @@ function errorFromSize(comParams::CommonParams, detParams::DetParams, cp::ClusPa
     sy = cp.maxCol[ic] - cp.minCol[ic]
 
     # is edgy ?
-    isEdgeX = cp.minRow[ic] == 0 || cp.maxRow[ic] == lastRowInModule
-    isEdgeY = cp.minCol[ic] == 0 || cp.maxCol[ic] == lastColInModule
+    isEdgeX = cp.minRow[ic] == 0 || cp.maxRow[ic] == last_row_in_module
+    isEdgeY = cp.minCol[ic] == 0 || cp.maxCol[ic] == last_col_in_module
     # is one and big?
     isBig1X = (0 == sx) && isBigPixX(cp.minRow[ic])
     isBig1Y = (0 == sy) && isBigPixY(cp.minCol[ic])
@@ -472,8 +472,8 @@ function errorFromDB(comParams::CommonParams, detParams::DetParams, cp::ClusPara
     sy = cp.maxCol[ic] - cp.minCol[ic]
 
     # is edgy ?
-    isEdgeX = cp.minRow[ic] == 0 || cp.maxRow[ic] == lastRowInModule
-    isEdgeY = cp.minCol[ic] == 0 || cp.maxCol[ic] == lastColInModule
+    isEdgeX = cp.minRow[ic] == 0 || cp.maxRow[ic] == last_row_in_module
+    isEdgeY = cp.minCol[ic] == 0 || cp.maxCol[ic] == last_col_in_module
     # is one and big?
     ix = (0 == sx) ? 1 : 0
     iy = (0 == sy) ? 1 : 0
