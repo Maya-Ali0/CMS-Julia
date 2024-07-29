@@ -1,5 +1,5 @@
 module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
-export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind, clus, xx, yy
+export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind, clus, xx, yy, adc
   # Structure to hold a constant view of device data
   potato = 123
   struct DeviceConstView
@@ -84,7 +84,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
   Outputs:
     - UInt16: The ADC value at the specified index
   """
-  @inline function adc(view::DeviceConstView, i::Int)::UInt16
+  @inline function adc(view::DeviceConstView, i::UInt32)::UInt16
       return view.adc[i]  
   end
 
