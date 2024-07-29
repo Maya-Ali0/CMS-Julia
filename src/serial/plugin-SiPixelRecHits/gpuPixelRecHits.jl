@@ -102,7 +102,7 @@ function getHits(cpeParams::ParamsOnGPU,
                         break
                     end
                     cl = clus(digis, i)
-                    if cl < startClus || cl >= lastClus
+                    if cl < startClus || cl > lastClus
                         continue
                     end
                     
@@ -130,7 +130,7 @@ function getHits(cpeParams::ParamsOnGPU,
 
                 pixmx = typemax(UInt16)
                 for i in first:numElements
-                    id = moduelInd(digis, i)
+                    id = module_ind(digis, i)
                     if id == InvId
                         continue
                     end
@@ -138,12 +138,13 @@ function getHits(cpeParams::ParamsOnGPU,
                         break
                     end
                     cl = clus(digis, i)
-                    if cl < startClus || cl >= lastClus
+                    
+                    if cl < startClus || cl > lastClus
                         continue
                     end
-                    cl = cl - startClus
-                    @assert cl >= 0 
-                    @assert cl < MaxHitsInIter
+                    cl = cl - startClus + 1
+                    @assert cl >= 1 
+                    @assert cl <= MaxHitsInIter
 
                     x = xx(digis, i)
                     y = yy(digis, i)
