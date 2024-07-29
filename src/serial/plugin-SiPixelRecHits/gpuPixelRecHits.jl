@@ -202,6 +202,8 @@ function getHits(cpeParams::ParamsOnGPU,
                     yg = yg - bs.y
                     zg = zg - bs.z
 
+                    print(xg, " ", yg, " ", zg)
+
                     frame = detParams(cpeParams, me).frame
                     toGlobal(frame, xl, yl, xg, yg, zg)
                

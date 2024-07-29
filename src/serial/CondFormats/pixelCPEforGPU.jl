@@ -355,7 +355,7 @@ function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusPa
     xsize = 8 * xsize - unbalanceX
     ysize = 8 * ysize - unbalanceY
 
-    print(unbalanceX, " ", unbalanceY, " ", xsize, " ", ysize)
+    # print(unbalanceX, " ", unbalanceY, " ", xsize, " ", ysize)
 
     cp.xsize[ic] = UInt32(min(xsize, 1023))
     cp.ysize[ic] = UInt32(min(ysize, 1023))
