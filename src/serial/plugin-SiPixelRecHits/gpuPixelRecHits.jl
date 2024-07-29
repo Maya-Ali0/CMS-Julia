@@ -1,7 +1,7 @@
 module RecoLocalTracker_SiPixelRecHits_plugins_gpuPixelRecHits_h
 
 using ..BeamSpotPOD_h: BeamSpotPOD
-using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
+using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology:AverageGeometry, local_x, local_y, is_big_pix_y, is_big_pix_x,number_of_ladders_in_barrel
 using ..gpuConfig
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
@@ -175,7 +175,7 @@ function getHits(cpeParams::ParamsOnGPU,
                     @assert h < n_hits(hits)
                     @assert h < clus_module_start(clusters, UInt32(me + 1))
 
-                    PixelGPU_h.position(commonParams(cpeParams), detParams(cpeParams,me), clusParams, UInt32(ic));
+                    position_corr(commonParams(cpeParams), detParams(cpeParams,me), clusParams, UInt32(ic));
                     pixelCPEforGPU.errorFromDB(commonParams(cpeParams), detParams(cpeParams,me), clusParams, UInt32(ic));
                     
                     charge(hits, h) =clusParams.charge[ic]

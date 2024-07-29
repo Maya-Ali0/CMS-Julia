@@ -63,9 +63,15 @@ export Event, EDPutTokenT, produces, emplace, begin_module_construction
 
 export number_of_ladders_in_barrel
 
+export local_x
+export local_y
+export is_big_pix_y
+export is_big_pix_x
+
 export BeamSpotPOD
 export SOAFrame
 export ParamsOnGPU
+export position_corr
 
 export PixelCPEFastESProducer
 export BeamSpotESProducer

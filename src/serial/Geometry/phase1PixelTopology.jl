@@ -1,7 +1,7 @@
 module Geometry_TrackerGeometryBuilder_phase1PixelTopology_h
-export number_of_ladders_in_barrel, number_of_module_in_barrel, AverageGeometry, find_max_module_stride
+export number_of_module_in_barrel, AverageGeometry, find_max_module_stride, local_x, local_y, is_big_pix_y, is_big_pix_x, number_of_ladders_in_barrel
 module phase1PixelTopology
-export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel, number_of_layers, layer_index_size, find_max_module_stride
+export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_index_size, find_max_module_stride, local_x, local_y, is_big_pix_y, is_big_pix_x, number_of_ladders_in_barrel
     # Constants defining the dimensions of ROCs and modules
     const num_rows_in_ROC = 80
     const num_cols_in_ROC = 52
@@ -193,7 +193,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `Bool`: `true` if the pixel is at the edge, `false` otherwise.
     """
-    @inline function is_edge_x(px::UInt16)::Bool
+    @inline function is_edge_x(px)
         return (px == 0) | (px == last_row_in_module)
     end
     
@@ -206,7 +206,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `Bool`: `true` if the pixel is at the edge, `false` otherwise.
     """
-    @inline function is_edge_y(py::UInt16)::Bool
+    @inline function is_edge_y(py)
         return (py == 0) | (py == last_col_in_module)
     end
 
@@ -219,7 +219,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `UInt16`: The ROC x-coordinate.
     """
-    @inline function to_ROC_x(px::UInt16)::UInt16
+    @inline function to_ROC_x(px)
         return (px < num_rows_in_ROC) ? px : px - num_rows_in_ROC
     end
 
@@ -232,8 +232,8 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `UInt16`: The ROC y-coordinate.
     """
-    @inline function to_ROC_y(py::UInt16)::UInt16
-        roc = divu52(py)
+    @inline function to_ROC_y(py)
+        roc = py ÷ 52
         return py - 52 * roc
     end
 
@@ -246,11 +246,15 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `Bool`: `true` if the pixel is a big pixel, `false` otherwise.
     """
-    @inline function is_big_pix_y(py::UInt16)::Bool
+    @inline function is_big_pix_y(py)
         ly = to_ROC_y(py)
         return (ly == 0) | (ly == last_col_in_roc)
     end
 
+    @inline function is_big_pix_x(px)
+        lx = to_ROC_x(px)
+        return (lx == 0) | (lx == last_row_in_roc)
+    end
     """
     Function to convert a local x-coordinate to a global x-coordinate.
     
@@ -260,7 +264,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `UInt16`: The global x-coordinate.
     """
-    @inline function local_x(px::UInt16)::UInt16
+    @inline function local_x(px)
         shift = 0
         if px > last_row_in_roc
             shift += 1
@@ -280,8 +284,8 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `UInt16`: The global y-coordinate.
     """
-    @inline function local_y(py::UInt16)::UInt16
-        roc = divu52(py)
+    @inline function local_y(py)
+        roc = py ÷ 52
         shift = 2 * roc
         y_in_ROC = py - 52 * roc
         if y_in_ROC > 0
