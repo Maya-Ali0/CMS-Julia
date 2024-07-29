@@ -191,23 +191,23 @@ function getHits(cpeParams::ParamsOnGPU,
 
                     xerr_local(hits, h) = clusParams.xerr[ic] * clusParams.xerr[ic]
                     yerr_local(hits, h) = clusParams.yerr[ic] * clusParams.yerr[ic]
-
-                    xg = 0
-                    yg = 0
-                    zg = 0
                     
+                    xg::Float32 = 0
+                    yg::Float32 = 0 
+                    zg::Float32 = 0
                     
                     frame = detParams(cpeParams, me).frame
-                    toGlobal(frame, xl, yl, xg, yg, zg)
+                    println(xg," ", yg," ", zg)
+                    toGlobal_special(frame, xl, yl, xg, yg, zg)
                
                     xg = xg - bs.x
                     yg = yg - bs.y
                     zg = zg - bs.z
 
-                   
-                    xg = x_global(hits, h)
-                    yg = y_global(hits, h)
-                    zg = z_global(hits, h) 
+                
+                    set_x_global(hits, h, xg)
+                    set_y_global(hits, h, yg)
+                    set_z_global(hits, h, zg) 
 
                   
                     r_global(hits, h) = sqrt(xg * xg + yg * yg)
