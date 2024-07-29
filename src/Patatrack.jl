@@ -90,7 +90,11 @@ export x_global
 export y_global
 export z_global
 
-export toGlobal
+export set_x_global
+export set_y_global
+export set_z_global
+
+export toGlobal_special
 
 
 #include("serial/bin/EventProcessor.jl")

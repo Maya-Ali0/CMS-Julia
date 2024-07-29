@@ -477,8 +477,8 @@ function errorFromDB(comParams::CommonParams, detParams::DetParams, cp::ClusPara
     # is one and big?
     ix = (0 == sx) ? 1 : 0
     iy = (0 == sy) ? 1 : 0
-    ix += (0 == sx) && isBigPixX(cp.minRow[ic]) ? 1 : 0
-    iy += (0 == sy) && isBigPixY(cp.minCol[ic]) ? 1 : 0
+    ix += (0 == sx) && is_big_pix_x(cp.minRow[ic]) ? 1 : 0
+    iy += (0 == sy) && is_big_pix_y(cp.minCol[ic]) ? 1 : 0
 
     if !isEdgeX
         cp.xerr[ic] = detParams.sx[ix + 1]
