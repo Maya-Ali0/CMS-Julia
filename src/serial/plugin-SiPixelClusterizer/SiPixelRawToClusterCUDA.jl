@@ -129,7 +129,7 @@ function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup
             word_counter_gpu += num_word32
         end 
     
-    make_clusters(self.gpu_algo,self.is_run2,
+    tmp = make_clusters(self.gpu_algo,self.is_run2,
                         gpu_map, 
                         gpu_modules_to_unpack, 
                         gpu_gains, 
@@ -140,6 +140,8 @@ function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup
                         self.use_quality, 
                         self.include_errors, 
                         false) #make clusters
+    emplace(event,self.digi_put_token,tmp[1])
+    x = tmp[2]
+    emplace(event,self.cluster_put_token,tmp[2])
 
-    # tmp = get_results(self.gpu_algo) # return pair of digis and clusters
 end  # module SiPixelRawToClusterCUDA

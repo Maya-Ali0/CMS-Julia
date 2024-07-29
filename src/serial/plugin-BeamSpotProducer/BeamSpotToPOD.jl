@@ -1,3 +1,5 @@
+using .BeamSpotPOD_h
+
 struct BeamSpotToPOD <: EDProducer
     bsPutToken_::EDPutTokenT{BeamSpotPOD}
 

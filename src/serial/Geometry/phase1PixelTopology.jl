@@ -1,7 +1,7 @@
 module Geometry_TrackerGeometryBuilder_phase1PixelTopology_h
-export number_of_ladders_in_barrel, number_of_module_in_barrel, AverageGeometry, find_max_module_stride
+export number_of_module_in_barrel, AverageGeometry, find_max_module_stride, local_x, local_y, is_big_pix_y, is_big_pix_x, number_of_ladders_in_barrel
 module phase1PixelTopology
-export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel, number_of_layers, layer_index_size, find_max_module_stride
+export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_index_size, find_max_module_stride, local_x, local_y, is_big_pix_y, is_big_pix_x, number_of_ladders_in_barrel, last_row_in_module, last_col_in_module, x_offset, y_offset
     # Constants defining the dimensions of ROCs and modules
     const num_rows_in_ROC = 80
     const num_cols_in_ROC = 52
@@ -193,7 +193,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `Bool`: `true` if the pixel is at the edge, `false` otherwise.
     """
-    @inline function is_edge_x(px::UInt16)::Bool
+    @inline function is_edge_x(px)
         return (px == 0) | (px == last_row_in_module)
     end
     
@@ -206,7 +206,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `Bool`: `true` if the pixel is at the edge, `false` otherwise.
     """
-    @inline function is_edge_y(py::UInt16)::Bool
+    @inline function is_edge_y(py)
         return (py == 0) | (py == last_col_in_module)
     end
 
@@ -219,7 +219,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `UInt16`: The ROC x-coordinate.
     """
-    @inline function to_ROC_x(px::UInt16)::UInt16
+    @inline function to_ROC_x(px)
         return (px < num_rows_in_ROC) ? px : px - num_rows_in_ROC
     end
 
@@ -232,8 +232,8 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `UInt16`: The ROC y-coordinate.
     """
-    @inline function to_ROC_y(py::UInt16)::UInt16
-        roc = divu52(py)
+    @inline function to_ROC_y(py)
+        roc = py ÷ 52
         return py - 52 * roc
     end
 
@@ -246,11 +246,15 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     ## Returns
     - `Bool`: `true` if the pixel is a big pixel, `false` otherwise.
     """
-    @inline function is_big_pix_y(py::UInt16)::Bool
+    @inline function is_big_pix_y(py)
         ly = to_ROC_y(py)
         return (ly == 0) | (ly == last_col_in_roc)
     end
 
+    @inline function is_big_pix_x(px)
+        lx = to_ROC_x(px)
+        return (lx == 0) | (lx == last_row_in_roc)
+    end
     """
     Function to convert a local x-coordinate to a global x-coordinate.
     
@@ -281,7 +285,7 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
     - `UInt16`: The global y-coordinate.
     """
     @inline function local_y(py::UInt16)::UInt16
-        roc = divu52(py)
+        roc = py ÷ 52
         shift = 2 * roc
         y_in_ROC = py - 52 * roc
         if y_in_ROC > 0
@@ -314,19 +318,24 @@ export AverageGeometry, number_of_ladders_in_barrel, number_of_module_in_barrel,
         ladderR::Vector{Float32}
         ladderMinZ::Vector{Float32}
         ladderMaxZ::Vector{Float32}
-        endCapZ::NTuple{2, Float32}  # just for pos and neg Layer1
+        endCapZ::Vector{Float32}  # just for pos and neg Layer1
         
-        # function AverageGeometry()
-        #     number_of_ladders_in_barrel = 0
-        #     ladderZ = Float32[]
-        #     ladderX = Float32[]
-        #     ladderY = Float32[]
-        #     ladderR = Float32[]
-        #     ladderMinZ = Float32[]
-        #     ladderMaxZ = Float32[]
-        #     endCapZ = (0.0f0, 0.0f0)
-        #     new(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
-        # end
+
+        function AverageGeometry(number_of_ladders_in_barrel,ladderZ,ladderX,ladderY,ladderR,ladderMinZ,ladderMaxZ,endCapZ)
+            return new(number_of_ladders_in_barrel,ladderZ,ladderX,ladderY,ladderR,ladderMinZ,ladderMaxZ,endCapZ)
+        end
+
+        function AverageGeometry()
+            number_of_ladders_in_barrel = 0
+            ladderZ = zeros(Float64, 148)
+            ladderX = zeros(Float64, 148)
+            ladderY = zeros(Float64, 148)
+            ladderR = zeros(Float64, 148)
+            ladderMinZ = zeros(Float64, 148)
+            ladderMaxZ = zeros(Float64, 148)
+            endCapZ = zeros(Float64, 2)
+            new(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
+        end
     end
     
 

@@ -1,7 +1,11 @@
-# using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
-include("../DataFormats/SOARotation.jl")
-using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
+module PixelGPU_h
 
+using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry, local_x, local_y, is_big_pix_y, is_big_pix_x,  last_row_in_module, last_col_in_module, x_offset, y_offset
+using ..SOA_h
+using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
+
+
+export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry, MaxHitsInIter, commonParams, detParams, position_corr, errorFromDB
 """
  Struct for common detector parameters including thickness, pitch, and default values.
     
@@ -68,27 +72,30 @@ struct DetParams
 
     frame::SOAFrame{Float32}
 
+    function DetParams(isBarrel,isPosZ,layer,index,rawId,shiftX,shiftY,chargeWidthX,chargeWidthY,x0,y0,z0,sx,sy,frame)
+        return new(isBarrel,isPosZ,layer,index,rawId,shiftX,shiftY,chargeWidthX,chargeWidthY,x0,y0,z0,sx,sy,frame)
+    end
 
 
-    # function DetParams()
-    #     new(
-    #         false,          # isBarrel
-    #         false,          # isPosZ
-    #         0x0000,         # layer
-    #         0x0000,         # index
-    #         0x00000000,     # rawId
-    #         0.0f0,          # shiftX
-    #         0.0f0,          # shiftY
-    #         0.0f0,          # chargeWidthX
-    #         0.0f0,          # chargeWidthY
-    #         0.0f0,          # x0
-    #         0.0f0,          # y0
-    #         0.0f0,          # z0
-    #         (0.0f0, 0.0f0, 0.0f0),  # sx
-    #         (0.0f0, 0.0f0, 0.0f0),  # sy
-    #         SOAFrame{Float32}()  # frame
-    #     )
-    # end
+    function DetParams()
+        new(
+            false,          # isBarrel
+            false,          # is    PosZ
+            0x0000,         # layer
+            0x0000,         # index
+            0x00000000,     # rawId
+            0.0f0,          # shiftX
+            0.0f0,          # shiftY
+            0.0f0,          # chargeWidthX
+            0.0f0,          # chargeWidthY
+            0.0f0,          # x0
+            0.0f0,          # y0
+            0.0f0,          # z0
+            (0.0f0, 0.0f0, 0.0f0),  # sx
+            (0.0f0, 0.0f0, 0.0f0),  # sy
+            SOAFrame{Float32}()  # frame
+        )
+    end
 end
 
 # const AverageGeometry = Phase1PixelTopology.AverageGeometry
@@ -151,7 +158,7 @@ function commonParams(params::ParamsOnGPU)
     return params.m_commonParams
 end
 
-function detParams(params::ParamsOnGPU, i::Int)
+function detParams(params::ParamsOnGPU, i::UInt32)
     return params.m_detParams[i]
 end
 
@@ -167,7 +174,7 @@ function layer(params::ParamsOnGPU, id::UInt16)
     return params.m_layerGeometry.layer[id ÷ Phase1PixelTopology.maxModuleStride]
 end
 
-# const MaxHitsInIter = GPUClustering.maxHitsInIter()
+const MaxHitsInIter = MAX_HITS_IN_ITER()
 
 """
    ### ClusParamsT{N}
@@ -192,26 +199,33 @@ end
 """
 
 struct ClusParamsT{N}
-    minRow::NTuple{N, UInt32}
-    maxRow::NTuple{N, UInt32}
-    minCol::NTuple{N, UInt32}
-    maxCol::NTuple{N, UInt32}
+    minRow::Vector{UInt32}
+    maxRow::Vector{UInt32}
+    minCol::Vector{UInt32}
+    maxCol::Vector{UInt32}
 
-    Q_f_X::NTuple{N, Int32}
-    Q_l_X::NTuple{N, Int32}
-    Q_f_Y::NTuple{N, Int32}
-    Q_l_Y::NTuple{N, Int32}
+    Q_f_X::Vector{Int32}
+    Q_l_X::Vector{Int32}
+    Q_f_Y::Vector{Int32}
+    Q_l_Y::Vector{Int32}
 
-    charge::NTuple{N, Int32}
+    charge::Vector{Int32}
 
-    xpos::NTuple{N, Float32}
-    ypos::NTuple{N, Float32}
+    xpos::Vector{Float32}
+    ypos::Vector{Float32}
 
-    xerr::NTuple{N, Float32}
-    yerr::NTuple{N, Float32}
+    xerr::Vector{Float32}
+    yerr::Vector{Float32}
 
-    xsize::NTuple{N, Int16}
-    ysize::NTuple{N, Int16}
+    xsize::Vector{Any}
+    ysize::Vector{Any}
+
+    function ClusParamsT{N}() where N
+        return new(zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),
+        zeros(Int32,N),zeros(Int32,N),zeros(Int32,N),zeros(Int32,N),zeros(Int32,N),
+        zeros(Float32,N),zeros(Float32,N),zeros(Float32,N),zeros(Float32,N),zeros(Int16,N),zeros(Int16,N))
+    end
+
 end
 
 """
@@ -260,7 +274,7 @@ end
     - `Float32`: Computed correction value.
 
 """
-function correction(sizeM1::Int32, Q_f::Int32, Q_l::Int32, upper_edge_first_pix::UInt16, lower_edge_last_pix::UInt16,
+function correction(sizeM1, Q_f, Q_l, upper_edge_first_pix, lower_edge_last_pix,
                     lorentz_shift::Float32, theThickness::Float32, cot_angle::Float32, pitch::Float32,
                     first_is_big::Bool, last_is_big::Bool)::Float32
     if sizeM1 == 0
@@ -304,11 +318,11 @@ end
     - Updates `cp.xpos[ic]` and `cp.ypos[ic]` with the corrected x and y positions.
 
 """
-function position(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32) where {N}
-    llx = cp.minRow[ic] + 1
-    lly = cp.minCol[ic] + 1
-    urx = cp.maxRow[ic]
-    ury = cp.maxCol[ic]
+function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32) where {N}
+    llx = UInt16(cp.minRow[ic] + 1)
+    lly = UInt16(cp.minCol[ic] + 1)
+    urx = UInt16(cp.maxRow[ic])
+    ury = UInt16(cp.maxCol[ic])
 
     llxl = local_x(llx)
     llyl = local_y(lly)
@@ -318,51 +332,53 @@ function position(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT
     mx = llxl + urxl
     my = llyl + uryl
 
-    xsize = Int32(urxl) + 2 - Int32(llxl)
-    ysize = Int32(uryl) + 2 - Int32(llyl)
+    xsize = Int(urxl) + 2 - Int(llxl)
+    ysize = Int(uryl) + 2 - Int(llyl)
     @assert xsize >= 0
     @assert ysize >= 0
 
-    if isBigPixX(cp.minRow[ic])
+    if is_big_pix_x(cp.minRow[ic])
         xsize += 1
     end
-    if isBigPixX(cp.maxRow[ic])
+    if is_big_pix_x(cp.maxRow[ic])
         xsize += 1
     end
-    if isBigPixY(cp.minCol[ic])
+    if is_big_pix_y(cp.minCol[ic])
         ysize += 1
     end
-    if isBigPixY(cp.maxCol[ic])
+    if is_big_pix_y(cp.maxCol[ic])
         ysize += 1
     end
 
-    unbalanceX = 8 * abs(Float32(cp.Q_f_X[ic] - cp.Q_l_X[ic])) / Float32(cp.Q_f_X[ic] + cp.Q_l_X[ic])
-    unbalanceY = 8 * abs(Float32(cp.Q_f_Y[ic] - cp.Q_l_Y[ic])) / Float32(cp.Q_f_Y[ic] + cp.Q_l_Y[ic])
+    unbalanceX = Int(trunc(8.0 * abs(Float32(cp.Q_f_X[ic] - cp.Q_l_X[ic])) / Float32(cp.Q_f_X[ic] + cp.Q_l_X[ic])))
+    unbalanceY = Int(trunc(8.0 * abs(Float32(cp.Q_f_Y[ic] - cp.Q_l_Y[ic])) / Float32(cp.Q_f_Y[ic] + cp.Q_l_Y[ic])))
     xsize = 8 * xsize - unbalanceX
     ysize = 8 * ysize - unbalanceY
 
-    cp.xsize[ic] = min(xsize, 1023)
-    cp.ysize[ic] = min(ysize, 1023)
+    print(unbalanceX, " ", unbalanceY, " ", xsize, " ", ysize)
 
-    if cp.minRow[ic] == 0 || cp.maxRow[ic] == lastRowInModule
+    cp.xsize[ic] = UInt32(min(xsize, 1023))
+    cp.ysize[ic] = UInt32(min(ysize, 1023))
+
+    if cp.minRow[ic] == 0 || cp.maxRow[ic] == last_row_in_module
         cp.xsize[ic] = -cp.xsize[ic]
     end
-    if cp.minCol[ic] == 0 || cp.maxCol[ic] == lastColInModule
+    if cp.minCol[ic] == 0 || cp.maxCol[ic] == last_col_in_module
         cp.ysize[ic] = -cp.ysize[ic]
     end
 
-    xPos = detParams.shiftX + comParams.thePitchX * (0.5f0 * Float32(mx) + Float32(xOffset))
-    yPos = detParams.shiftY + comParams.thePitchY * (0.5f0 * Float32(my) + Float32(yOffset))
+    xPos = detParams.shiftX + comParams.thePitchX * (0.5f0 * Float32(mx) + Float32(x_offset))
+    yPos = detParams.shiftY + comParams.thePitchY * (0.5f0 * Float32(my) + Float32(y_offset))
 
     cotalpha, cotbeta = computeAnglesFromDet(detParams, xPos, yPos)
 
     thickness = detParams.isBarrel ? comParams.theThicknessB : comParams.theThicknessE
 
     xcorr = correction(cp.maxRow[ic] - cp.minRow[ic], cp.Q_f_X[ic], cp.Q_l_X[ic], llxl, urxl, detParams.chargeWidthX,
-                       thickness, cotalpha, comParams.thePitchX, isBigPixX(cp.minRow[ic]), isBigPixX(cp.maxRow[ic]))
+                       thickness, cotalpha, comParams.thePitchX, is_big_pix_x(cp.minRow[ic]), is_big_pix_x(cp.maxRow[ic]))
 
     ycorr = correction(cp.maxCol[ic] - cp.minCol[ic], cp.Q_f_Y[ic], cp.Q_l_Y[ic], llyl, uryl, detParams.chargeWidthY,
-                       thickness, cotbeta, comParams.thePitchY, isBigPixY(cp.minCol[ic]), isBigPixY(cp.maxCol[ic]))
+                       thickness, cotbeta, comParams.thePitchY, is_big_pix_y(cp.minCol[ic]), is_big_pix_y(cp.maxCol[ic]))
 
     cp.xpos[ic] = xPos + xcorr
     cp.ypos[ic] = yPos + ycorr
@@ -406,8 +422,8 @@ function errorFromSize(comParams::CommonParams, detParams::DetParams, cp::ClusPa
     sy = cp.maxCol[ic] - cp.minCol[ic]
 
     # is edgy ?
-    isEdgeX = cp.minRow[ic] == 0 || cp.maxRow[ic] == lastRowInModule
-    isEdgeY = cp.minCol[ic] == 0 || cp.maxCol[ic] == lastColInModule
+    isEdgeX = cp.minRow[ic] == 0 || cp.maxRow[ic] == last_row_in_module
+    isEdgeY = cp.minCol[ic] == 0 || cp.maxCol[ic] == last_col_in_module
     # is one and big?
     isBig1X = (0 == sx) && isBigPixX(cp.minRow[ic])
     isBig1Y = (0 == sy) && isBigPixY(cp.minCol[ic])
@@ -456,13 +472,13 @@ function errorFromDB(comParams::CommonParams, detParams::DetParams, cp::ClusPara
     sy = cp.maxCol[ic] - cp.minCol[ic]
 
     # is edgy ?
-    isEdgeX = cp.minRow[ic] == 0 || cp.maxRow[ic] == lastRowInModule
-    isEdgeY = cp.minCol[ic] == 0 || cp.maxCol[ic] == lastColInModule
+    isEdgeX = cp.minRow[ic] == 0 || cp.maxRow[ic] == last_row_in_module
+    isEdgeY = cp.minCol[ic] == 0 || cp.maxCol[ic] == last_col_in_module
     # is one and big?
     ix = (0 == sx) ? 1 : 0
     iy = (0 == sy) ? 1 : 0
-    ix += (0 == sx) && isBigPixX(cp.minRow[ic]) ? 1 : 0
-    iy += (0 == sy) && isBigPixY(cp.minCol[ic]) ? 1 : 0
+    ix += (0 == sx) && is_big_pix_x(cp.minRow[ic]) ? 1 : 0
+    iy += (0 == sy) && is_big_pix_y(cp.minCol[ic]) ? 1 : 0
 
     if !isEdgeX
         cp.xerr[ic] = detParams.sx[ix + 1]
@@ -470,4 +486,6 @@ function errorFromDB(comParams::CommonParams, detParams::DetParams, cp::ClusPara
     if !isEdgeY
         cp.yerr[ic] = detParams.sy[iy + 1]
     end
+end
+
 end

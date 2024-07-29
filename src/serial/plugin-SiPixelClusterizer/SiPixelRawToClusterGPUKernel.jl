@@ -4,7 +4,7 @@ Phase 1 Geometry Constants
 module pixelGPUDetails
     export make_clusters, get_results, initialize_word_fed
 
-    using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA:SiPixelClustersSoA
+    using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     
     using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA,set_n_modules_digis
     
@@ -681,7 +681,7 @@ module pixelGPUDetails
             digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, digi_errors_d.error_d,use_quality_info,include_errors,debug)
         #end # end for raw to digi
         
-        calib_digis(is_run_2,digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,gains,word_counter,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.clus_module_star_d)
+        calib_digis(is_run_2,digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,gains,word_counter,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
         # open("outputDigis.txt","w") do file
         #     for i ∈ 0:48315
         #         write(file,"xx[",string(i), "] = ", string(digis_d.xx_d[i+1])," yy[",string(i), "] = ", string(digis_d.yy_d[i+1])," adc[",string(i), "] = ", string(digis_d.adc_d[i+1], " moduleid[",string(i),"] = ",digis_d.module_ind_d[i+1]," pdigi[",string(i),"] = ",string(digis_d.pdigi_d[i+1])," rawidarr[",string(i),"] = ",digis_d.raw_id_arr_d[i+1],'\n'))
@@ -716,7 +716,9 @@ module pixelGPUDetails
         #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
         #     end
         # end
-        fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_star_d)
+        fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
+
+        setNClusters!(clusters_d,clusters_d.clus_module_start_d[gpuClustering.MAX_NUM_MODULES])
         # open("fill_hits_module.txt","w") do file
         #     for i ∈ 1:MAX_NUM_MODULES+1
         #         write(file,string(clusters_d.clus_module_star_d[i]),'\n')
@@ -727,7 +729,11 @@ module pixelGPUDetails
         #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
         #     end
         # end
+<<<<<<< HEAD
         """
+=======
+        return (digis_d,clusters_d)
+>>>>>>> 78691852fc6070c087405c7f2a5098375461f026
     end
     """
     clus_start: Number of clusters within each module

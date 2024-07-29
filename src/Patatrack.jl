@@ -1,5 +1,3 @@
-
-
 module Patatrack
 import Base.length
 
@@ -65,11 +63,38 @@ export Event, EDPutTokenT, produces, emplace, begin_module_construction
 
 export number_of_ladders_in_barrel
 
+export local_x
+export local_y
+export is_big_pix_y
+export is_big_pix_x
+
+export  last_row_in_module
+export  last_col_in_module
+
+export x_offset
+export y_offset
+
 export BeamSpotPOD
 export SOAFrame
 export ParamsOnGPU
+export position_corr
+
+export errorFromDB
 
 export PixelCPEFastESProducer
+export BeamSpotESProducer
+export BeamSpotToPOD
+export SiPixelRecHitCUDA
+
+export x_global
+export y_global
+export z_global
+
+export set_x_global
+export set_y_global
+export set_z_global
+
+export toGlobal_special
 
 
 #include("serial/bin/EventProcessor.jl")
@@ -82,8 +107,8 @@ include("serial/CondFormats/si_pixel_gain_for_hlt_on_gpu.jl")
 include("serial/CondFormats/si_pixel_gain_calibration_for_hlt_gpu.jl")
 include("serial/CUDACore/cudaCompat.jl")
 include("serial/CUDACore/cudastdAlgorithm.jl")
-include("serial/CUDACore/hist_to_container.jl")
 include("serial/CUDACore/prefix_scan.jl")
+include("serial/CUDACore/hist_to_container.jl")
 include("serial/CUDADataFormats/gpu_clustering_constants.jl")
 include("serial/CUDADataFormats/SiPixelClusterSoA.jl")
 include("serial/DataFormats/SiPixelRawDataError.jl")
@@ -112,22 +137,25 @@ include("serial/plugin-SiPixelClusterizer/SiPixelRawToClusterCUDA.jl")
 # include("serial/plugin-SiPixelClusterizer/testClustering.jl")
 include("serial/bin/ReadRAW.jl")
 include("serial/DataFormats/BeamSpotPOD.jl")
-# include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
-# include("serial/plugin-BeamSpotProducer/BeamSpotESProducer.jl")
+include("serial/plugin-BeamSpotProducer/BeamSpotToPOD.jl")
+include("serial/plugin-BeamSpotProducer/BeamSpotESProducer.jl")
+
 # include("serial/CUDADataFormats/HeterogeneousSoA.jl")
+include("serial/DataFormats/SOARotation.jl")
 
 
-# include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
-# include("serial/CUDADataFormats/TrackingRecHit2DHeterogeneous.jl")
-# include("serial/DataFormats/approx_atan2.jl")
+include("serial/CondFormats/pixelCPEforGPU.jl")
 
-# include("serial/CondFormats/pixelCPEforGPU.jl")
-# include("serial/plugin-SiPixelRecHits/gpuPixelRecHits.jl")
+include("serial/CUDADataFormats/TrackingRecHit2DSOAView.jl")
+include("serial/CUDADataFormats/TrackingRecHit2DHeterogeneous.jl")
+include("serial/DataFormats/approx_atan2.jl")
+
+include("serial/plugin-SiPixelRecHits/gpuPixelRecHits.jl")
 
 include("serial/CondFormats/PixelCPEFast.jl")
 
 include("serial/plugin-SiPixelRecHits/PixelCPEFastESProducer.jl")
 
-# include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
-# include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
+include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
+include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
 end

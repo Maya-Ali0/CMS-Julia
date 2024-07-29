@@ -6,7 +6,7 @@ end
 ProductRegistry() = ProductRegistry(0,Set{UInt}(),Dict{DataType, Tuple{UInt, UInt}}())
 
 function produces(registry::ProductRegistry,::Type{T}) where T
-    ind::UInt32 = length(registry.type_to_index)
+    ind::UInt32 = length(registry.type_to_index) + 1
     if haskey(registry.type_to_index, T)
         throw(ErrorException("Product of type $T already exists"))
     end

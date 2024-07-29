@@ -3,9 +3,9 @@ module CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
 using ..histogram: HisToContainer
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUM_CLUSTERS
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
-include("../DataFormats/SOARotation.jl")
-include("../CondFormats/pixelCPEforGPU.jl")
-
+using ..SOA_h
+using ..PixelGPU_h
+export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global
 
 """
     Struct representing the 2D Structure of Arrays view of tracking hits.
@@ -71,11 +71,11 @@ mutable struct TrackingRecHit2DSOAView
             empty_int_vector,
             empty_int_vector,
             AverageGeometry(),
-            ParamsOnGPU(0,0,0,0),
-            0,
-            0,
-            HisToContainer{T,N_BINS,SIZE,S,I}(),
-            0)
+            ParamsOnGPU(),
+            Vector{Integer}(),
+            Vector{Integer}(),
+            HisToContainer{0,0,0,0,UInt32}(), #added dummy values 
+            zero(UInt32))
     end
 
 
@@ -96,7 +96,7 @@ mutable struct TrackingRecHit2DSOAView
             m_det_ind::Vector{UInt16},
             m_average_geometry::AverageGeometry,
             m_cpe_params::ParamsOnGPU,
-            m_hits_module_start::Vector{Integer},
+            m_hits_module_start::Vector{UInt32},
             m_hits_layer_start::Vector{Integer},
             m_hist::HisToContainer,
             m_nHits::UInt32
@@ -138,7 +138,7 @@ end
     - `UInt32`: The maximum number of clusters (`MAX_NUM_CLUSTERS`).
 """
 function max_hits()
-    return MAX_NUM_CLUSTERS
+    return UInt32(48 * 1024)
 end
 
 """
@@ -232,7 +232,7 @@ end
     # Returns
     - `Float64`: The global x-coordinate (`m_xg[i]`) of the hit at index `i`.
 """
-@inline function x_global(self::TrackingRecHit2DSOAView, i::Int)::Float64
+@inline function x_global(self::TrackingRecHit2DSOAView, i)::Float64
     return self.m_xg[i]
 end
 
@@ -248,7 +248,7 @@ end
     # Returns
     - `Float64`: The global y-coordinate (`m_yg[i]`) of the hit at index `i`.
 """
-@inline function y_global(self::TrackingRecHit2DSOAView, i::Int)::Float64
+@inline function y_global(self::TrackingRecHit2DSOAView, i)::Float64
     return self.m_yg[i]
 end
 
@@ -264,9 +264,23 @@ end
     # Returns
     - `Float64`: The global z-coordinate (`m_zg[i]`) of the hit at index `i`.
 """
-@inline function z_global(self::TrackingRecHit2DSOAView, i::Int)::Float64
+@inline function z_global(self::TrackingRecHit2DSOAView, i)::Float64
     return self.m_zg[i]
 end
+
+@inline function set_x_global(self::TrackingRecHit2DSOAView, i, val)
+    self.m_xg[i] = val
+end
+
+@inline function set_y_global(self::TrackingRecHit2DSOAView, i, val)
+    self.m_yg[i] = val
+end
+
+@inline function set_z_global(self::TrackingRecHit2DSOAView, i, val)
+    self.m_zg[i] = val
+end
+
+
 
 """
     r_global(self::TrackingRecHit2DSOAView, i::Int)::Float64
@@ -435,7 +449,7 @@ end
     # Returns
     - `AverageGeometry`: The average geometry data (`m_average_geometry`).
 """
-@inline function average_geometry(self::TrackingRecHit2DSOAView)::AverageGeometry
+@inline function average_geometry(self::TrackingRecHit2DSOAView)
     return self.m_average_geometry
 end
 

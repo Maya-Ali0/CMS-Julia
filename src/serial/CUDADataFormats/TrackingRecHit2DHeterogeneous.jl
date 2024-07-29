@@ -1,5 +1,7 @@
 module CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 
+export TrackingRecHit2DHeterogeneous, histView, ParamsOnGPU
+
 # Import necessary types and functions from other modules
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView, ParamsOnGPU
 using ..histogram: HisToContainer
@@ -27,12 +29,12 @@ mutable struct TrackingRecHit2DHeterogeneous
     n32::UInt32
     m_store16::Union{Nothing, Vector{Vector{UInt16}}}
     m_store32::Union{Nothing, Vector{Vector{Float64}}}
-    m_HistStore::Union{Nothing, Vector{HisToContainer}}
-    m_AverageGeometryStore::Union{Nothing, Vector{AverageGeometry}}
-    m_view::Union{Nothing, Vector{TrackingRecHit2DSOAView}}
+    m_HistStore::HisToContainer
+    m_AverageGeometryStore::AverageGeometry
+    m_view::TrackingRecHit2DSOAView
     m_nHits::UInt32
     m_hitsModuleStart::Vector{UInt32}
-    m_hist::Union{Nothing, HisToContainer}
+    m_hist::HisToContainer
     m_hitsLayerStart::Union{Nothing, Vector{UInt32}}
     m_iphi::Union{Nothing, Vector{UInt16}}
 
@@ -54,12 +56,13 @@ mutable struct TrackingRecHit2DHeterogeneous
         - `m_AverageGeometryStore`: Initialized with a vector containing one `AverageGeometry` object.
         - `m_view`: Initialized with one `TrackingRecHit2DSOAView` object.
     """
-    function TrackingRecHit2DHeterogeneous(nHits::Integer, cpe_params::ParamsOnGPU, hitsModuleStart::Vector{Integer}, Hist::HisToContainer)
+    function TrackingRecHit2DHeterogeneous(nHits::Integer, cpe_params::ParamsOnGPU, hitsModuleStart::Vector{UInt32})
         n16 = 4
         n32 = 9
     
         if nHits == 0
-            return new(n16, n32, Nothing, Nothing, Nothing, Nothing, Nothing, nHits, hitsModuleStart, Nothing, Nothing, Nothing)
+            return new(n16, n32, Vector{Vector{UInt16}}()
+            , Vector{Vector{Float64}}(), Vector{HisToContainer{0,0,0,0,UInt32}}(), Vector{AverageGeometry}(), TrackingRecHit2DSOAView(), nHits, hitsModuleStart, HisToContainer{0,0,0,0,UInt32}(), Vector{UInt32}(), Vector{UInt16}()) #added dummy values for HisToContainer
         end
     
         # Initialize storage vectors
@@ -70,24 +73,17 @@ mutable struct TrackingRecHit2DHeterogeneous
         append!(m_store32_UInt32, [Vector{UInt32}(undef, 11)])
 
         # Initialize AverageGeometry and Histogram store
-        obj2 = AverageGeometry()
-        m_HistStore = Hist
-        m_HistStor_vector = Vector{HisToContainer}()
-        push!(m_HistStor_vector, m_HistStore)
-        m_AverageGeometryStore = Vector{AverageGeometry}()
-        push!(m_AverageGeometryStore, obj2)
+        m_AverageGeometryStore = AverageGeometry()
+        m_HistStore = HisToContainer{UInt32,0,0,0,UInt32}()
     
         # Define local functions to access storage
         function get16(i)
-            println("get16 called")
             return  m_store16[i + 1]
         end
         function get32(i) 
-            println("get32 called")
             return m_store32[i + 1] 
         end
         function get32_uint(i)
-            println("get32 called")
             return m_store32_UInt32[i + 1] 
         end
     
@@ -96,8 +92,7 @@ mutable struct TrackingRecHit2DHeterogeneous
         m_iphi =  get16(0)
     
         # Create and initialize the TrackingRecHit2DSOAView object
-        println("calling the constructor here")
-        obj = TrackingRecHit2DSOAView(
+        m_view = TrackingRecHit2DSOAView(
             get32(0),
             get32(1),
             get32(2),
@@ -111,21 +106,17 @@ mutable struct TrackingRecHit2DHeterogeneous
             get16(2),
             get16(3),
             get16(1),
-            obj2,
+            m_AverageGeometryStore,
             cpe_params,
             hitsModuleStart,
             hits_layer_start,
             m_HistStore,
             UInt32(nHits)
-        )
-        println("finished constructor")
-    
-        # Store the view object
-        m_view = Vector{TrackingRecHit2DSOAView}()
-        push!(m_view, obj)
+        )    
+        
 
         # Return a new instance of TrackingRecHit2DHeterogeneous
-        return new(n16, n32, m_store16, m_store32, m_HistStor_vector, m_AverageGeometryStore, m_view, nHits, hitsModuleStart, m_HistStor_vector[1], hits_layer_start, m_iphi)
+        return new(n16, n32, m_store16, m_store32, m_HistStore, m_AverageGeometryStore, m_view, nHits, hitsModuleStart, m_HistStore, hits_layer_start, m_iphi)
     end
 end
 
@@ -138,7 +129,7 @@ end
     ## Returns
     - `hit.m_view`: The stored view of type `Vector{TrackingRecHit2DSOAView}`.
 """
-view(hit::TrackingRecHit2DHeterogeneous) = hit.m_view
+histView(hit::TrackingRecHit2DHeterogeneous) = hit.m_view
 
 """
     Accessor function for retrieving the number of hits.

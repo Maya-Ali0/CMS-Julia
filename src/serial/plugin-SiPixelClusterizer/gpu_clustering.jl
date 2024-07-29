@@ -3,16 +3,13 @@ module gpuClustering
 export MAX_NUM_MODULES, count_modules, find_clus
 
 using Printf
-include("../CUDADataFormats/gpu_clustering_constants.jl")
-using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
+using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 
 #using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 
-include("../CUDACore/hist_to_container.jl")
-using .histogram: HisToContainer, zero, count!, finalize!, size, bin, val, begin_h, end_h, fill!, type_I
+using ..histogram: HisToContainer, zero, count!, finalize!, size, bin, val, begin_h, end_h, fill!, type_I
 
-include("../Geometry/phase1PixelTopology.jl")
-using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
+using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
 #using ..histogram: HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
 
 #using ..gpuConfig

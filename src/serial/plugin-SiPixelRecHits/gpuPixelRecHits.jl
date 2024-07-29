@@ -1,11 +1,15 @@
 module RecoLocalTracker_SiPixelRecHits_plugins_gpuPixelRecHits_h
 
 using ..BeamSpotPOD_h: BeamSpotPOD
-using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
+using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
 using ..gpuConfig
-using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA: SiPixelClustersSoA, DeviceConstView
-using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA: SiPixelDigisSoA, DeviceConstView
-using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT
+using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
+using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
+using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
+using ..PixelGPU_h
+using ..SOA_h
+
+export getHits
 """ getHits function
 
  Processes pixel hit data from clusters and digis, adjusts for the beam spot position, 
@@ -25,19 +29,18 @@ using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: Trac
 """
 function getHits(cpeParams::ParamsOnGPU, 
                  bs::BeamSpotPOD, 
-                 pdigis::DeviceConstView, 
+                 pdigis::CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA.DeviceConstView,
                  numElements::Integer,
-                 pclusters::DeviceConstView,
-                 phits::Vector{TrackingRecHit2DSOAView})
+                 pclusters::CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA.DeviceConstView,
+                 phits::TrackingRecHit2DSOAView)
 
-        @assert(phits)
-        @assert(cpeParams)
         hits = phits
         digis = pdigis
         clusters = pclusters
+
         agc = average_geometry(hits)
         ag = averageGeometry(cpeParams)
-        for il in 1:TrackingRecHit2DSOAView::AverageGeometry::numberOfLaddersInBarrel
+        for il in 1:number_of_ladders_in_barrel
             agc.ladderZ[il] = ag.ladderZ[il] - bs.z
             agc.ladderX[il] = ag.ladderX[il] - bs.x
             agc.ladderY[il] = ag.ladderY[il] - bs.y
@@ -49,48 +52,50 @@ function getHits(cpeParams::ParamsOnGPU,
         agc.endCapZ[2] = ag.endCapZ[2] - bs.z
 
 
-        InvId = 9999
-        MaxHitsInIter = pixelCPEforGPU::MaxHitsInIter
 
-        clusParams:: pixelCPEforGPU::ClusParams
+        InvId = 9999
+        MaxHitsInIter = PixelGPU_h.MaxHitsInIter
+
+        clusParams = ClusParamsT{10000}()
 
         firstModule = 1
-        endModule = moduleStart(clusters, 1)
+        endModule = module_start(clusters, 1)
         for mod in firstModule:endModule
-            me = moduleId(clusters, mod)
-            nclus = clusInModule(clusters, me)
+            me = module_id(clusters, mod)
+            nclus = clus_in_module(clusters, me)
             
             if 0 == nclus
                 continue
             end
             
-            for startClus in 1:MaxHitsInIter:(nclus)
-                first = moduleStart(clusters, mod + 1)
+        endClus = nclus
 
-                nClusterInIter = min(maxHitsInIer, endClus - startClus)
-                lastClus = startClus + nClusterInIter
+            for startClus in 1:MaxHitsInIter:(endClus)
+                first = module_start(clusters, mod + 1)
+
+                nClusterInIter = min(MaxHitsInIter, endClus - startClus + 1)
+                lastClus = startClus - 1 + nClusterInIter
                 @assert nClusterInIter <= nclus
                 @assert nClusterInIter > 0
                 @assert lastClus <= nclus
-
-                @assert nclus > MaxHitsInIter || (0 == startClus && nClusterInIter ==  nclus && lastClus == nclus)
+                @assert nclus > MaxHitsInIter || (1 == startClus && nClusterInIter == nclus && lastClus == nclus)
                 
 
-                for ic in 0:nClusterInIter
+                for ic in 1:nClusterInIter
                     clusParams.minRow[ic] = UInt32(typemax(UInt32))
-                    clusParams.maxRow[ic] = UInt32(0)
+                    clusParams.maxRow[ic] = zero(UInt32)
                     clusParams.minCol[ic] = UInt32(typemax(UInt32))
-                    clusParams.maxCol[ic] = UInt32(0)
-                    clusParams.charge[ic] = UInt32(0)
-                    clusParams.Q_f_X[ic] = UInt32(0)
-                    clusParams.Q_l_X[ic] = UInt32(0)
-                    clusParams.Q_f_Y[ic] = UInt32(0)
-                    clusParams.Q_l_Y[ic] = UInt32(0)
+                    clusParams.maxCol[ic] = zero(UInt32)
+                    clusParams.charge[ic] = zero(UInt32)
+                    clusParams.Q_f_X[ic] = zero(UInt32)
+                    clusParams.Q_l_X[ic] = zero(UInt32)
+                    clusParams.Q_f_Y[ic] = zero(UInt32)
+                    clusParams.Q_l_Y[ic] = zero(UInt32)
                 end
                 
 
                 for i in first:numElements
-                    id = moduelInd(digis, i)
+                    id = module_ind(digis, i)
                     if id == InvId
                         continue
                     end
@@ -98,16 +103,16 @@ function getHits(cpeParams::ParamsOnGPU,
                         break
                     end
                     cl = clus(digis, i)
-                    if cl < startClus || cl >= lastClus
+                    if cl < startClus || cl > lastClus
                         continue
                     end
                     
                     x = xx(digis, i)
                     y = yy(digis, i)
 
-                    cl = cl - startClus
+                    cl = cl - startClus + 1
                     @assert cl >= 1 
-                    @assert cl < MaxHitsInIter
+                    @assert cl <= MaxHitsInIter  # will verify later
 
                     if clusParams.minRow[cl] > x
                         clusParams.minRow[cl] = x
@@ -126,7 +131,7 @@ function getHits(cpeParams::ParamsOnGPU,
 
                 pixmx = typemax(UInt16)
                 for i in first:numElements
-                    id = moduelInd(digis, i)
+                    id = module_ind(digis, i)
                     if id == InvId
                         continue
                     end
@@ -134,12 +139,13 @@ function getHits(cpeParams::ParamsOnGPU,
                         break
                     end
                     cl = clus(digis, i)
-                    if cl < startClus || cl >= lastClus
+                    
+                    if cl < startClus || cl > lastClus
                         continue
                     end
-                    cl = cl - startClus
-                    @assert cl >= 0 
-                    @assert cl < MaxHitsInIter
+                    cl = cl - startClus + 1
+                    @assert cl >= 1 
+                    @assert cl <= MaxHitsInIter
 
                     x = xx(digis, i)
                     y = yy(digis, i)
@@ -163,41 +169,47 @@ function getHits(cpeParams::ParamsOnGPU,
                 first = clus_module_start(clusters, me) + startClus
 
                 for ic in 1:nClusterInIter
-                    h = first + ic
-
-                    if h >= TrackingRecHit2DSOAView::max_hits()
+                    h = UInt32(first + ic)
+                    if (h > max_hits())
                         break
                     end
                     @assert h < n_hits(hits)
-                    @assert h < clus_module_start(clusters, me + 1)
+                    @assert h < clus_module_start(clusters, UInt32(me + 1))
 
-                    pixelCPEforGPU::position(cpeParams.commonParams(), cpeParams.detParams(me), clusParams, ic);
-                    pixelCPEforGPU::errorFromDB(cpeParams.commonParams(), cpeParams.detParams(me), clusParams, ic);
+                    position_corr(commonParams(cpeParams), detParams(cpeParams,me), clusParams, UInt32(ic));
+                    errorFromDB(commonParams(cpeParams), detParams(cpeParams,me), clusParams, ic);
                     
                     charge(hits, h) =clusParams.charge[ic]
                     detector_index(hits, h) = me
 
-                    x_local(hits, h) = xl = clusParams.xpos[ic]
-                    y_local(hits, h) = yl = clusParams.ypos[ic]
-                             
+                    x_local(hits, h) = clusParams.xpos[ic]
+                    xl = x_local(hits, h)
+                    y_local(hits, h) = clusParams.ypos[ic]
+                    yl = y_local(hits, h)
                     cluster_size_x(hits, h) = clusParams.xsize[ic]
                     cluster_size_y(hits, h) = clusParams.ysize[ic]
 
                     xerr_local(hits, h) = clusParams.xerr[ic] * clusParams.xerr[ic]
                     yerr_local(hits, h) = clusParams.yerr[ic] * clusParams.yerr[ic]
-
                     
-                    cpeParams.detParams(me).frame.toGlobal(xl, yl, xg, yg, zg)
-                
+                    xg::Float32 = 0
+                    yg::Float32 = 0 
+                    zg::Float32 = 0
+                    
+                    frame = detParams(cpeParams, me).frame
+                    println(xg," ", yg," ", zg)
+                    toGlobal_special(frame, xl, yl, xg, yg, zg)
+               
                     xg = xg - bs.x
                     yg = yg - bs.y
                     zg = zg - bs.z
 
-                    x_global(hits, h) = xg
-                    y_global(hits, h) = yg
-                    z_global(hits, h) = zg
+                
+                    set_x_global(hits, h, xg)
+                    set_y_global(hits, h, yg)
+                    set_z_global(hits, h, zg) 
 
-                    
+                  
                     r_global(hits, h) = sqrt(xg * xg + yg * yg)
                     i_phi(hits, h) = unsafe_atan2s<7>(yg, xg)
 

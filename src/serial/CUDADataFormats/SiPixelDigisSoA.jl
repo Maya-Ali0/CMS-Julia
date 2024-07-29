@@ -1,10 +1,11 @@
 module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
+export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind, clus, xx, yy, adc
   # Structure to hold a constant view of device data
   potato = 123
   struct DeviceConstView
     xx::Vector{Int16}         # X-coordinates of pixels
     yy::Vector{Int16}         # Y-coordinates of pixels
-    adc::Vector{Int16}        # ADC values of pixels
+    adc::Vector{Int32}        # ADC values of pixels
     module_ind::Vector{Int16}  # Module indices of pixels
     clus::Vector{Int32}       # Cluster indices of pixels
   end
@@ -59,7 +60,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
   Outputs:
     - UInt16: The X-coordinate at the specified index
   """
-  @inline function xx(view::DeviceConstView, i::Int)::UInt16
+  @inline function xx(view::DeviceConstView, i::UInt32)::UInt16
       return view.xx[i]
   end
 
@@ -71,7 +72,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
   Outputs:
     - UInt16: The Y-coordinate at the specified index
   """
-  @inline function yy(view::DeviceConstView, i::Int)::UInt16
+  @inline function yy(view::DeviceConstView, i::UInt32)::UInt16
       return view.yy[i]
   end
 
@@ -83,7 +84,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
   Outputs:
     - UInt16: The ADC value at the specified index
   """
-  @inline function adc(view::DeviceConstView, i::Int)::UInt16
+  @inline function adc(view::DeviceConstView, i::UInt32)::UInt16
       return view.adc[i]  
   end
 
@@ -95,7 +96,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
   Outputs:
     - UInt16: The module ID at the specified index
   """
-  @inline function module_ind(view::DeviceConstView, i::Int)::UInt16
+  @inline function module_ind(view::DeviceConstView, i::UInt32)::UInt16
       return view.module_ind[i]  
   end
 
@@ -107,7 +108,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
   Outputs:
     - UInt32: The cluster ID at the specified index
   """
-  @inline function clus(view::DeviceConstView, i::Int)::UInt32
+  @inline function clus(view::DeviceConstView, i::UInt32)::UInt32
       return view.clus[i]
   end
 
@@ -118,7 +119,7 @@ module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
   Outputs:
     - DeviceConstView: The constant view of the device data
   """
-  function view(self::SiPixelDigisSoA)::DeviceConstView
+  function digiView(self::SiPixelDigisSoA)::DeviceConstView
       return self.view_d
   end
 

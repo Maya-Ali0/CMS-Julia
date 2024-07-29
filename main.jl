@@ -26,13 +26,13 @@ dataDir::String = (@__DIR__) * "/data/"
 cabling_map_producer::SiPixelFedCablingMapGPUWrapperESProducer = SiPixelFedCablingMapGPUWrapperESProducer(dataDir)
 gain_Calibration_producer::SiPixelGainCalibrationForHLTGPUESProducer = SiPixelGainCalibrationForHLTGPUESProducer(dataDir)
 CPE_Producer = PixelCPEFastESProducer(dataDir)
+beam_Producer = BeamSpotESProducer(dataDir)
 
 produce(cabling_map_producer,es)
 produce(gain_Calibration_producer,es);
+produce(CPE_Producer,es);
+produce(beam_Producer,es)
 
-function test(rawToCluster,event,es)
-    produce(rawToCluster,event,es)
-end
 function run()
     count = 0 
 for collection ∈ raw_events
@@ -46,11 +46,20 @@ for collection ∈ raw_events
         break
     end
     emplace(event,raw_token,collection)
+<<<<<<< HEAD
     @time test(rawToCluster,event,es)
+=======
+    produce(rawToCluster,event,es)
+
+    bs =  BeamSpotToPOD(reg)
+    produce(bs,event,es)
+
+    recHit = SiPixelRecHitCUDA(reg)
+    produce(recHit,event,es)
+
+>>>>>>> 78691852fc6070c087405c7f2a5098375461f026
 end
 end
 
  run()
 
-
-# produce(beamSpotProducer,es)
