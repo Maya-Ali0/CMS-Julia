@@ -1,5 +1,5 @@
 module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
-export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConstView, module_start, setNClusters!, module_id, clus_in_module
+export SiPixelClustersSoA, nClusters, clus_module_start, clusterView, DeviceConstView, module_start, setNClusters!, module_id, clus_in_module
     """
     Struct to represent a constant view of the device data.
     """
@@ -7,7 +7,7 @@ export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConst
         module_start::Vector{UInt32}       # Pointer to module start data
         clus_in_module::Vector{UInt32}      # Pointer to clusters in module data
         module_id::Vector{UInt32}          # Pointer to module ID data
-        clus_module_star::Vector{UInt32}   # Pointer to clusters module start data
+        clus_module_start::Vector{UInt32}   # Pointer to clusters module start data
     end
 
     """
@@ -54,8 +54,8 @@ export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConst
     Outputs:
     - UInt32: The start index of the specified cluster module.
     """
-    @inline function clus_module_star(view::DeviceConstView, i::Int)::UInt32
-        return view.clus_module_star[i]
+    @inline function clus_module_start(view::DeviceConstView, i::UInt32)::UInt32
+        return view.clus_module_start[i]
     end
 
     """
@@ -65,7 +65,7 @@ export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConst
         module_start_d::Vector{UInt32}       # Pointer to the module start data
         clus_in_module_d::Vector{UInt32}      # Pointer to the number of clusters in each module
         module_id_d::Vector{UInt32}          # Pointer to the module ID data
-        clus_module_star_d::Vector{UInt32}   # Pointer to the start index of clusters in each module
+        clus_module_start_d::Vector{UInt32}   # Pointer to the start index of clusters in each module
         
         view_d::DeviceConstView             # Device view containing the data pointers
         nClusters_h::UInt32                 # Number of clusters (stored on host)
@@ -84,11 +84,11 @@ export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConst
         module_start_d = zeros(UInt32, maxClusters + 1)
         clus_in_module_d = zeros(UInt32, maxClusters)
         module_id_d = zeros(UInt32, maxClusters)
-        clus_module_star_d = zeros(UInt32, maxClusters + 1)
+        clus_module_start_d = zeros(UInt32, maxClusters + 1)
 
-        view_d = DeviceConstView(module_start_d, clus_in_module_d, module_id_d, clus_module_star_d)
+        view_d = DeviceConstView(module_start_d, clus_in_module_d, module_id_d, clus_module_start_d)
     
-        return SiPixelClustersSoA(module_start_d, clus_in_module_d, module_id_d, clus_module_star_d, view_d, 0)
+        return SiPixelClustersSoA(module_start_d, clus_in_module_d, module_id_d, clus_module_start_d, view_d, 0)
     end
 
     """
@@ -142,8 +142,8 @@ export SiPixelClustersSoA, nClusters, clus_module_star, clusterView, DeviceConst
     Outputs:
     - pointer(UInt32): The pointer to the clusters module start data.
     """
-    function clus_module_star(self::SiPixelClustersSoA)::Vector{UInt32}
-        return self.clus_module_star_d
+    function clus_module_start(self::SiPixelClustersSoA)::Vector{UInt32}
+        return self.clus_module_start_d
     end
 
     """
