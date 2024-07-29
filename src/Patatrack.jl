@@ -58,7 +58,7 @@ export count_modules,find_clus
 export HisToContainer
 export MAX_NUM_CLUSTERS
 export AverageGeometry
-export ProductRegiexistry
+export ProductRegistry
 export Event, EDPutTokenT, produces, emplace, begin_module_construction
 
 export number_of_ladders_in_barrel
