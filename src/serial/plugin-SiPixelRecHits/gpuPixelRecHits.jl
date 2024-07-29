@@ -168,9 +168,8 @@ function getHits(cpeParams::ParamsOnGPU,
                 first = clus_module_start(clusters, me) + startClus
 
                 for ic in 1:nClusterInIter
-                    h = first + ic
-
-                    if h >= TrackingRecHit2DSOAView::max_hits()
+                    h = UInt32(first + ic)
+                    if (h > max_hits())
                         break
                     end
                     @assert h < n_hits(hits)

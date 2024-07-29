@@ -138,7 +138,7 @@ end
     - `UInt32`: The maximum number of clusters (`MAX_NUM_CLUSTERS`).
 """
 function max_hits()
-    return MAX_NUM_CLUSTERS
+    return UInt32(48 * 1024)
 end
 
 """
