@@ -319,10 +319,10 @@ end
 
 """
 function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32) where {N}
-    llx = cp.minRow[ic] + 1
-    lly = cp.minCol[ic] + 1
-    urx = cp.maxRow[ic]
-    ury = cp.maxCol[ic]
+    llx = UInt16(cp.minRow[ic] + 1)
+    lly = UInt16(cp.minCol[ic] + 1)
+    urx = UInt16(cp.maxRow[ic])
+    ury = UInt16(cp.maxCol[ic])
 
     llxl = local_x(llx)
     llyl = local_y(lly)
@@ -332,8 +332,8 @@ function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusPa
     mx = llxl + urxl
     my = llyl + uryl
 
-    xsize = urxl + 2 - llxl
-    ysize = uryl + 2 - llyl
+    xsize = Int(urxl) + 2 - Int(llxl)
+    ysize = Int(uryl) + 2 - Int(llyl)
     @assert xsize >= 0
     @assert ysize >= 0
 
@@ -350,13 +350,15 @@ function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusPa
         ysize += 1
     end
 
-    unbalanceX = 8 * abs(Float32(cp.Q_f_X[ic] - cp.Q_l_X[ic])) / Float32(cp.Q_f_X[ic] + cp.Q_l_X[ic])
-    unbalanceY = 8 * abs(Float32(cp.Q_f_Y[ic] - cp.Q_l_Y[ic])) / Float32(cp.Q_f_Y[ic] + cp.Q_l_Y[ic])
+    unbalanceX = Int(trunc(8.0 * abs(Float32(cp.Q_f_X[ic] - cp.Q_l_X[ic])) / Float32(cp.Q_f_X[ic] + cp.Q_l_X[ic])))
+    unbalanceY = Int(trunc(8.0 * abs(Float32(cp.Q_f_Y[ic] - cp.Q_l_Y[ic])) / Float32(cp.Q_f_Y[ic] + cp.Q_l_Y[ic])))
     xsize = 8 * xsize - unbalanceX
     ysize = 8 * ysize - unbalanceY
 
-    cp.xsize[ic] = min(xsize, 1023)
-    cp.ysize[ic] = min(ysize, 1023)
+    print(unbalanceX, " ", unbalanceY, " ", xsize, " ", ysize)
+
+    cp.xsize[ic] = UInt32(min(xsize, 1023))
+    cp.ysize[ic] = UInt32(min(ysize, 1023))
 
     if cp.minRow[ic] == 0 || cp.maxRow[ic] == lastRowInModule
         cp.xsize[ic] = -cp.xsize[ic]

@@ -264,7 +264,7 @@ export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_inde
     ## Returns
     - `UInt16`: The global x-coordinate.
     """
-    @inline function local_x(px)
+    @inline function local_x(px::UInt16)::UInt16
         shift = 0
         if px > last_row_in_roc
             shift += 1
@@ -284,7 +284,7 @@ export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_inde
     ## Returns
     - `UInt16`: The global y-coordinate.
     """
-    @inline function local_y(py)
+    @inline function local_y(py::UInt16)::UInt16
         roc = py ÷ 52
         shift = 2 * roc
         y_in_ROC = py - 52 * roc
