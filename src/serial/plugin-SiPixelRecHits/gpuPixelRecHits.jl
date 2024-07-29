@@ -1,12 +1,12 @@
 module RecoLocalTracker_SiPixelRecHits_plugins_gpuPixelRecHits_h
 
 using ..BeamSpotPOD_h: BeamSpotPOD
-using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology:AverageGeometry, local_x, local_y, is_big_pix_y, is_big_pix_x,number_of_ladders_in_barrel
+using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
 using ..gpuConfig
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
-using ..PixelGPU_h:position_corr
+using ..PixelGPU_h
 
 export getHits
 """ getHits function
