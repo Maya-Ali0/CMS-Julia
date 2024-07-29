@@ -173,10 +173,10 @@ function getHits(cpeParams::ParamsOnGPU,
                         break
                     end
                     @assert h < n_hits(hits)
-                    @assert h < clus_module_start(clusters, me + 1)
+                    @assert h < clus_module_start(clusters, UInt32(me + 1))
 
-                    pixelCPEforGPU::position(cpeParams.commonParams(), cpeParams.detParams(me), clusParams, ic);
-                    pixelCPEforGPU::errorFromDB(cpeParams.commonParams(), cpeParams.detParams(me), clusParams, ic);
+                    PixelGPU_h.position(commonParams(cpeParams), detParams(cpeParams,me), clusParams, UInt32(ic));
+                    pixelCPEforGPU.errorFromDB(commonParams(cpeParams), detParams(cpeParams,me), clusParams, UInt32(ic));
                     
                     charge(hits, h) =clusParams.charge[ic]
                     detector_index(hits, h) = me

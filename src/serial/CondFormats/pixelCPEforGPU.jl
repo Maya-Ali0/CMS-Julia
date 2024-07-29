@@ -5,7 +5,7 @@ using ..SOA_h
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 
 
-export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry, MaxHitsInIter
+export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry, MaxHitsInIter, commonParams, detParams
 """
  Struct for common detector parameters including thickness, pitch, and default values.
     
@@ -158,7 +158,7 @@ function commonParams(params::ParamsOnGPU)
     return params.m_commonParams
 end
 
-function detParams(params::ParamsOnGPU, i::Int)
+function detParams(params::ParamsOnGPU, i::UInt32)
     return params.m_detParams[i]
 end
 
