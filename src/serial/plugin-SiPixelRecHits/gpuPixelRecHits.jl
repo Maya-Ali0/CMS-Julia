@@ -6,7 +6,7 @@ using ..gpuConfig
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
-using ..PixelGPU_h
+using ..PixelGPU_h:position_corr
 
 export getHits
 """ getHits function
