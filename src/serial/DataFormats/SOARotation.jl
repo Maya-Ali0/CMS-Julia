@@ -1,6 +1,6 @@
 module SOA_h
 
-export SOARotation, SOAFrame
+export SOARotation, SOAFrame, toGlobal
 
 struct SOARotation{T}
     R11::T

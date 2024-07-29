@@ -176,32 +176,34 @@ function getHits(cpeParams::ParamsOnGPU,
                     @assert h < clus_module_start(clusters, UInt32(me + 1))
 
                     position_corr(commonParams(cpeParams), detParams(cpeParams,me), clusParams, UInt32(ic));
-                    pixelCPEforGPU.errorFromDB(commonParams(cpeParams), detParams(cpeParams,me), clusParams, UInt32(ic));
+                    errorFromDB(commonParams(cpeParams), detParams(cpeParams,me), clusParams, ic);
                     
                     charge(hits, h) =clusParams.charge[ic]
                     detector_index(hits, h) = me
 
-                    x_local(hits, h) = xl = clusParams.xpos[ic]
-                    y_local(hits, h) = yl = clusParams.ypos[ic]
-                             
+                    x_local(hits, h) = clusParams.xpos[ic]
+                    xl = x_local(hits, h)
+                    y_local(hits, h) = clusParams.ypos[ic]
+                    yl = y_local(hits, h)
                     cluster_size_x(hits, h) = clusParams.xsize[ic]
                     cluster_size_y(hits, h) = clusParams.ysize[ic]
 
                     xerr_local(hits, h) = clusParams.xerr[ic] * clusParams.xerr[ic]
                     yerr_local(hits, h) = clusParams.yerr[ic] * clusParams.yerr[ic]
 
+
                     
-                    cpeParams.detParams(me).frame.toGlobal(xl, yl, xg, yg, zg)
-                
+                    xg = x_global(hits, h)
+                    yg = y_global(hits, h)
+                    zg = z_global(hits, h) 
+
                     xg = xg - bs.x
                     yg = yg - bs.y
                     zg = zg - bs.z
 
-                    x_global(hits, h) = xg
-                    y_global(hits, h) = yg
-                    z_global(hits, h) = zg
-
-                    
+                    frame = detParams(cpeParams, me).frame
+                    toGlobal(frame, xl, yl, xg, yg, zg)
+               
                     r_global(hits, h) = sqrt(xg * xg + yg * yg)
                     i_phi(hits, h) = unsafe_atan2s<7>(yg, xg)
 

@@ -58,7 +58,7 @@ export count_modules,find_clus
 export HisToContainer
 export MAX_NUM_CLUSTERS
 export AverageGeometry
-export ProductRegistry
+export ProductRegiexistry
 export Event, EDPutTokenT, produces, emplace, begin_module_construction
 
 export number_of_ladders_in_barrel
@@ -68,15 +68,30 @@ export local_y
 export is_big_pix_y
 export is_big_pix_x
 
+export  last_row_in_module
+export  last_col_in_module
+
+export x_offset
+export y_offset
+
 export BeamSpotPOD
 export SOAFrame
 export ParamsOnGPU
 export position_corr
 
+export errorFromDB
+
 export PixelCPEFastESProducer
 export BeamSpotESProducer
 export BeamSpotToPOD
 export SiPixelRecHitCUDA
+
+export x_global
+export y_global
+export z_global
+
+export toGlobal
+
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
