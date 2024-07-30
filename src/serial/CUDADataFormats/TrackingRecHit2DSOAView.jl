@@ -5,7 +5,7 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUM_CL
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 using ..SOA_h
 using ..PixelGPU_h
-export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global, charge, detector_index, x_local, y_local
+export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global, charge, detector_index, x_local, y_local, cluster_size_x, cluster_size_y
 
 """
     Struct representing the 2D Structure of Arrays view of tracking hits.
@@ -357,6 +357,9 @@ end
 @inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::Int)::UInt16
     return self.m_xsize[i]
 end
+@inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::Int, k::Int)::UInt16
+    self.m_xsize[i] = k
+end
 
 """
     cluster_size_y(self::TrackingRecHit2DSOAView, i::Int)::UInt16
@@ -374,6 +377,9 @@ end
     return self.m_ysize[i]
 end
 
+@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::Int, k::Int)::UInt16
+    self.m_ysize[i] = k
+end
 """
     detector_index(self::TrackingRecHit2DSOAView, i::Int)::UInt16
 
