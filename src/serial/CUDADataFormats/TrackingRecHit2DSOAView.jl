@@ -32,14 +32,14 @@ export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonP
     - `m_nHits::UInt32`: Number of hits.
 """
 mutable struct TrackingRecHit2DSOAView
-    m_xl::Vector{Float64}
-    m_yl::Vector{Float64}
-    m_xerr::Vector{Float64}
-    m_yerr::Vector{Float64}
-    m_xg::Vector{Float64}
-    m_yg::Vector{Float64}
-    m_zg::Vector{Float64}
-    m_rg::Vector{Float64}
+    m_xl::Vector{Float32}
+    m_yl::Vector{Float32}
+    m_xerr::Vector{Float32}
+    m_yerr::Vector{Float32}
+    m_xg::Vector{Float32}
+    m_yg::Vector{Float32}
+    m_zg::Vector{Float32}
+    m_rg::Vector{Float32}
     m_iphi::Vector{UInt16}
     m_charge::Vector{UInt32}
     m_xsize::Vector{UInt16}
