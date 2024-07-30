@@ -168,11 +168,11 @@ end
     # Returns
     - `Float64`: The local x-coordinate (`m_xl[i]`) of the hit at index `i`.
 """
-@inline function x_local(self::TrackingRecHit2DSOAView, i::Int)::Float64
+@inline function x_local(self::TrackingRecHit2DSOAView, i::UInt32)::Float64
     return self.m_xl[i]
 end
 
-@inline function x_local(self::TrackingRecHit2DSOAView, i::Int, k::Int)::Float64
+@inline function x_local(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::Float64
     self.m_xl[i] = k
 end
 
@@ -188,11 +188,11 @@ end
     # Returns
     - `Float64`: The local y-coordinate (`m_yl[i]`) of the hit at index `i`.
 """
-@inline function y_local(self::TrackingRecHit2DSOAView, i::Int)::Float64
+@inline function y_local(self::TrackingRecHit2DSOAView, i::UInt32)::Float64
     return self.m_yl[i]
 end
 
-@inline function y_local(self::TrackingRecHit2DSOAView, i::Int, k::Int)::Float64
+@inline function y_local(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::Float64
     self.m_yl[i] = k
 end
 
@@ -208,11 +208,11 @@ end
     # Returns
     - `Float64`: The error in the local x-coordinate (`m_xerr[i]`) of the hit at index `i`.
 """
-@inline function xerr_local(self::TrackingRecHit2DSOAView, i::Int)::Float64
+@inline function xerr_local(self::TrackingRecHit2DSOAView, i::UInt32)::Float64
     return self.m_xerr[i]
 end
 
-@inline function xerr_local(self::TrackingRecHit2DSOAView, i::Int, k::Int)::Float64
+@inline function xerr_local(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::Float64
     self.m_xerr[i] = k
 end
 """
@@ -227,11 +227,11 @@ end
     # Returns
     - `Float64`: The error in the local y-coordinate (`m_yerr[i]`) of the hit at index `i`.
 """
-@inline function yerr_local(self::TrackingRecHit2DSOAView, i::Int)::Float64
+@inline function yerr_local(self::TrackingRecHit2DSOAView, i::UInt32)::Float64
     return self.m_yerr[i]
 end
 
-@inline function yerr_local(self::TrackingRecHit2DSOAView, i::Int, k::Int)::Float64
+@inline function yerr_local(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::Float64
     self.m_yerr[i] = k
 end
 
@@ -341,11 +341,11 @@ end
     # Returns
     - `UInt32`: The charge (`m_charge[i]`) of the hit at index `i`.
 """
-@inline function charge(self::TrackingRecHit2DSOAView, i::Int)::UInt32
+@inline function charge(self::TrackingRecHit2DSOAView, i::UInt32)::UInt32
     return self.m_charge[i]
 end
 
-@inline function charge(self::TrackingRecHit2DSOAView, i::Int, k::Int)::UInt32
+@inline function charge(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::UInt32
     self.m_charge[i] = k
 end
 
@@ -361,10 +361,10 @@ end
     # Returns
     - `UInt16`: The size of the hit cluster in the x direction (`m_xsize[i]`) at index `i`.
 """
-@inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::Int)::UInt16
+@inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::UInt32)::UInt16
     return self.m_xsize[i]
 end
-@inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::Int, k::Int)::UInt16
+@inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::UInt16
     self.m_xsize[i] = k
 end
 
@@ -380,11 +380,11 @@ end
     # Returns
     - `UInt16`: The size of the hit cluster in the y direction (`m_ysize[i]`) at index `i`.
 """
-@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::Int)::UInt16
+@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::UInt32)::UInt16
     return self.m_ysize[i]
 end
 
-@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::Int, k::Int)::UInt16
+@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::UInt16
     self.m_ysize[i] = k
 end
 """
@@ -399,11 +399,11 @@ end
     # Returns
     - `UInt16`: The detector index (`m_det_ind[i]`) of the hit at index `i`.
 """
-@inline function detector_index(self::TrackingRecHit2DSOAView, i::Int)::UInt16
+@inline function detector_index(self::TrackingRecHit2DSOAView, i::UInt32)::UInt16
     return self.m_det_ind[i]
 end
 
-@inline function detector_index(self::TrackingRecHit2DSOAView, i::Int, k::Int)::UInt16
+@inline function detector_index(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::UInt16
     self.m_det_ind[i] = k
 end
 
