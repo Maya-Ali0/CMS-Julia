@@ -95,7 +95,7 @@ function getHits(cpeParams::ParamsOnGPU,
             
         endClus = nclus
 
-        write(file, "FOR startClus 1 to $(nclus ) incrementing by $MaxHitsInIter\n")
+        write(file, "FOR startClus 1 to $(nclus) incrementing by $MaxHitsInIter\n")
 
             for startClus in 1:MaxHitsInIter:(endClus)
                 first = module_start(clusters, mod + 1)
@@ -276,12 +276,11 @@ function getHits(cpeParams::ParamsOnGPU,
                     write(file,"n_hits = $(n_hits(hits))\n")
                     write(file,"clus_module_start = $(clus_module_start(clusters, UInt32(me + 2)))\n")
 
-                    exit()
 
-                    position_corr(commonParams(cpeParams), detParams(cpeParams,me), clusParams, UInt32(ic));
-                    errorFromDB(commonParams(cpeParams), detParams(cpeParams,me), clusParams, ic);
+                    position_corr(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic));
+                    errorFromDB(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic));
                     
-                    charge(hits, h) =clusParams.charge[ic]
+                    charge(hits, h, clusParams.charge[ic])
                     detector_index(hits, h) = me
 
                     x_local(hits, h) = clusParams.xpos[ic]
@@ -299,7 +298,7 @@ function getHits(cpeParams::ParamsOnGPU,
                     zg::Float32 = 0
                     
                     frame = detParams(cpeParams, me).frame
-                    println(xg," ", yg," ", zg)
+                    # println(xg," ", yg," ", zg)
                     toGlobal_special(frame, xl, yl, xg, yg, zg)
                
                     xg = xg - bs.x

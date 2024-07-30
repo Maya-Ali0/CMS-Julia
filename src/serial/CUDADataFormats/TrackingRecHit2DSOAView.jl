@@ -5,7 +5,7 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUM_CL
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 using ..SOA_h
 using ..PixelGPU_h
-export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global
+export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global, charge
 
 """
     Struct representing the 2D Structure of Arrays view of tracking hits.
@@ -328,6 +328,10 @@ end
 """
 @inline function charge(self::TrackingRecHit2DSOAView, i::Int)::UInt32
     return self.m_charge[i]
+end
+
+@inline function charge(self::TrackingRecHit2DSOAView, i::Int, k::Int)::UInt32
+    self.m_charge[i] = k
 end
 
 """
