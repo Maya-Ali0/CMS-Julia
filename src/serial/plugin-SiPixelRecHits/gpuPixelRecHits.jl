@@ -86,9 +86,8 @@ function getHits(cpeParams::ParamsOnGPU,
         for mod in firstModule:endModule
             write(file, "me = $(module_id(clusters, mod))\n")
             me = module_id(clusters, mod)
-            write(file, "nclus = $(clus_in_module(clusters, me))\n")
             nclus = clus_in_module(clusters, UInt32(me + 1))
-            println(nclus)
+            write(file, "nclus = $(nclus)\n")
             
             if 0 == nclus
                 continue
@@ -194,6 +193,10 @@ function getHits(cpeParams::ParamsOnGPU,
                 end
 
                 pixmx = typemax(UInt16)
+                print()
+                write(file,"##################################\n")
+                write(file,"pixmx: $pixmx\n")
+                write(file,"FOR i IN $first to $numElements\n")
                 for i in first:numElements
                     id = module_ind(digis, i)
                     write(file, "id = $id\n")
@@ -225,6 +228,11 @@ function getHits(cpeParams::ParamsOnGPU,
                     
                     ch = min(adc(digis, i), pixmx)
                     write(file, "ch = $ch\n")
+
+                    if(ch == 6267)
+                        print("hi")
+                        write(file,"peeepo\n")
+                    end
                     
                     clusParams.charge[cl] = clusParams.charge[cl] + ch
                     write(file, "clusParams.charge[$cl] = $(clusParams.charge[cl])\n")
@@ -250,7 +258,9 @@ function getHits(cpeParams::ParamsOnGPU,
                     write(file, "clusParams.Q_l_Y[$cl] = $(clusParams.Q_l_Y[cl])\n")
                 end
 
-                first = clus_module_start(clusters, me) + startClus
+                write(file,"###########################################\n")
+
+                first = clus_module_start(clusters, UInt32(me + 1)) + startClus
                 write(file, "first = $first\n")
 
                 # exit(404)
