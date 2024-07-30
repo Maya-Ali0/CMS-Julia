@@ -326,10 +326,10 @@ function getHits(cpeParams::ParamsOnGPU,
                     i_phi(hits, h, unsafe_atan2s(yg, xg,7))
                     write(file,"unsafe_atan2s($yg,$xg,7) = $(unsafe_atan2s(yg, xg,7))\n")
                 end
-                exit()
             end
 
         end
+        exit()
 end 
 
 # function test_getHits()
