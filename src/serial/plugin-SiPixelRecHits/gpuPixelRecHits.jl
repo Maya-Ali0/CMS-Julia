@@ -8,6 +8,7 @@ using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
 using ..PixelGPU_h
 using ..SOA_h
+using ..DataFormatsMathAPPROX_ATAN2_H
 
 export getHits
 """ getHits function
@@ -322,7 +323,7 @@ function getHits(cpeParams::ParamsOnGPU,
                     set_z_global(hits, h, zg) 
 
                     r_global(hits,h,sqrt(xg * xg + yg * yg))
-                    i_phi(hits, h, unsafe_atan2s<7>(yg, xg))
+                    i_phi(hits, h, unsafe_atan2s(yg, xg,7))
                 end
             end
 

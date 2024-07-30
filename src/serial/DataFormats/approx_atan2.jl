@@ -1,6 +1,6 @@
 module DataFormatsMathAPPROX_ATAN2_H
 
-
+export unsafe_atan2s
 # Define polynomial approximations for different degrees for float (32 bits)
 
 
@@ -137,48 +137,52 @@ end
 # Define polynomial approximations for different degrees for short (16 bits)
 
 
-# degree =  3   => absolute accuracy is  53
-function approx_atan2s_P(x::Float32, ::Val{3})
-    z = x * x
-    return x * (-10142.439453125f0 + z * 2002.0908203125f0)
-end
+# # degree =  3   => absolute accuracy is  53
+# function approx_atan2s_P(x::Float32, ::Val{3})
+#     z = x * x
+#     return x * (-10142.439453125f0 + z * 2002.0908203125f0)
+# end
 
-# degree =  5   => absolute accuracy is  7
-function approx_atan2s_P(x::Float32, ::Val{5})
-    z = x * x
-    return x * (-10381.9609375f0 + z * (3011.1513671875f0 + z * (-827.538330078125f0)))
-end
+# # degree =  5   => absolute accuracy is  7
+# function approx_atan2s_P(x::Float32, ::Val{5})
+#     z = x * x
+#     return x * (-10381.9609375f0 + z * (3011.1513671875f0 + z * (-827.538330078125f0)))
+# end
 
-# degree =  7   => absolute accuracy is  2
-function approx_atan2s_P(x::Float32, ::Val{7})
-    z = x * x
-    return x * (-10422.177734375f0 + z * (3349.97412109375f0 + z * (-1525.589599609375f0 + z * 406.64190673828125f0)))
-end
+# # degree =  7   => absolute accuracy is  2
+# function approx_atan2s_P(x::Float32, ::Val{7})
+#     z = x * x
+#     return x * (-10422.177734375f0 + z * (3349.97412109375f0 + z * (-1525.589599609375f0 + z * 406.64190673828125f0)))
+# end
 
 # degree =  9   => absolute accuracy is 1
-function approx_atan2s_P(x::Float32, ::Val{9})
+function approx_atan2s_P(x::Float32)
     z = x * x
-    return x * (-10428.984375f0 + z * (3445.20654296875f0 + z * (-1879.137939453125f0 + z * (888.22314453125f0 + z * (-217.42669677734375f0)))))
+    l = x * (-10428.984375f0 + z * (3445.20654296875f0 + z * (-1879.137939453125f0 + z * (888.22314453125f0 + z * (-217.42669677734375f0)))))
+    return l
 end
 
-function unsafe_atan2s_impl(y::Float32, x::Float32, ::Val{DEGREE})::Int16 where {DEGREE}
+function unsafe_atan2s_impl(y::Float32, x::Float32,DEGREE::Int)::Int16 
     maxshort = Int32(typemax(Int16)) + 1
     pi4 = Int16(maxshort / 4)
     pi34 = Int16(3 * maxshort / 4)
 
     r = (abs(x) - abs(y)) / (abs(x) + abs(y))
+    
+    r = Float32(1)
+
     if x < 0
         r = -r
     end
 
     angle = (x >= 0) ? pi4 : pi34
-    angle += Int16(approx_atan2s_P(r, Val{DEGREE}()))
+    angle += Int16(trunc(approx_atan2s_P(r)))
 
     return (y < 0) ? -angle : angle
 end
 
-function unsafe_atan2s(y::Float32, x::Float32, ::Val{DEGREE})::Int16 where {DEGREE}
-    return unsafe_atan2s_impl(y, x, Val{DEGREE}())
+function unsafe_atan2s(y::Float32, x::Float32,DEGREE::Int)::Int16 # TO FIX POLYMORPHISM ACCORDING TO DEGREE LATER !!!!
+    return unsafe_atan2s_impl(y, x, DEGREE)
 end
 
 
