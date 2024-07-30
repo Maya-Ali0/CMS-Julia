@@ -729,11 +729,8 @@ module pixelGPUDetails
         #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
         #     end
         # end
-<<<<<<< HEAD
         """
-=======
         return (digis_d,clusters_d)
->>>>>>> 78691852fc6070c087405c7f2a5098375461f026
     end
     """
     clus_start: Number of clusters within each module

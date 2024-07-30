@@ -241,4 +241,5 @@ module histogram
 
         end
     end
+    const OneToManyAssoc{I,MAXONES,MAXMANYS} = HisToContainer{UInt32,MAXONES,MAXMANYS,sizeof(UInt32)*8,I,1}
 end
