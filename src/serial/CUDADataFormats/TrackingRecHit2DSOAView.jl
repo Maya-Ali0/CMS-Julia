@@ -5,7 +5,7 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUM_CL
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 using ..SOA_h
 using ..PixelGPU_h
-export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global, charge, detector_index, x_local, y_local, cluster_size_x, cluster_size_y
+export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global, charge, detector_index, x_local, y_local, cluster_size_x, cluster_size_y, xerr_local, yerr_local
 
 """
     Struct representing the 2D Structure of Arrays view of tracking hits.
@@ -212,6 +212,9 @@ end
     return self.m_xerr[i]
 end
 
+@inline function xerr_local(self::TrackingRecHit2DSOAView, i::Int, k::Int)::Float64
+    self.m_xerr[i] = k
+end
 """
     yerr_local(self::TrackingRecHit2DSOAView, i::Int)::Float64
 
@@ -226,6 +229,10 @@ end
 """
 @inline function yerr_local(self::TrackingRecHit2DSOAView, i::Int)::Float64
     return self.m_yerr[i]
+end
+
+@inline function yerr_local(self::TrackingRecHit2DSOAView, i::Int, k::Int)::Float64
+    self.m_yerr[i] = k
 end
 
 """
