@@ -21,10 +21,10 @@ function setHitsLayerStart(hitsModuleStart::Vector{UInt32}, cpeParams::ParamsOnG
     @assert 0 == hitsModuleStart[1]
     begin_t = 1 
     end_t = 11
-    for i in begin_h:end_h 
+    for i in begin_t:end_t
         hitsLayerStart[i] = hitsModuleStart[layerGeometry(cpeParams).layerStart[i]]
     end
-end 
+end
 
 function makeHits(digis_d::SiPixelDigisSoA,
                   clusters_d::SiPixelClustersSoA,
