@@ -264,14 +264,19 @@ function getHits(cpeParams::ParamsOnGPU,
                 write(file, "first = $first\n")
 
                 # exit(404)
-
+                write(file, "FOR ic in 1 to $nClusInIter\n")
                 for ic in 1:nClusInIter
-                    h = UInt32(first + ic)
+                    h = UInt32(first - 1 + ic)
+                    write(file,"h is: $h\n")
                     if (h > max_hits())
                         break
                     end
-                    @assert h < n_hits(hits)
-                    @assert h < clus_module_start(clusters, UInt32(me + 1))
+                    @assert h <= n_hits(hits)
+                    @assert h <= clus_module_start(clusters, UInt32(me + 2))
+                    write(file,"n_hits = $(n_hits(hits))\n")
+                    write(file,"clus_module_start = $(clus_module_start(clusters, UInt32(me + 2)))\n")
+
+                    exit()
 
                     position_corr(commonParams(cpeParams), detParams(cpeParams,me), clusParams, UInt32(ic));
                     errorFromDB(commonParams(cpeParams), detParams(cpeParams,me), clusParams, ic);
