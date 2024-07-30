@@ -10,6 +10,7 @@ using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 using ..RecoLocalTracker_SiPixelRecHits_plugins_gpuPixelRecHits_h
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
+using ..PixelGPU_h
 
 
 export makeHits
@@ -22,7 +23,7 @@ function setHitsLayerStart(hitsModuleStart::Vector{UInt32}, cpeParams::ParamsOnG
     begin_t = 1 
     end_t = 11
     for i in begin_t:end_t
-        hitsLayerStart[i] = hitsModuleStart[layerGeometry(cpeParams).layerStart[i]]
+        hitsLayerStart[i] = hitsModuleStart[layerGeometry(cpeParams).layerStart[i] + 1]
     end
 end
 
