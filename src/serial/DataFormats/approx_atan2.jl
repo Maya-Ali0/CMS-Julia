@@ -169,7 +169,6 @@ function unsafe_atan2s_impl(y::Float32, x::Float32,DEGREE::Int)::Int16
 
     r = (abs(x) - abs(y)) / (abs(x) + abs(y))
     
-    r = Float32(1)
 
     if x < 0
         r = -r
