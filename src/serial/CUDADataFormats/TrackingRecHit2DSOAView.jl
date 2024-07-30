@@ -40,11 +40,11 @@ mutable struct TrackingRecHit2DSOAView
     m_yg::Vector{Float32}
     m_zg::Vector{Float32}
     m_rg::Vector{Float32}
-    m_iphi::Vector{UInt16}
+    m_iphi::Vector{Int16}
     m_charge::Vector{UInt32}
-    m_xsize::Vector{UInt16}
-    m_ysize::Vector{UInt16}
-    m_det_ind::Vector{UInt16}
+    m_xsize::Vector{Int16}
+    m_ysize::Vector{Int16}
+    m_det_ind::Vector{Int16}
     m_average_geometry::AverageGeometry
     m_cpe_params::ParamsOnGPU
     m_hits_module_start::Vector{Integer}
@@ -89,11 +89,11 @@ mutable struct TrackingRecHit2DSOAView
             m_yg::Vector{Float64},
             m_zg::Vector{Float64},
             m_rg::Vector{Float64},
-            m_iphi::Vector{UInt16},
+            m_iphi::Vector{Int16},
             m_charge::Vector{UInt32},
-            m_xsize::Vector{UInt16},
-            m_ysize::Vector{UInt16},
-            m_det_ind::Vector{UInt16},
+            m_xsize::Vector{Int16},
+            m_ysize::Vector{Int16},
+            m_det_ind::Vector{Int16},
             m_average_geometry::AverageGeometry,
             m_cpe_params::ParamsOnGPU,
             m_hits_module_start::Vector{UInt32},
@@ -361,10 +361,10 @@ end
     # Returns
     - `UInt16`: The size of the hit cluster in the x direction (`m_xsize[i]`) at index `i`.
 """
-@inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::UInt32)::UInt16
+@inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::UInt32)::Int16
     return self.m_xsize[i]
 end
-@inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt16)::UInt16
+@inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::UInt32, k::Int16)::Int16
     self.m_xsize[i] = k
 end
 
@@ -380,11 +380,11 @@ end
     # Returns
     - `UInt16`: The size of the hit cluster in the y direction (`m_ysize[i]`) at index `i`.
 """
-@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::UInt32)::UInt16
+@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::UInt32)::Int16
     return self.m_ysize[i]
 end
 
-@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt16)::UInt16
+@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::UInt32, k::Int16)::Int16
     self.m_ysize[i] = k
 end
 """

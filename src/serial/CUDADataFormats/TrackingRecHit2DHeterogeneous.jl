@@ -27,7 +27,7 @@ using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopolog
 mutable struct TrackingRecHit2DHeterogeneous
     n16::UInt32
     n32::UInt32
-    m_store16::Union{Nothing, Vector{Vector{UInt16}}}
+    m_store16::Union{Nothing, Vector{Vector{Int16}}}
     m_store32::Union{Nothing, Vector{Vector{Float64}}}
     m_HistStore::HisToContainer
     m_AverageGeometryStore::AverageGeometry
@@ -36,7 +36,7 @@ mutable struct TrackingRecHit2DHeterogeneous
     m_hitsModuleStart::Vector{UInt32}
     m_hist::HisToContainer
     m_hitsLayerStart::Union{Nothing, Vector{UInt32}}
-    m_iphi::Union{Nothing, Vector{UInt16}}
+    m_iphi::Union{Nothing, Vector{Int16}}
 
     """
         Constructor for TrackingRecHit2DHeterogeneous.
@@ -61,12 +61,12 @@ mutable struct TrackingRecHit2DHeterogeneous
         n32 = 9
     
         if nHits == 0
-            return new(n16, n32, Vector{Vector{UInt16}}()
-            , Vector{Vector{Float64}}(), Vector{HisToContainer{0,0,0,0,UInt32}}(), Vector{AverageGeometry}(), TrackingRecHit2DSOAView(), nHits, hitsModuleStart, HisToContainer{0,0,0,0,UInt32}(), Vector{UInt32}(), Vector{UInt16}()) #added dummy values for HisToContainer
+            return new(n16, n32, Vector{Vector{Int16}}()
+            , Vector{Vector{Float64}}(), Vector{HisToContainer{0,0,0,0,UInt32}}(), Vector{AverageGeometry}(), TrackingRecHit2DSOAView(), nHits, hitsModuleStart, HisToContainer{0,0,0,0,UInt32}(), Vector{UInt32}(), Vector{Int16}()) #added dummy values for HisToContainer
         end
     
         # Initialize storage vectors
-        m_store16 = [Vector{UInt16}(undef, nHits) for _ in 1:n16]
+        m_store16 = [Vector{Int16}(undef, nHits) for _ in 1:n16]
         m_store32 = [Vector{Float64}(undef, nHits) for _ in 1:n32]
         m_store32_UInt32 = [Vector{UInt32}(undef, nHits) for _ in 1:n32]
         append!(m_store32, [Vector{Float64}(undef, 11)])
