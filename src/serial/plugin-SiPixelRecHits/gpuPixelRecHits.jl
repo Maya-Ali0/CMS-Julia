@@ -262,6 +262,7 @@ function getHits(cpeParams::ParamsOnGPU,
                 # exit(404)
                 write(file, "FOR ic in 1 to $nClusInIter\n")
                 for ic in 1:nClusInIter
+                    write(file,"########################################// $ic \n")
                     h = UInt32(first - 1 + ic)
                     write(file,"h is: $h\n")
                     if (h > max_hits())
@@ -277,29 +278,29 @@ function getHits(cpeParams::ParamsOnGPU,
                     errorFromDB(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic));
                     
                     charge(hits, h, clusParams.charge[ic])
-                    write(file, "clusParams.charge[$ic] = $(clusParams.charge[ic]))\n")
+                    write(file, "clusParams.charge[$ic] = $(clusParams.charge[ic])\n")
 
                     detector_index(hits, h, me)
-                    write(file, "detector_index[$h] = $(me))\n")
+                    write(file, "detector_index[$h] = $(me)\n")
 
 
                     xl = x_local(hits, h, clusParams.xpos[ic])
-                    write(file, "clusParams.xpos[$ic] = $(clusParams.xpos[ic]))\n")
+                    write(file, "clusParams.xpos[$ic] = $(clusParams.xpos[ic])\n")
 
                     yl = y_local(hits, h, clusParams.ypos[ic])
-                    write(file, "clusParams.ypos[$ic] = $(clusParams.ypos[ic]))\n")
+                    write(file, "clusParams.ypos[$ic] = $(clusParams.ypos[ic])\n")
 
                     cluster_size_x(hits, h, clusParams.xsize[ic])
-                    write(file, "clusParams.xsize[$ic] = $(clusParams.xsize[ic]))\n")
+                    write(file, "clusParams.xsize[$ic] = $(clusParams.xsize[ic])\n")
 
                     cluster_size_y(hits, h, clusParams.ysize[ic])
-                    write(file, "clusParams.ysize[$ic] = $(clusParams.ysize[ic]))\n")
+                    write(file, "clusParams.ysize[$ic] = $(clusParams.ysize[ic])\n")
 
                     xerr_local(hits, h, clusParams.xerr[ic] * clusParams.xerr[ic])
-                    write(file, "clusParams.xerr[$ic] = $(clusParams.xerr[ic] * clusParams.xerr[ic]))\n")
+                    write(file, "clusParams.xerr[$ic] = $(clusParams.xerr[ic] * clusParams.xerr[ic])\n")
 
                     yerr_local(hits, h, clusParams.yerr[ic] * clusParams.yerr[ic])
-                    write(file, "clusParams.ysize[$ic] = $(clusParams.yerr[ic] * clusParams.yerr[ic]))\n")
+                    write(file, "clusParams.ysize[$ic] = $(clusParams.yerr[ic] * clusParams.yerr[ic])\n")
 
 
                     xg::Float32 = 0
@@ -324,7 +325,9 @@ function getHits(cpeParams::ParamsOnGPU,
 
                     r_global(hits,h,sqrt(xg * xg + yg * yg))
                     i_phi(hits, h, unsafe_atan2s(yg, xg,7))
+                    write(file,"unsafe_atan2s($yg,$xg,7) = $(unsafe_atan2s(yg, xg,7))\n")
                 end
+                exit()
             end
 
         end
