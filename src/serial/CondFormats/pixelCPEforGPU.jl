@@ -217,8 +217,8 @@ struct ClusParamsT{N}
     xerr::Vector{Float32}
     yerr::Vector{Float32}
 
-    xsize::Vector{Any}
-    ysize::Vector{Any}
+    xsize::Vector{Int16}
+    ysize::Vector{Int16}
 
     function ClusParamsT{N}() where N
         return new(zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),

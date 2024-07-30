@@ -364,7 +364,7 @@ end
 @inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::UInt32)::UInt16
     return self.m_xsize[i]
 end
-@inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::UInt16
+@inline function cluster_size_x(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt16)::UInt16
     self.m_xsize[i] = k
 end
 
@@ -384,7 +384,7 @@ end
     return self.m_ysize[i]
 end
 
-@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::UInt16
+@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt16)::UInt16
     self.m_ysize[i] = k
 end
 """
