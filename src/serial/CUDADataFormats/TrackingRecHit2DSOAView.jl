@@ -168,11 +168,11 @@ end
     # Returns
     - `Float64`: The local x-coordinate (`m_xl[i]`) of the hit at index `i`.
 """
-@inline function x_local(self::TrackingRecHit2DSOAView, i::UInt32)::Float64
+@inline function x_local(self::TrackingRecHit2DSOAView, i::UInt32)::Float32
     return self.m_xl[i]
 end
 
-@inline function x_local(self::TrackingRecHit2DSOAView, i::UInt32, k::Float32)::Float64
+@inline function x_local(self::TrackingRecHit2DSOAView, i::UInt32, k::Float32)::Float32
     self.m_xl[i] = k
 end
 
@@ -188,11 +188,11 @@ end
     # Returns
     - `Float64`: The local y-coordinate (`m_yl[i]`) of the hit at index `i`.
 """
-@inline function y_local(self::TrackingRecHit2DSOAView, i::UInt32)::Float64
+@inline function y_local(self::TrackingRecHit2DSOAView, i::UInt32)::Float32
     return self.m_yl[i]
 end
 
-@inline function y_local(self::TrackingRecHit2DSOAView, i::UInt32, k::Float32)::Float64
+@inline function y_local(self::TrackingRecHit2DSOAView, i::UInt32, k::Float32)::Float32
     self.m_yl[i] = k
 end
 
