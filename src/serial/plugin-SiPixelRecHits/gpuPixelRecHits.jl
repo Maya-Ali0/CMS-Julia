@@ -281,7 +281,7 @@ function getHits(cpeParams::ParamsOnGPU,
                     errorFromDB(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic));
                     
                     charge(hits, h, clusParams.charge[ic])
-                    detector_index(hits, h) = me
+                    detector_index(hits, h, me)
 
                     x_local(hits, h) = clusParams.xpos[ic]
                     xl = x_local(hits, h)
