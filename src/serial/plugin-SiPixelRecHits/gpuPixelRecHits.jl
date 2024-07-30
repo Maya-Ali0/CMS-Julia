@@ -321,10 +321,8 @@ function getHits(cpeParams::ParamsOnGPU,
                     set_y_global(hits, h, yg)
                     set_z_global(hits, h, zg) 
 
-                  
-                    r_global(hits, h) = sqrt(xg * xg + yg * yg)
-                    i_phi(hits, h) = unsafe_atan2s<7>(yg, xg)
-
+                    r_global(hits,h,sqrt(xg * xg + yg * yg))
+                    i_phi(hits, h, unsafe_atan2s<7>(yg, xg))
                 end
             end
 

@@ -5,7 +5,7 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUM_CL
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 using ..SOA_h
 using ..PixelGPU_h
-export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global, charge, detector_index, x_local, y_local, cluster_size_x, cluster_size_y, xerr_local, yerr_local, hits_layer_start
+export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global, charge, detector_index, x_local, y_local, cluster_size_x, cluster_size_y, xerr_local, yerr_local, hits_layer_start, r_global, i_phi
 
 """
     Struct representing the 2D Structure of Arrays view of tracking hits.
@@ -309,8 +309,12 @@ end
     # Returns
     - `Float64`: The global r-coordinate (`m_rg[i]`) of the hit at index `i`.
 """
-@inline function r_global(self::TrackingRecHit2DSOAView, i::Int)::Float64
+@inline function r_global(self::TrackingRecHit2DSOAView, i::UInt32)::Float64
     return self.m_rg[i]
+end
+
+@inline function r_global(self::TrackingRecHit2DSOAView, i::UInt32, l::Float32)::Float32
+    self.m_rg[i] = l
 end
 
 """
@@ -325,8 +329,12 @@ end
     # Returns
     - `UInt16`: The phi index (`m_iphi[i]`) of the hit at index `i`.
 """
-@inline function i_phi(self::TrackingRecHit2DSOAView, i::Int)::UInt16
+@inline function i_phi(self::TrackingRecHit2DSOAView, i::UInt32)::Int16
     return self.m_iphi[i]
+end
+
+@inline function i_phi(self::TrackingRecHit2DSOAView, i::UInt32, k::Int16)::Int16
+    self.m_iphi[i] = k
 end
 
 """
