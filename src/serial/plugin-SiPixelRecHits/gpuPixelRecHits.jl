@@ -228,11 +228,6 @@ function getHits(cpeParams::ParamsOnGPU,
                     
                     ch = min(adc(digis, i), pixmx)
                     write(file, "ch = $ch\n")
-
-                    if(ch == 6267)
-                        print("hi")
-                        write(file,"peeepo\n")
-                    end
                     
                     clusParams.charge[cl] = clusParams.charge[cl] + ch
                     write(file, "clusParams.charge[$cl] = $(clusParams.charge[cl])\n")
@@ -296,7 +291,7 @@ function getHits(cpeParams::ParamsOnGPU,
                     yg::Float32 = 0 
                     zg::Float32 = 0
                     
-                    frame = detParams(cpeParams, me).frame
+                    frame = detParams(cpeParams, UInt32(me + 1)).frame
                     # println(xg," ", yg," ", zg)
                     toGlobal_special(frame, xl, yl, xg, yg, zg)
                
