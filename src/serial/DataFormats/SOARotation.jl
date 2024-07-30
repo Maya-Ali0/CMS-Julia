@@ -120,12 +120,15 @@ function toGlobal(frame::SOAFrame{T}, vx::T, vy::T) where {T}
     return ux, uy, uz
 end
 
-function toGlobal_special(frame::SOAFrame{T}, vx::T, vy::T, ux::T, uy::T, uz::T) where {T}
+function toGlobal_special(frame::SOAFrame{T}, vx::T, vy::T) where {T}
     ux, uy, uz = multiplyInverse(frame.rot, vx, vy, ux, uy, uz);
-    print(ux, " ", uy, " ", uz, "\n")
-    ux += frame.px
-    uy += frame.py
-    uz += frame.pz
+    # ux += frame.px
+    # uy += frame.py
+    # uz += frame.pz
+    println(ux)
+    println(uy)
+    println(uz)
+    sleep(10)
     return ux, uy, uz
 end
 

@@ -96,7 +96,6 @@ export set_z_global
 
 export toGlobal_special
 
-
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")

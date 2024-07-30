@@ -194,7 +194,6 @@ function getHits(cpeParams::ParamsOnGPU,
                 end
 
                 pixmx = typemax(UInt16)
-                print()
                 write(file,"##################################\n")
                 write(file,"pixmx: $pixmx\n")
                 write(file,"FOR i IN $first to $numElements\n")
@@ -310,7 +309,7 @@ function getHits(cpeParams::ParamsOnGPU,
                     frame = detParams(cpeParams, UInt32(me + 1)).frame
                     # println(xg," ", yg," ", zg)
                     xg, yg, zg = toGlobal_special(frame, xl, yl, xg, yg, zg)
-               
+                    write(file,"bs.x = $(bs.x)\n")
                     xg = xg - bs.x
                     yg = yg - bs.y
                     zg = zg - bs.z
