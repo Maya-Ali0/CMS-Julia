@@ -283,10 +283,9 @@ function getHits(cpeParams::ParamsOnGPU,
                     charge(hits, h, clusParams.charge[ic])
                     detector_index(hits, h, me)
 
-                    x_local(hits, h) = clusParams.xpos[ic]
-                    xl = x_local(hits, h)
-                    y_local(hits, h) = clusParams.ypos[ic]
-                    yl = y_local(hits, h)
+                    xl = x_local(hits, h, clusParams.xpos[ic])
+                    yl = y_local(hits, h, clusParams.ypos[ic])
+                    
                     cluster_size_x(hits, h) = clusParams.xsize[ic]
                     cluster_size_y(hits, h) = clusParams.ysize[ic]
 
