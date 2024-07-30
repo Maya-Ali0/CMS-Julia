@@ -172,7 +172,7 @@ end
     return self.m_xl[i]
 end
 
-@inline function x_local(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::Float64
+@inline function x_local(self::TrackingRecHit2DSOAView, i::UInt32, k::Float32)::Float64
     self.m_xl[i] = k
 end
 
@@ -192,7 +192,7 @@ end
     return self.m_yl[i]
 end
 
-@inline function y_local(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::Float64
+@inline function y_local(self::TrackingRecHit2DSOAView, i::UInt32, k::Float32)::Float64
     self.m_yl[i] = k
 end
 
@@ -212,7 +212,7 @@ end
     return self.m_xerr[i]
 end
 
-@inline function xerr_local(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::Float64
+@inline function xerr_local(self::TrackingRecHit2DSOAView, i::UInt32, k::Float32)::Float64
     self.m_xerr[i] = k
 end
 """
@@ -231,7 +231,7 @@ end
     return self.m_yerr[i]
 end
 
-@inline function yerr_local(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::Float64
+@inline function yerr_local(self::TrackingRecHit2DSOAView, i::UInt32, k::Float32)::Float64
     self.m_yerr[i] = k
 end
 
@@ -341,11 +341,11 @@ end
     # Returns
     - `UInt32`: The charge (`m_charge[i]`) of the hit at index `i`.
 """
-@inline function charge(self::TrackingRecHit2DSOAView, i::UInt32)::UInt32
+@inline function charge(self::TrackingRecHit2DSOAView, i::Int32)::UInt32
     return self.m_charge[i]
 end
 
-@inline function charge(self::TrackingRecHit2DSOAView, i::UInt32, k::UInt32)::UInt32
+@inline function charge(self::TrackingRecHit2DSOAView, i::UInt32, k::Int32)::UInt32
     self.m_charge[i] = k
 end
 
