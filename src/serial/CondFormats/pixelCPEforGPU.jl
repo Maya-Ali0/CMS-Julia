@@ -318,36 +318,36 @@ end
     - Updates `cp.xpos[ic]` and `cp.ypos[ic]` with the corrected x and y positions.
 
 """
-function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32) where {N}
+function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32, file) where {N}
     # file = open("continue.txt", "w")
 
     llx = UInt16(cp.minRow[ic] + 1)
-#    write(file,"llx = $llx\n")
+    write(file,"llx = $llx\n")
     lly = UInt16(cp.minCol[ic] + 1)
-#    write(file,"lly = $lly\n")
+    write(file,"lly = $lly\n")
     urx = UInt16(cp.maxRow[ic])
-#    write(file,"urx = $urx\n")
+    write(file,"urx = $urx\n")
     ury = UInt16(cp.maxCol[ic])
-#    write(file,"ury = $ury\n")
+    write(file,"ury = $ury\n")
 
     llxl = local_x(llx)
-#    write(file,"llxl = $llxl\n")
+    write(file,"llxl = $llxl\n")
     llyl = local_y(lly)
-#    write(file,"llyl = $llyl\n")
+    write(file,"llyl = $llyl\n")
     urxl = local_x(urx)
-#    write(file,"urxl = $urxl\n")
+    write(file,"urxl = $urxl\n")
     uryl = local_y(ury)
-#    write(file,"uryl = $uryl\n")
+    write(file,"uryl = $uryl\n")
 
     mx = llxl + urxl
 #    write(file,"mx = $mx\n")
     my = llyl + uryl
 #    write(file,"my = $my\n")
 
-    xsize = Int(urxl) + 2 - Int(llxl)
-#    write(file,"xsize = $xsize\n")
-    ysize = Int(uryl) + 2 - Int(llyl)
-#    write(file,"ysize = $ysize\n")
+    xsize = Int32(urxl) + 2 - Int32(llxl)
+    # write(file,"xsize = $xsize\n")
+    ysize = Int32(uryl) + 2 - Int32(llyl)
+    # write(file,"ysize = $ysize\n")
     @assert xsize >= 0
     @assert ysize >= 0
 
@@ -367,11 +367,14 @@ function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusPa
         ysize += 1
     #    write(file,"ysize = $ysize\n")
     end
+    # write(file,"xsize = $xsize\n")
+    # write(file,"ysize = $ysize\n")
 
-    unbalanceX = Int(trunc(8.0 * abs(Float32(cp.Q_f_X[ic] - cp.Q_l_X[ic])) / Float32(cp.Q_f_X[ic] + cp.Q_l_X[ic])))
-#    write(file,"unbalanceX = $unbalanceX\n")
-    unbalanceY = Int(trunc(8.0 * abs(Float32(cp.Q_f_Y[ic] - cp.Q_l_Y[ic])) / Float32(cp.Q_f_Y[ic] + cp.Q_l_Y[ic])))
-#    write(file,"unbalanceY = $unbalanceY\n")
+
+    unbalanceX = Int32(trunc(8.0 * abs(Float32(cp.Q_f_X[ic] - cp.Q_l_X[ic])) / Float32(cp.Q_f_X[ic] + cp.Q_l_X[ic])))
+    write(file,"unbalanceX = $unbalanceX\n")
+    unbalanceY = Int32(trunc(8.0 * abs(Float32(cp.Q_f_Y[ic] - cp.Q_l_Y[ic])) / Float32(cp.Q_f_Y[ic] + cp.Q_l_Y[ic])))
+    write(file,"unbalanceY = $unbalanceY\n")
     xsize = 8 * xsize - unbalanceX
 #    write(file,"xsize = $xsize\n")
     ysize = 8 * ysize - unbalanceY

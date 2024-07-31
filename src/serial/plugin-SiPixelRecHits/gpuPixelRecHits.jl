@@ -35,7 +35,7 @@ function getHits(cpeParams::ParamsOnGPU,
                  pclusters::CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA.DeviceConstView,
                  phits::TrackingRecHit2DSOAView)
 
-        # file = open("someData.txt", "w")
+        file = open("coooo.txt", "w")
 
         hits = phits
         digis = pdigis
@@ -273,7 +273,7 @@ function getHits(cpeParams::ParamsOnGPU,
                #     write(file,"clus_module_start = $(clus_module_start(clusters, UInt32(me + 2)))\n")
 
 
-                    position_corr(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic));
+                    position_corr(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic),file);
                     errorFromDB(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic));
                     
                     charge(hits, h, clusParams.charge[ic])
@@ -290,10 +290,10 @@ function getHits(cpeParams::ParamsOnGPU,
                #     write(file, "clusParams.ypos[$ic] = $(clusParams.ypos[ic])\n")
 
                     cluster_size_x(hits, h, clusParams.xsize[ic])
-               #     write(file, "clusParams.xsize[$ic] = $(clusParams.xsize[ic])\n")
+                    write(file, "clusParams.xsize[$h] = $(clusParams.xsize[ic])\n")
 
                     cluster_size_y(hits, h, clusParams.ysize[ic])
-               #     write(file, "clusParams.ysize[$ic] = $(clusParams.ysize[ic])\n")
+                    write(file, "clusParams.ysize[$h] = $(clusParams.ysize[ic])\n")
 
                     xerr_local(hits, h, clusParams.xerr[ic] * clusParams.xerr[ic])
                #     write(file, "clusParams.xerr[$ic] = $(clusParams.xerr[ic] * clusParams.xerr[ic])\n")
@@ -329,6 +329,8 @@ function getHits(cpeParams::ParamsOnGPU,
             end
 
         end
+        close(file)
+        exit()
 end 
 
 

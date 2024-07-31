@@ -252,8 +252,7 @@ export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_inde
     end
 
     @inline function is_big_pix_x(px)
-        lx = to_ROC_x(px)
-        return (lx == 0) | (lx == last_row_in_roc)
+        return (px == 79) | (px == 80)
     end
     """
     Function to convert a local x-coordinate to a global x-coordinate.

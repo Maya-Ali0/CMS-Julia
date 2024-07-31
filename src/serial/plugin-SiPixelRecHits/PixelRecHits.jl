@@ -44,7 +44,7 @@ function makeHits(digis_d::SiPixelDigisSoA,
     end
 
     if (nHits != 0)
-        # HistoContainer::fillManyFromVector(phi_binner(hits_d), 10, iphi(hits_d), hits_layer_start(hits_d), nHits)
+        HistoContainer::fillManyFromVector(phi_binner(hits_d), 10, iphi(hits_d), hits_layer_start(hits_d), nHits)
     end
 
     open("rechits.txt", "w") do file
