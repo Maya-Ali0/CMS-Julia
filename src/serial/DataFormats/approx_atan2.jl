@@ -158,8 +158,7 @@ end
 # degree =  9   => absolute accuracy is 1
 function approx_atan2s_P(x::Float32)
     z = x * x
-    l = x * (-10428.984375f0 + z * (3445.20654296875f0 + z * (-1879.137939453125f0 + z * (888.22314453125f0 + z * (-217.42669677734375f0)))))
-    return l
+    return x * (-10422.177734375f0 + z * (3349.97412109375f0 + z * (-1525.589599609375f0 + z * 406.64190673828125f0)))
 end
 
 function unsafe_atan2s_impl(y::Float32, x::Float32,DEGREE::Int)::Int16 

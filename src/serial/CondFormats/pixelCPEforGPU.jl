@@ -319,7 +319,7 @@ end
 
 """
 function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32) where {N}
-    file = open("continue.txt", "w")
+    # file = open("continue.txt", "w")
 
     llx = UInt16(cp.minRow[ic] + 1)
 #    write(file,"llx = $llx\n")
@@ -506,7 +506,7 @@ end
 """
 
 function errorFromDB(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32) where {N}
-    file = open("continue2.txt", "w")
+    # file = open("continue2.txt", "w")
 
     # Edge cluster errors
     cp.xerr[ic] = 0.0050f0
