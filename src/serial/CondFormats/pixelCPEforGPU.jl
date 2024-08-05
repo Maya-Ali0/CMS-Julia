@@ -5,7 +5,7 @@ using ..SOA_h
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 
 
-export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry, MaxHitsInIter, commonParams, detParams, position_corr, errorFromDB
+export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry, MaxHitsInIter, commonParams, detParams, position_corr, errorFromDB, layerGeometry
 """
  Struct for common detector parameters including thickness, pitch, and default values.
     
@@ -217,8 +217,8 @@ struct ClusParamsT{N}
     xerr::Vector{Float32}
     yerr::Vector{Float32}
 
-    xsize::Vector{Any}
-    ysize::Vector{Any}
+    xsize::Vector{Int16}
+    ysize::Vector{Int16}
 
     function ClusParamsT{N}() where N
         return new(zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),
@@ -319,60 +319,96 @@ end
 
 """
 function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32) where {N}
+    # file = open("continue.txt", "w")
+
     llx = UInt16(cp.minRow[ic] + 1)
+#    write(file,"llx = $llx\n")
     lly = UInt16(cp.minCol[ic] + 1)
+#    write(file,"lly = $lly\n")
     urx = UInt16(cp.maxRow[ic])
+#    write(file,"urx = $urx\n")
     ury = UInt16(cp.maxCol[ic])
+#    write(file,"ury = $ury\n")
 
     llxl = local_x(llx)
+#    write(file,"llxl = $llxl\n")
     llyl = local_y(lly)
+#    write(file,"llyl = $llyl\n")
     urxl = local_x(urx)
+#    write(file,"urxl = $urxl\n")
     uryl = local_y(ury)
+#    write(file,"uryl = $uryl\n")
 
     mx = llxl + urxl
+#    write(file,"mx = $mx\n")
     my = llyl + uryl
+#    write(file,"my = $my\n")
 
     xsize = Int(urxl) + 2 - Int(llxl)
+#    write(file,"xsize = $xsize\n")
     ysize = Int(uryl) + 2 - Int(llyl)
+#    write(file,"ysize = $ysize\n")
     @assert xsize >= 0
     @assert ysize >= 0
 
     if is_big_pix_x(cp.minRow[ic])
         xsize += 1
+    #    write(file,"xsize = $xsize\n")
     end
     if is_big_pix_x(cp.maxRow[ic])
         xsize += 1
+    #    write(file,"xsize = $xsize\n")
     end
     if is_big_pix_y(cp.minCol[ic])
         ysize += 1
+    #    write(file,"ysize = $ysize\n")
     end
     if is_big_pix_y(cp.maxCol[ic])
         ysize += 1
+    #    write(file,"ysize = $ysize\n")
     end
 
     unbalanceX = Int(trunc(8.0 * abs(Float32(cp.Q_f_X[ic] - cp.Q_l_X[ic])) / Float32(cp.Q_f_X[ic] + cp.Q_l_X[ic])))
+#    write(file,"unbalanceX = $unbalanceX\n")
     unbalanceY = Int(trunc(8.0 * abs(Float32(cp.Q_f_Y[ic] - cp.Q_l_Y[ic])) / Float32(cp.Q_f_Y[ic] + cp.Q_l_Y[ic])))
+#    write(file,"unbalanceY = $unbalanceY\n")
     xsize = 8 * xsize - unbalanceX
+#    write(file,"xsize = $xsize\n")
     ysize = 8 * ysize - unbalanceY
+#    write(file,"ysize = $ysize\n")
 
-    print(unbalanceX, " ", unbalanceY, " ", xsize, " ", ysize)
+
+    # print(unbalanceX, " ", unbalanceY, " ", xsize, " ", ysize)
 
     cp.xsize[ic] = UInt32(min(xsize, 1023))
+#    write(file,"cp.xsize[ic] = $(cp.xsize[ic])\n")
     cp.ysize[ic] = UInt32(min(ysize, 1023))
+#    write(file,"cp.ysize[ic] = $(cp.ysize[ic])\n")
 
     if cp.minRow[ic] == 0 || cp.maxRow[ic] == last_row_in_module
         cp.xsize[ic] = -cp.xsize[ic]
+    #    write(file,"cp.xsize[ic] = $(cp.xsize[ic])\n")
     end
     if cp.minCol[ic] == 0 || cp.maxCol[ic] == last_col_in_module
         cp.ysize[ic] = -cp.ysize[ic]
+    #    write(file,"cp.ysize[ic] = $(cp.ysize[ic])\n")
     end
 
     xPos = detParams.shiftX + comParams.thePitchX * (0.5f0 * Float32(mx) + Float32(x_offset))
+#    write(file,"xPos = $xPos\n")
     yPos = detParams.shiftY + comParams.thePitchY * (0.5f0 * Float32(my) + Float32(y_offset))
+#    write(file,"yPos = $yPos\n")
 
     cotalpha, cotbeta = computeAnglesFromDet(detParams, xPos, yPos)
 
+#    write(file,"cotalpha = $cotalpha\n")
+#    write(file,"cotbeta = $cotbeta\n")
+
+
     thickness = detParams.isBarrel ? comParams.theThicknessB : comParams.theThicknessE
+#    write(file,"thickness = $thickness\n")
+
+
 
     xcorr = correction(cp.maxRow[ic] - cp.minRow[ic], cp.Q_f_X[ic], cp.Q_l_X[ic], llxl, urxl, detParams.chargeWidthX,
                        thickness, cotalpha, comParams.thePitchX, is_big_pix_x(cp.minRow[ic]), is_big_pix_x(cp.maxRow[ic]))
@@ -380,8 +416,14 @@ function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusPa
     ycorr = correction(cp.maxCol[ic] - cp.minCol[ic], cp.Q_f_Y[ic], cp.Q_l_Y[ic], llyl, uryl, detParams.chargeWidthY,
                        thickness, cotbeta, comParams.thePitchY, is_big_pix_y(cp.minCol[ic]), is_big_pix_y(cp.maxCol[ic]))
 
+#    write(file,"xcorr = $xcorr\n")
+#    write(file,"ycorr = $ycorr\n")
+
     cp.xpos[ic] = xPos + xcorr
     cp.ypos[ic] = yPos + ycorr
+
+#    write(file,"cp.xpos[ic] = $(cp.xpos[ic])\n")
+#    write(file,"cp.ypos[ic] = $(cp.ypos[ic])\n")
 end
 
 """
@@ -463,28 +505,40 @@ end
     - Updates `cp.xerr[ic]` and `cp.yerr[ic]` with the error values based on the cluster size and position.
 """
 
-function errorFromDB(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::Int) where {N}
+function errorFromDB(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32) where {N}
+    # file = open("continue2.txt", "w")
+
     # Edge cluster errors
     cp.xerr[ic] = 0.0050f0
     cp.yerr[ic] = 0.0085f0
 
     sx = cp.maxRow[ic] - cp.minRow[ic]
+#    write(file,"sx = $sx\n")
     sy = cp.maxCol[ic] - cp.minCol[ic]
+#    write(file,"sy = $sy\n")
 
     # is edgy ?
     isEdgeX = cp.minRow[ic] == 0 || cp.maxRow[ic] == last_row_in_module
+#    write(file,"isEdgeX = $isEdgeX\n")
     isEdgeY = cp.minCol[ic] == 0 || cp.maxCol[ic] == last_col_in_module
+#    write(file,"isEdgeY = $isEdgeY\n")
     # is one and big?
     ix = (0 == sx) ? 1 : 0
+#    write(file,"ix = $ix\n")
     iy = (0 == sy) ? 1 : 0
+#    write(file,"iy = $iy\n")
     ix += (0 == sx) && is_big_pix_x(cp.minRow[ic]) ? 1 : 0
+#    write(file,"ix = $ix\n")
     iy += (0 == sy) && is_big_pix_y(cp.minCol[ic]) ? 1 : 0
+#    write(file,"iy = $iy\n")
 
     if !isEdgeX
         cp.xerr[ic] = detParams.sx[ix + 1]
+    #    write(file,"cp.xerr[ic] = $(cp.xerr[ic])\n")
     end
     if !isEdgeY
         cp.yerr[ic] = detParams.sy[iy + 1]
+    #    write(file,"cp.yerr[ic] = $(cp.yerr[ic])\n")
     end
 end
 

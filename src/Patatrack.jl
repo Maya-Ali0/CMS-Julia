@@ -1,5 +1,6 @@
 module Patatrack
 import Base.length
+using Printf
 
 export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT,
 FED_EVSZ_EXTRACT, FED_CRCS_EXTRACT, FED_STAT_EXTRACT, FED_TTSI_EXTRACT,
@@ -95,7 +96,6 @@ export set_y_global
 export set_z_global
 
 export toGlobal_special
-
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")

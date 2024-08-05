@@ -1,6 +1,6 @@
 module SOA_h
 
-export SOARotation, SOAFrame, toGlobal_special
+export SOARotation, SOAFrame, toGlobal_Special
 
 struct SOARotation{T}
     R11::T
@@ -54,8 +54,17 @@ end
 
 function multiplyInverse(r::SOARotation{T}, vx::T, vy::T) where {T}
     ux = r.R11 * vx + r.R21 * vy
+    println(r.R11, " ", r.R21)
+
     uy = r.R12 * vx + r.R22 * vy
+    println(r.R12, " ", r.R22)
+
     uz = r.R13 * vx + r.R23 * vy
+    println(r.R13, " ", r.R23)
+
+    sleep(100)
+
+
     return ux, uy, uz
 end
 
@@ -120,8 +129,8 @@ function toGlobal(frame::SOAFrame{T}, vx::T, vy::T) where {T}
     return ux, uy, uz
 end
 
-function toGlobal_special(frame::SOAFrame{T}, vx::T, vy::T, ux::T, uy::T, uz::T) where {T}
-    ux, uy, uz = multiplyInverse(frame.rot, vx, vy, ux, uy, uz);
+function toGlobal_Special(frame::SOAFrame{T}, vx::T, vy::T) where {T}
+    ux, uy, uz = multiplyInverse(frame.rot, vx, vy);
     ux += frame.px
     uy += frame.py
     uz += frame.pz
