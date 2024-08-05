@@ -241,5 +241,12 @@ module histogram
 
         end
     end
+    
+    function fill_many_from_vector(h::Hist,nh::Integer,v::Vector{T},offsets::Vector{UInt32},tot_size::UInt32) where {Hist,T}
+        count_from_vector(h,nh,v,offsets)
+        finalize(h)
+        fill_from_vector(h,nh,v,offsets)
+    end
+
     const OneToManyAssoc{I,MAXONES,MAXMANYS} = HisToContainer{UInt32,MAXONES,MAXMANYS,sizeof(UInt32)*8,I,1}
 end

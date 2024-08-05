@@ -138,7 +138,6 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         end
         
         finalize!(hist)
-        """
         for i in first:msize-1
             if id[i] == INV_ID
                 continue 
@@ -256,7 +255,6 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         end
         n_clusters_in_module[this_module_id+1] = found_clusters
         moduleId[mod] = this_module_id
-        """
     end
   
 end

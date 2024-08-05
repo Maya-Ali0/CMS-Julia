@@ -1,4 +1,4 @@
-module CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
+module CUDADataForsSiPixelClusterInterfaceGPUClusteringConstants
 
 module pixelGPUConstants
 export MAX_NUM_MODULES , MAX_NUM_CLUSTERS , MAX_HITS_IN_MODULE, MAX_HITS_IN_ITER, MAX_NUMBER_OF_HITS
