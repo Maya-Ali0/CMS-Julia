@@ -1,5 +1,5 @@
 using Patatrack
-using BenchmarkTools
+using BenchmarkTools, ProfileView
 num_of_threads::Int = 1
 num_of_streams::Int = 0
 warm_up_events::Int = 0 # Number of events to process before starting the benchmark (default 0).
@@ -46,9 +46,6 @@ for collection ∈ raw_events
         break
     end
     emplace(event,raw_token,collection)
-<<<<<<< HEAD
-    @time test(rawToCluster,event,es)
-=======
     produce(rawToCluster,event,es)
 
     bs =  BeamSpotToPOD(reg)
@@ -57,11 +54,11 @@ for collection ∈ raw_events
     recHit = SiPixelRecHitCUDA(reg)
     produce(recHit,event,es)
 
->>>>>>> 78691852fc6070c087405c7f2a5098375461f026
 end
 end
 
  run()
+ @profileview run()
 
 
 
