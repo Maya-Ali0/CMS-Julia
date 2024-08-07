@@ -1,5 +1,6 @@
 module cAHitNtupletGenerator
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
+    using Main::kernel_fill_hit_indices
     struct Counters
         n_events::UInt64
         n_hits::UInt64
@@ -79,5 +80,7 @@ module cAHitNtupletGenerator
         cell_storage::Vector{UInt8}
         
     end
-
+    function fill_hit_det_indices(hv::TrackingRecHit2DSOAView, tracks_d::TkSoA)
+        kernel_fill_hit_indices(tracks_d.hit_indices, hv, tracks_d.det_indices)
+    end
 end
