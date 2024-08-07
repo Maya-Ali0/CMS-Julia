@@ -99,6 +99,7 @@ export toGlobal_special
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
+include("serial/CUDACore/vec_array.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu_wrapper.jl")
 include("serial/CondFormats/si_pixel_fed_ids.jl")
