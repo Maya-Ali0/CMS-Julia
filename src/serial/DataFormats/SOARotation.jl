@@ -54,17 +54,8 @@ end
 
 function multiplyInverse(r::SOARotation{T}, vx::T, vy::T) where {T}
     ux = r.R11 * vx + r.R21 * vy
-    println(r.R11, " ", r.R21)
-
     uy = r.R12 * vx + r.R22 * vy
-    println(r.R12, " ", r.R22)
-
     uz = r.R13 * vx + r.R23 * vy
-    println(r.R13, " ", r.R23)
-
-    sleep(100)
-
-
     return ux, uy, uz
 end
 
