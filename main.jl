@@ -46,9 +46,6 @@ for collection ∈ raw_events
         break
     end
     emplace(event,raw_token,collection)
-<<<<<<< HEAD
-    @time test(rawToCluster,event,es)
-=======
     produce(rawToCluster,event,es)
 
     bs =  BeamSpotToPOD(reg)
@@ -57,7 +54,6 @@ for collection ∈ raw_events
     recHit = SiPixelRecHitCUDA(reg)
     produce(recHit,event,es)
 
->>>>>>> 78691852fc6070c087405c7f2a5098375461f026
 end
 end
 

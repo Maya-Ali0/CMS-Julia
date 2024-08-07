@@ -62,7 +62,7 @@ mutable struct TrackingRecHit2DHeterogeneous
     
         if nHits == 0
             return new(n16, n32, Vector{Vector{Int16}}()
-            , Vector{Vector{Float64}}(), Vector{HisToContainer{0,0,0,0,UInt32}}(), Vector{AverageGeometry}(), TrackingRecHit2DSOAView(), nHits, hitsModuleStart, HisToContainer{0,0,0,0,UInt32}(), Vector{UInt32}(), Vector{Int16}()) #added dummy values for HisToContainer
+            , Vector{Vector{Float64}}(), HisToContainer{0,0,0,0,UInt32}(), AverageGeometry(), TrackingRecHit2DSOAView(), nHits, hitsModuleStart, HisToContainer{0,0,0,0,UInt32}(), Vector{UInt32}(), Vector{Int16}()) #added dummy values for HisToContainer
         end
     
         # Initialize storage vectors
