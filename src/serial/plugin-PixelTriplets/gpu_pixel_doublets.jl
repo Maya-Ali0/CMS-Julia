@@ -1,7 +1,8 @@
 module gpuPixelDoublets
     using StaticArrays
-    include("ca_constants.jl")
-    using .caConstants
+    using ..caConstants
+    using ..gpuCACELL
+    using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
     n_pairs = 13 + 2 + 4 
     const layer_pairs = SArray{Tuple{2*n_pairs}}(
         0, 1, 0, 4, 0, 7,              # BPIX1 (3)
@@ -40,5 +41,25 @@ module gpuPixelDoublets
     const minz = SArray{Tuple{n_pairs}}(-20., 0., -30., -22., 10., -30., -70., -70., -22., 15., -30, -70., -70., -20., -22., 0, -30., -70., -70.)
     const maxz = SArray{Tuple{n_pairs}}(20., 30., 0., 22., 30., -10., 70., 70., 22., 30., -15., 70., 70., 20., 22., 30., 0., 70., 70.)
     const maxr = SArray{Tuple{n_pairs}}(20., 9., 9., 20., 7., 7., 5., 5., 20., 6., 6., 5., 5., 20., 20., 9., 9., 9., 9.)
-
+    function init_doublets(is_outer_hit_of_cell::Vector{OuterHitOfCell},n_hits::Integer,cell_neighbors::CellNeighborsVector,cell_neighbors_container::CellNeighbors,
+                           cell_tracks::CellTracksVector,cell_tracks_container::CellTracks)
+        @assert(!empty(is_outer_hit_of_cell))
+        first = 1
+        for i ∈ first:n_hits
+            reset(is_outer_hit_of_cell[i])
+        end
+        construct(cell_neighbors,MAX_NUM_OF_ACTIVE_DOUBLETS,cell_neighbors_container)
+        construct(cell_tracks,MAX_NUM_OF_ACTIVE_DOUBLETS,cell_tracks_container)
+        i = extend(cell_neighbors)
+        @assert(i == 1)
+        reset(cell_neighbors[1])
+        i = extend(cell_tracks)
+        @assert(i == 1)
+        reset(cell_tracks[1])
+    end
+    function get_doublets_from_histo(cells::Vector{GPUCACell},n_cells::Integer,cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,
+                                     hhp::TrackingRecHit2DSOAView,is_outer_hit_of_cell::Vector{OuterHitOfCell},n_actual_pairs::Integer,
+                                     ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,do_pt_cut::Bool,max_num_of_doublets::Integer)
+        
+    end
 end
