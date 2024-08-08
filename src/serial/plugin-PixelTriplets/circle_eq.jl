@@ -50,7 +50,7 @@ function dca0(self::CircleEq{T}) where T
     y = self.m_c * self.m_yp + self.m_beta
     return  √(x^2 + y^2) - T(1)
 end
-
+# distance of closest approach
 function dca(self::CircleEq{T},x::T,y::T) where T
     x = self.m_c * (self.m_xp - x) + self.m_alpha
     y = self.m_c * (self.m_yp - y) + self.m_beta
