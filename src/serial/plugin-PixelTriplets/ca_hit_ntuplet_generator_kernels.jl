@@ -78,20 +78,36 @@ module cAHitNtupletGenerator
                                12.0)) # |Zip| < 12.0 cm
     
     
-    struct ca_hit_ntuplet_generator_kernels
-        cell_storage::Vector{UInt8}
+    struct CAHitNTupletGeneratorKernels
+        #cell_storage::Vector{UInt8}
         device_the_cell_neighbors::CellNeighborsVector
         device_the_cell_neighbors_container::CellNeighbors
         device_the_cell_tracks::CellTracksVector
-        the_cell_tracks_container::CellTracks
+        device_the_cell_tracks_container::CellTracks
         device_is_outer_hit_of_cell::Vector{OuterHitOfCell}
         device_n_cells::UInt32
         device_hit_to_tuple::HitToTuple
         device_tuple_multiplicity::TupleMultiplicity
         m_params::Params
-        
+        function CAHitNTupletGeneratorKernels(params::Params)
+            is_outer_hit_of_cell = Vector{OuterHitOfCell}(undef,max(1,n_hits))
+            the_cell_neighbors_container = Vector{CellNeighbors}(undef,MAX_NUM_OF_ACTIVE_DOUBLETS)
+            the_cell_tracks_container = Vector{CellTracks}(undef,MAX_NUM_OF_ACTIVE_DOUBLETS)
+            new(CellNeighborsVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_neighbors_container),the_cell_neighbors_container,
+                CellTracksVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_tracks_container),the_cell_tracks_container,is_outer_hit_of_cell,
+                0,HitToTuple(),TupleMultiplicity(),params)
+        end
     end
     # function fill_hit_det_indices(hv::TrackingRecHit2DSOAView, tracks_d::TkSoA)
     #     kernel_fill_hit_indices(tracks_d.hit_indices, hv, tracks_d.det_indices)
     # end
+
+    function build_doublets(self::CAHitNTupletGeneratorKernels,hh::HitsOnCPU)
+        n_hits = n_hits(hh)
+        println("Building Doublets out of ",n_hits," Hits")
+        
+        # cell_storage
+        
+    end
+
 end
