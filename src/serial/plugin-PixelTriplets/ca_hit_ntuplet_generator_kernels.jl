@@ -1,6 +1,8 @@
 module cAHitNtupletGenerator
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
-    using Main::kernel_fill_hit_indices
+    using StaticArrays:MArray
+    using ..caConstants
+    #using Main::kernel_fill_hit_indices
     struct Counters
         n_events::UInt64
         n_hits::UInt64
@@ -15,7 +17,7 @@ module cAHitNtupletGenerator
         n_zero_track_cells::UInt64
     end
     const HitsView = TrackingRecHit2DSOAView
-    const HitsOnGPU = TrackingRecHit2DSOAView
+    const HitsOnCPU = TrackingRecHit2DSOAView
 
     struct region
         max_tip::Float32 # cm
@@ -31,7 +33,7 @@ module cAHitNtupletGenerator
         quadruplet::region
     end
 
-    struct params
+    struct Params
         on_gpu::Bool
         min_hits_per_ntuplet::UInt32
         max_num_of_doublets::UInt32
@@ -78,9 +80,18 @@ module cAHitNtupletGenerator
     
     struct ca_hit_ntuplet_generator_kernels
         cell_storage::Vector{UInt8}
+        device_the_cell_neighbors::CellNeighborsVector
+        device_the_cell_neighbors_container::CellNeighbors
+        device_the_cell_tracks::CellTracksVector
+        the_cell_tracks_container::CellTracks
+        device_is_outer_hit_of_cell::Vector{OuterHitOfCell}
+        device_n_cells::UInt32
+        device_hit_to_tuple::HitToTuple
+        device_tuple_multiplicity::TupleMultiplicity
+        m_params::Params
         
     end
-    function fill_hit_det_indices(hv::TrackingRecHit2DSOAView, tracks_d::TkSoA)
-        kernel_fill_hit_indices(tracks_d.hit_indices, hv, tracks_d.det_indices)
-    end
+    # function fill_hit_det_indices(hv::TrackingRecHit2DSOAView, tracks_d::TkSoA)
+    #     kernel_fill_hit_indices(tracks_d.hit_indices, hv, tracks_d.det_indices)
+    # end
 end
