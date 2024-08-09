@@ -51,14 +51,14 @@ for collection ∈ raw_events
     bs =  BeamSpotToPOD(reg)
     produce(bs,event,es)
 
-    recHit = SiPixelRecHitCUDA(reg)
-    produce(recHit,event,es)
+    # recHit = SiPixelRecHitCUDA(reg)
+    # produce(recHit,event,es)
 
 end
 end
 
  run()
- @profileview run()
+ @profview run()
 
 
 

@@ -159,4 +159,7 @@ include("serial/plugin-SiPixelRecHits/PixelCPEFastESProducer.jl")
 
 include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
 include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
+
+include("serial/CUDACore/vec_array.jl")
+
 end

@@ -91,14 +91,14 @@ function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup
                 continue
             end
             trailer_byte_start = length(raw_data) - 7
-            trailer =  view(data(raw_data),trailer_byte_start:trailer_byte_start+7) # The last 8 bytes
+            trailer =  view(dataFormats.data(raw_data),trailer_byte_start:trailer_byte_start+7) # The last 8 bytes
 
             #FIXME
             # if (!check_crc(error_check,errors_in_event, fed_id, trailer, self.errors)) 
             #     continue
             # end 
             header_byte_start = 1 
-            header = view(data(raw_data),header_byte_start:header_byte_start+7)
+            header = view(dataFormats.data(raw_data),header_byte_start:header_byte_start+7)
 
             moreHeaders = true
             while moreHeaders
@@ -116,7 +116,7 @@ function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup
                 moreTrailer = trailerStatus
                 if moreTrailer
                     trailer_byte_start -= 8
-                    trailer = view(data(rawData),trailer_byte_start:trailer_byte_start+7)
+                    trailer = view(dataFormats.data(rawData),trailer_byte_start:trailer_byte_start+7)
                 end
             end 
             
@@ -125,7 +125,7 @@ function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup
             @assert((end_word32_index - begin_word32_index + 1) % 4 == 0)
             num_word32 = (end_word32_index - begin_word32_index + 1) ÷ sizeof(UInt32)
             @assert (0 == num_word32 % 2) # Number of 32 bit words should be a multiple of 2
-            initialize_word_fed(self.word_fed_appender,fed_id,view(data(raw_data),begin_word32_index:end_word32_index),word_counter_gpu)
+            initialize_word_fed(self.word_fed_appender,fed_id,view(dataFormats.data(raw_data),begin_word32_index:end_word32_index),word_counter_gpu)
             word_counter_gpu += num_word32
         end 
     
