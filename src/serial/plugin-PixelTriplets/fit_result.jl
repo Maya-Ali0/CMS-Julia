@@ -1,8 +1,8 @@
 module RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h
 
 module Rfit
-
-struct circle_fit{N} where N
+using StaticArrays
+struct circle_fit{N} 
     par::SVector{3,Float64} # parameter: (X0,Y0,R)
     cov::SMatrix{3,N,Float64}
     # < covariance matrix: \n
