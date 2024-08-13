@@ -3,10 +3,11 @@ module gpuCACELL
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
     using Main:VecArray
     using Main:SimpleVector
+    using Printf
     const ptr_as_int = UInt64
-    #const Hits = TrackingRecHit2DSOAView
+    const Hits = TrackingRecHit2DSOAView
     const TmpTuple = VecArray{UInt32,6}
-
+    export GPUCACell
 
     struct GPUCACell
         the_outer_neighbors::CellNeighbors
@@ -31,7 +32,7 @@ module gpuCACELL
         self.the_outer_hit_id = outer_hit_id
         self.the_doublet_id = doublet_id
         self.the_layer_pair_id = layer_pair_id
-        the_used = 0 
+        self.the_used = 0 
         self.the_inner_r = r_global(hh,inner_hit_id)
         self.the_inner_z = z_global(hh,inner_hit_id)
         self.the_outer_neighbors = cell_neighbors[1]

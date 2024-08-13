@@ -2,6 +2,8 @@ module cAHitNtupletGenerator
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
     using StaticArrays:MArray
     using ..caConstants
+    using ..gpuCACELL
+    using ..gpuPixelDoublets
     #using Main::kernel_fill_hit_indices
     struct Counters
         n_events::UInt64
@@ -84,6 +86,7 @@ module cAHitNtupletGenerator
         device_the_cell_neighbors_container::CellNeighbors
         device_the_cell_tracks::CellTracksVector
         device_the_cell_tracks_container::CellTracks
+        device_the_cells::Vector{GPUCACell}
         device_is_outer_hit_of_cell::Vector{OuterHitOfCell}
         device_n_cells::UInt32
         device_hit_to_tuple::HitToTuple
@@ -93,8 +96,9 @@ module cAHitNtupletGenerator
             is_outer_hit_of_cell = Vector{OuterHitOfCell}(undef,max(1,n_hits))
             the_cell_neighbors_container = Vector{CellNeighbors}(undef,MAX_NUM_OF_ACTIVE_DOUBLETS)
             the_cell_tracks_container = Vector{CellTracks}(undef,MAX_NUM_OF_ACTIVE_DOUBLETS)
+            the_cells = Vector{GPUCACell}(undef,params.max_num_of_doublets)
             new(CellNeighborsVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_neighbors_container),the_cell_neighbors_container,
-                CellTracksVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_tracks_container),the_cell_tracks_container,is_outer_hit_of_cell,
+                CellTracksVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_tracks_container),the_cell_tracks_container,the_cells,is_outer_hit_of_cell,
                 0,HitToTuple(),TupleMultiplicity(),params)
         end
     end
@@ -105,9 +109,26 @@ module cAHitNtupletGenerator
     function build_doublets(self::CAHitNTupletGeneratorKernels,hh::HitsOnCPU)
         n_hits = n_hits(hh)
         println("Building Doublets out of ",n_hits," Hits")
-        
         # cell_storage
-        
+        init_doublets(self.device_is_outer_hit_of_cell,n_hits,self.device_the_cell_neighbors,self.device_the_cell_tracks)
+        if(n_hits == 0)
+            return
+        end
+
+        n_actual_pairs = n_pairs
+
+        if(!m_params.include_jumping_forward_doublets)
+            n_actual_pairs = 15
+        end
+
+        if(min_hits_per_ntuplet > 3)
+            n_actual_pairs = 13
+        end
+
+        @assert(n_actual_pairs <= n_pairs)
+        get_doublets_from_histo(self.device_the_cells,self.device_n_cells,self.device_the_cell_neighbors,self.device_the_cell_tracks,hh,
+                                self.device_is_outer_hit_of_cell,n_actual_pairs,self.m_params.ideal_conditions,self.m_params.do_cluster_cut,
+                                self.m_params.do_z0_cut,self.m_params.do_pt_cut,self.m_params.max_num_of_doublets)
     end
 
 end

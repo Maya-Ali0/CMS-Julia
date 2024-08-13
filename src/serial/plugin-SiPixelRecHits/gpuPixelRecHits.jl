@@ -267,6 +267,8 @@ function getHits(cpeParams::ParamsOnGPU,
                     if (h > max_hits())
                         break
                     end
+                    println(h)
+                    println(n_hits(hits))
                     @assert h <= n_hits(hits)
                     @assert h <= clus_module_start(clusters, UInt32(me + 2))
                #     write(file,"n_hits = $(n_hits(hits))\n")

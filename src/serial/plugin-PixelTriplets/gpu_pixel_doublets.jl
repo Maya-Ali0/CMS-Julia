@@ -67,6 +67,9 @@ module gpuPixelDoublets
                                  cell_tracks::CellTracksVector,hh::TrackingRecHit2DSOAView,is_outer_hit_of_cell::Vector{OuterHitOfCell},phi_cuts::Vector{Int16},
                                  min_z::Vector{Float32},max_z::Vector{Float32},max_r::Vector{Float32},ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,
                                  do_pt_cut::Bool,max_num_of_doublets::Integer)
+        """
+        Used for filtering doublets based on the y-size comparision of the hits
+        """
         ###
         min_y_size_B1 = 36
         min_y_size_B2 = 28
@@ -80,21 +83,39 @@ module gpuPixelDoublets
         hist = phi_binner(hh)
         offsets = hits_layer_start(hh)
         @assert(!empty(offsets))
-
+        """
+        lambda function layer_size: returns the total number of hits for a particular layer : li
+        """
         layer_size = let offsets = offsets 
             li -> offsets[li+1] - offsets[li]
         end
 
         n_pairs_max = MAX_NUM_OF_LAYER_PAIRS
+        """
+        Ensure that the type of the pair (layer i -> layer j) is within the maximum bound MAX_NUM_OF_LAYER_PAIRS
+        defined in cluster constants
+        """
         @assert(n_pairs <= n_pairs_max)
-
+        """
+        used for determining for indexed hits which pair_layer_id to associate it with. Example:
+            If the index of a hit i was >= inner_layer_cumulative_size[pair_layer_id] but < inner_layer_cumulative_size[pair_layer_id+1],
+            then we associate it with that specific pair_layer_id
+        """
         inner_layer_cumulative_size = MArray{Tuple{n_pairs_max},UInt32}(undef)
         n_tot = 0
         inner_layer_cumulative_size[1] = layer_size(layer_pairs[1])
-        
+        """
+        To fill the inner_layer_cumulative_size array, we need to search for the number of hits for the inner layer of the pair labeled with i.
+        The layerPairs array contains all pairs p1, p2, p3, p4, ... Each pair contains two integers the first consisting of the inner layer, the 
+        second consisting of the outer layer. So layerPairs contains p1.first, p1.second, p2.first, p2.second, p3.first, p3.second etc...
+        To find the inner layer index of the i'th pair, we look at index 2*i - 1. We add 1 because julia indexing starts at 1.
+        """
         for i ∈ 2:n_pairs
             inner_layer_cumulative_size[i] = inner_layer_cumulative_size[i-1] + layer_size(layerPairs[2*i-1]+1)
         end
+        """
+        n_total : The total number of inner hits
+        """
         n_tot = inner_layer_cumulative_size[n_pairs]
         
         idy = 0
@@ -102,19 +123,32 @@ module gpuPixelDoublets
         stride = 1
         pair_layer_id = 1 
         #FIXME j may need to start from 1 for indexing 
+        """
+        Go over all inner hits by indexing them from 0 to the total number of inner hits - 1
+        """
         for j ∈ idy:n_tot-1
+            """
+            update the pair_layer_id to ensure the correct type of pair the hit j belongs to.
+            I don't think a while loop is needed here. A regular if statement would suffice.
+            """
             while(j >= inner_layer_cumulative_size[pair_layer_id])
                 pair_layer_id+=1
             end
             @assert(pair_layer_id <= n_pairs)
             @assert(j < inner_layer_cumulative_size[pair_layer_id])
             @assert(pair_layer_id == 1 || j >= inner_layer_cumulative_size[pair_layer_id-1])
-
+            
+            """
+            find the inner and outer indices for the layers 
+            """
             inner = layer_pairs[2*pair_layer_id-1]
             outer = layer_pairs[2*pair_layer_id]
-
             @assert(outer > inner)
             hoff = hist_off(Hist,outer)
+            """
+            i is the index of the inner hit within the hits struct
+            inner + 2 would never overflow becauses we are considering a hit on an inner layer
+            """
             i = (1 == pair_layer_id) ? j : j - inner_layer_cumulative_size[pair_layer_id-1] # previous layer
             i += offsets[inner+1] # +1 because indexed from 1 in julia
             @assert(i >= offsets[inner + 1]) # +1 because of indexing in julia
@@ -123,13 +157,16 @@ module gpuPixelDoublets
             if(mi > 2000)
                 continue 
             end
-            mez = z_global(hh,i)
-            if (mez < minz[pair_layer_id] || mez > maxz[pair_layer_id])
+            me_z = z_global(hh,i)
+            if (me_z < min_z[pair_layer_id] || me_z > max_z[pair_layer_id])
                 continue;
             end
-            
             me_s = -1
-
+            """
+            Modules on barrels are found on ladders which mount 8 modules each.
+            They are alternating. Here, the size of a hit on the y-direction must satisfy a lower bound.
+            inner hits on outer ladders on BPIX1 and BPIX2 are tested to meet the lower bound
+            """
             if do_cluster_cut
                 if inner == 0 
                     @assert(mi < 96)
@@ -155,7 +192,9 @@ module gpuPixelDoublets
             hard_pt_cut = 0.5 # GeV
             min_radius = hard_pt_cut * 87.78 # cm ( 1 GeV track has 1 GeV/c / (e * 3.8 T) ~ 87 cm radius in a 3.8 T field)
             min_radius_2T4 = 4. * min_radius * min_radius
-
+            """
+            Assuming Zero impact parameter, ensures that the calculated value for pt satisfies the lower bound
+            """
             pt_cut = let r2t4 = min_radius_2T4 , ri = me_r, hh = hh
                 (j,idphi) -> begin
                     ro = r_global(hh,j)
@@ -163,7 +202,9 @@ module gpuPixelDoublets
                     return dϕ^2 * (r2t4 - ri*ro) > (ro - ri)^2
                 end
             end
-
+            """
+            Ensure that the value Z0 the line in the rz plane formed by inner and outer hit is < z0_cut = 12 cm
+            """
             z0_cut_off = let ri = me_r , zi = me_z, max_r = max_r, z0_cut = z0_cut, hh = hh, pair_layer_id = pair_layer_id
                 (j) -> begin
                 zo = z_global(hh,j)
@@ -172,7 +213,10 @@ module gpuPixelDoublets
                 return dr > max_r[pair_layer_id] || dr < 0 || abs(zi*ro - ri*zo) > z0_cut * dr
                 end
             end
-            
+            """
+            Delta y of inner and outer hit must not be bigger than some upper bound. Depends on layer pair.
+            Here, if both hits are on barrrels, or if the inner hit is on a barrel, and the outer hit is on a disk.
+            """
             z_size_cut = let hh = hh , outer = outer, inner = inner, max_dy_size_12 = max_dy_size_12, max_dy_size = max_dy_size, me_s = me_s, zi = me_z, ri = me_r, dz_dr_fact = dz_dr_fact, max_dy_pred = max_dy_pred
                 (j) -> begin
                     only_barrel = outer < 4
@@ -183,6 +227,9 @@ module gpuPixelDoublets
                     return only_barrel ? (me_s > 0 && so > 0 && abs(so - me_s) > dy) : (inner < 4 ) && (me_s > 0 ) && abs(me_s - Int(abs((zi - zo)/(ri - ro))*dz_dr_fact + 0.5)) > max_dy_pred
                 end
             end
+            """
+            Consider hits that are delta phi away from inner hit.
+            """
             i_phi_cut = phi_cuts[pair_layer_id]
 
             kl = bin(hh,Int16(me_p-i_phi_cut))

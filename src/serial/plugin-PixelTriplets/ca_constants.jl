@@ -1,10 +1,10 @@
 module caConstants
-    export MAX_CELLS_PER_HIT, OuterHitOfCell, CellNeighbors, CellTracks, CellNeighborsVector, CellTracksVector
-    using StaticArrays
-    # using ..histogram:OneToManyAssoc
-    # using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants:MAX_NUMBER_OF_HITS
-    include("../CUDACore/vec_array.jl")
-    include("../CUDACore/simple_vector.jl")
+    export MAX_CELLS_PER_HIT, OuterHitOfCell, CellNeighbors, CellTracks, CellNeighborsVector, CellTracksVector, HitToTuple, TupleMultiplicity
+    export hindex_type
+    using ..histogram:OneToManyAssoc
+    using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants:MAX_NUMBER_OF_HITS
+    using Main:VecArray
+    using Main:SimpleVector
     const MAX_NUM_TUPLES = 48 * 1024
     const MAX_NUM_QUADRUPLETS = MAX_NUM_TUPLES
     const MAX_NUM_OF_DOUBLETS = 2 * 1024 * 1024
@@ -21,6 +21,6 @@ module caConstants
     const CellTracksVector = SimpleVector{CellTracks}
     const OuterHitOfCell = VecArray{UInt32,MAX_CELLS_PER_HIT}
     # const TuplesContainer = OneToManyAssoc{hindex_type,MAX_TUPLES,5*MAX_TUPLES}
-    # const HitToTuple = OneToManyAssoc{tindex_type,MAX_NUMBER_OF_HITS,4*MAX_TUPLES}
-    # const TupleMultiplicity = OneToManyAssoc{tindex_type,8,MAX_TUPLES}
+    const HitToTuple = OneToManyAssoc{tindex_type,MAX_NUMBER_OF_HITS,4*MAX_TUPLES}
+    const TupleMultiplicity = OneToManyAssoc{tindex_type,8,MAX_TUPLES}
 end

@@ -1,4 +1,3 @@
-using StaticArrays
 struct VecArray{T,maxSize}
     m_data::MArray{Tuple{maxSize},T}
     m_size::Int
