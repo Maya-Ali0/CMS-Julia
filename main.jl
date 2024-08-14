@@ -1,5 +1,5 @@
 using Patatrack
-using BenchmarkTools, ProfileView
+# using Profile, BenchmarkTools
 num_of_threads::Int = 1
 num_of_streams::Int = 0
 warm_up_events::Int = 0 # Number of events to process before starting the benchmark (default 0).
@@ -54,9 +54,5 @@ function run()
         e+=1
 end
 end
-
-@time run()
-
-
 
 

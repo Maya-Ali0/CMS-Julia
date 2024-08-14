@@ -9,6 +9,7 @@ using ...gpuConfig
 
 using ...CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
 using StaticArrays: MVector
+using ...Printf
 
 export calib_digis
 
@@ -52,17 +53,19 @@ function calib_digis(is_run_2::Bool, id::Vector{Int16}, x::Vector{Int16}, y::Vec
         ret = get_ped_and_gain(ped, id[i], col, row, is_dead_column_is_noisy_column)
         pedestal = ret[1]
         gain = ret[2]
-        # open("pedAndFed.txt","a") do file
-        #     write(file,string(pedestal)," ",string(gain),'\n')
-        # end
-        # float pedestal = 0, float gain = 1
+        
         if is_dead_column_is_noisy_column[1] || is_dead_column_is_noisy_column[2]
             id[i] = inv_id
             adc[i] = 0
             println("bad pixel at $i in $(id[i])")
         else
-            vcal = (adc[i] - pedestal) * gain
-            adc[i] = max(100, floor(Int, vcal * conversion_factor + offset))
+            vcal = adc[i] * gain - pedestal * gain
+            adc[i] = max(100, Int32(trunc(vcal * conversion_factor + offset)))
+
+            # open("testttt.txt","a") do file
+            #     write(file, "$(adc[i])\n")
+            # end
+            
         end
     end
 end

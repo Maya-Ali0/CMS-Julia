@@ -42,8 +42,8 @@ struct SiPixelGainForHLTonGPU
     _dead_flag::UInt32
     _noisy_flag::UInt32
 end
-    decode_gain(structure::SiPixelGainForHLTonGPU, gain) = gain * 0.0395257 + structure._min_gain
-    decode_ped(structure::SiPixelGainForHLTonGPU, ped) = ped * 1.00791 + structure._min_ped
+    decode_gain(structure::SiPixelGainForHLTonGPU, gain)::Float32 = gain * structure.gain_precision + structure._min_gain
+    decode_ped(structure::SiPixelGainForHLTonGPU, ped)::Float32 = ped * structure.ped_precision + structure._min_ped
 @inline function get_ped_and_gain(structure::SiPixelGainForHLTonGPU, module_ind, col, row, is_dead_column_is_noisy_column::MVector{2, Bool})
     range = Pair(structure.range_and_cols[module_ind+1].first,structure.range_and_cols[module_ind+1].last)
     n_cols = structure.range_and_cols[module_ind+1].cols
@@ -67,6 +67,10 @@ end
     is_dead_column_is_noisy_column[1] = ((s.ped & 0xFF) == structure._dead_flag)
     is_dead_column_is_noisy_column[2] = ((s.ped & 0xFF) == structure._noisy_flag)
     # println(structure.ped_precision," ",structure._min_ped)
+
+    # open("dataa.txt","a") do file
+    #     write(file,'\n')
+    # end
     return tuple(decode_ped(structure, s.ped & 0xFF), decode_gain(structure, s.gain & 0xFF))
 end
 
