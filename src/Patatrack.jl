@@ -1,7 +1,7 @@
 module Patatrack
 import Base.length
 using Printf
-
+using StaticArrays:MArray
 export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT,
 FED_EVSZ_EXTRACT, FED_CRCS_EXTRACT, FED_STAT_EXTRACT, FED_TTSI_EXTRACT,
 FED_MORE_TRAILERS_EXTRACT, FED_CRC_MODIFIED_EXTRACT, FED_SLINK_ERROR_EXTRACT,
@@ -99,6 +99,8 @@ export toGlobal_special
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
+include("serial/CUDACore/vec_array.jl")
+include("serial/CUDACore/simple_vector.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu_wrapper.jl")
 include("serial/CondFormats/si_pixel_fed_ids.jl")
@@ -158,4 +160,7 @@ include("serial/plugin-SiPixelRecHits/PixelCPEFastESProducer.jl")
 
 include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
 include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
+include("serial/plugin-PixelTriplets/ca_constants.jl")
+include("serial/plugin-PixelTriplets/fit_result.jl")
+include("serial/plugin-PixelTriplets/helix_fit_on_gpu.jl")
 end
