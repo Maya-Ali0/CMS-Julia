@@ -33,7 +33,7 @@ function getHits(cpeParams::ParamsOnGPU,
                  pdigis::CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA.DeviceConstView,
                  numElements::Integer,
                  pclusters::CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA.DeviceConstView,
-                 phits::TrackingRecHit2DSOAView, file)
+                 phits::TrackingRecHit2DSOAView)
 
 
         hits = phits
@@ -76,19 +76,19 @@ function getHits(cpeParams::ParamsOnGPU,
         clusParams = ClusParamsT{100000}()
 
         firstModule = 1
-        write(file, "firstModule: $firstModule\n")
+     #    write(file, "firstModule: $firstModule\n")
 
         endModule = module_start(clusters, 1)
         #print(endModule)
-        write(file, "endModule: $endModule\n")
-        write(file, "##############################################\n")
-        write(file, "FOR module 1 to $(endModule )\n")
+     #    write(file, "endModule: $endModule\n")
+     #    write(file, "##############################################\n")
+     #    write(file, "FOR module 1 to $(endModule )\n")
 
         for mod in firstModule:endModule
-            write(file, "me = $(module_id(clusters, mod))\n")
+            #write(file, "me = $(module_id(clusters, mod))\n")
             me = module_id(clusters, mod)
             nclus = clus_in_module(clusters, UInt32(me + 1))
-            write(file, "nclus = $(nclus)\n")
+            #write(file, "nclus = $(nclus)\n")
             
             if 0 == nclus
                 continue
@@ -96,7 +96,7 @@ function getHits(cpeParams::ParamsOnGPU,
             
         endClus = nclus
 
-        write(file, "FOR startClus 1 to $(nclus) incrementing by $MaxHitsInIter\n")
+        #write(file, "FOR startClus 1 to $(nclus) incrementing by $MaxHitsInIter\n")
 
             for startClus in 1:MaxHitsInIter:(endClus)
                 first = module_start(clusters, mod + 1)
@@ -144,7 +144,7 @@ function getHits(cpeParams::ParamsOnGPU,
                     #write(file, "clusParams.Q_l_Y[$ic] = $(clusParams.Q_l_Y[ic])\n")
                 end
                 
-                write(file,"FOR i in $first to $numElements \n")
+                #write(file,"FOR i in $first to $numElements \n")
 
                 for i in first:numElements
                     id = module_ind(digis, i)
@@ -270,15 +270,15 @@ function getHits(cpeParams::ParamsOnGPU,
                     if (h > max_hits())
                         break
                     end
-                    println(h)
-                    println(n_hits(hits))
+                    # println(h)
+                    # println(n_hits(hits))
                     @assert h <= n_hits(hits)
                     @assert h <= clus_module_start(clusters, UInt32(me + 2))
                     #write(file,"n_hits = $(n_hits(hits))\n")
                     #write(file,"clus_module_start = $(clus_module_start(clusters, UInt32(me + 2)))\n")
 
 
-                    position_corr(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic),file);
+                    position_corr(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic));
                     errorFromDB(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic));
                     
                     charge(hits, h, clusParams.charge[ic])

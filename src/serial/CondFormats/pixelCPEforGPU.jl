@@ -318,7 +318,7 @@ end
     - Updates `cp.xpos[ic]` and `cp.ypos[ic]` with the corrected x and y positions.
 
 """
-function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32, file) where {N}
+function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusParamsT{N}, ic::UInt32) where {N}
     # file = open("continue.txt", "w")
 
     llx = UInt16(cp.minRow[ic] + 1)
@@ -423,34 +423,34 @@ function position_corr(comParams::CommonParams, detParams::DetParams, cp::ClusPa
 
     xcorr = correction(cp.maxRow[ic] - cp.minRow[ic], cp.Q_f_X[ic], cp.Q_l_X[ic], llxl, urxl, detParams.chargeWidthX,
                     thickness, cotalpha, comParams.thePitchX, is_big_pix_x(cp.minRow[ic]), is_big_pix_x(cp.maxRow[ic]))
-    write(file, "maxRow - minRow: $(cp.maxRow[ic] - cp.minRow[ic])\n")
-    write(file, "Q_f_X: $(cp.Q_f_X[ic])\n")
-    write(file, "Q_l_X: $(cp.Q_l_X[ic])\n")
-    write(file, "llxl: $(llxl)\n")
-    write(file, "urxl: $(urxl)\n")
-    write(file, "chargeWidthX: ", @sprintf("%.9f", detParams.chargeWidthX), "\n")
-    write(file, "thickness: ", @sprintf("%.9f", thickness), "\n")
-    write(file, "cotalpha: ", @sprintf("%.9f", cotalpha), "\n")
-    write(file, "thePitchX: ", @sprintf("%.9f", comParams.thePitchX), "\n")
-    write(file, "isBigPixX(minRow): $(Int(is_big_pix_x(cp.minRow[ic])))\n")
-    write(file, "isBigPixX(maxRow): $(Int(is_big_pix_x(cp.maxRow[ic])))\n")
-    write(file, "xcorr: ", @sprintf("%.9f", xcorr), "\n")
+    # write(file, "maxRow - minRow: $(cp.maxRow[ic] - cp.minRow[ic])\n")
+    # write(file, "Q_f_X: $(cp.Q_f_X[ic])\n")
+    # write(file, "Q_l_X: $(cp.Q_l_X[ic])\n")
+    # write(file, "llxl: $(llxl)\n")
+    # write(file, "urxl: $(urxl)\n")
+    # write(file, "chargeWidthX: ", @sprintf("%.9f", detParams.chargeWidthX), "\n")
+    # write(file, "thickness: ", @sprintf("%.9f", thickness), "\n")
+    # write(file, "cotalpha: ", @sprintf("%.9f", cotalpha), "\n")
+    # write(file, "thePitchX: ", @sprintf("%.9f", comParams.thePitchX), "\n")
+    # write(file, "isBigPixX(minRow): $(Int(is_big_pix_x(cp.minRow[ic])))\n")
+    # write(file, "isBigPixX(maxRow): $(Int(is_big_pix_x(cp.maxRow[ic])))\n")
+    # write(file, "xcorr: ", @sprintf("%.9f", xcorr), "\n")
 
     ycorr = correction(cp.maxCol[ic] - cp.minCol[ic], cp.Q_f_Y[ic], cp.Q_l_Y[ic], llyl, uryl, detParams.chargeWidthY,
                     thickness, cotbeta, comParams.thePitchY, is_big_pix_y(cp.minCol[ic]), is_big_pix_y(cp.maxCol[ic]))
 
-    write(file, "maxCol - minCol: $(cp.maxCol[ic] - cp.minCol[ic])\n")
-    write(file, "Q_f_Y: $(cp.Q_f_Y[ic])\n")
-    write(file, "Q_l_Y: $(cp.Q_l_Y[ic])\n")
-    write(file, "llyl: $(llyl)\n")
-    write(file, "uryl: $(uryl)\n")
-    write(file, "chargeWidthY: ", @sprintf("%.9f", detParams.chargeWidthY), "\n")
-    write(file, "thickness: ", @sprintf("%.9f", thickness), "\n")
-    write(file, "cotbeta: ", @sprintf("%.9f", cotbeta), "\n")
-    write(file, "thePitchY: ", @sprintf("%.9f", comParams.thePitchY), "\n")
-    write(file, "isBigPixY(minCol): $(Int(is_big_pix_y(cp.minCol[ic])))\n")
-    write(file, "isBigPixY(maxCol): $(Int(is_big_pix_y(cp.maxCol[ic])))\n")
-    write(file, "ycorr: ", @sprintf("%.9f", ycorr), "\n")
+    # write(file, "maxCol - minCol: $(cp.maxCol[ic] - cp.minCol[ic])\n")
+    # write(file, "Q_f_Y: $(cp.Q_f_Y[ic])\n")
+    # write(file, "Q_l_Y: $(cp.Q_l_Y[ic])\n")
+    # write(file, "llyl: $(llyl)\n")
+    # write(file, "uryl: $(uryl)\n")
+    # write(file, "chargeWidthY: ", @sprintf("%.9f", detParams.chargeWidthY), "\n")
+    # write(file, "thickness: ", @sprintf("%.9f", thickness), "\n")
+    # write(file, "cotbeta: ", @sprintf("%.9f", cotbeta), "\n")
+    # write(file, "thePitchY: ", @sprintf("%.9f", comParams.thePitchY), "\n")
+    # write(file, "isBigPixY(minCol): $(Int(is_big_pix_y(cp.minCol[ic])))\n")
+    # write(file, "isBigPixY(maxCol): $(Int(is_big_pix_y(cp.maxCol[ic])))\n")
+    # write(file, "ycorr: ", @sprintf("%.9f", ycorr), "\n")
 
 
     cp.xpos[ic] = xPos + xcorr

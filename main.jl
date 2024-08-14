@@ -48,12 +48,10 @@ for collection ∈ raw_events
     produce(bs,event,es)
 
     recHit = SiPixelRecHitCUDA(reg)
-    produce(recHit,event,es,file)
+    produce(recHit,event,es)
     if(i == 10000)
         break
     end
 end
-
-
 
 

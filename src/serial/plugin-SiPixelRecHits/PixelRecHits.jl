@@ -30,13 +30,13 @@ end
 function makeHits(digis_d::SiPixelDigisSoA,
                   clusters_d::SiPixelClustersSoA,
                   bs_d::BeamSpotPOD, 
-                  cpeParams::ParamsOnGPU,file)
+                  cpeParams::ParamsOnGPU)
     nHits = nClusters(clusters_d)
 
     hits_d = TrackingRecHit2DHeterogeneous(nHits, cpeParams, clus_module_start(clusters_d))
 
     if (n_modules(digis_d) != 0)
-        getHits(cpeParams, bs_d, digiView(digis_d), n_digis(digis_d), clusterView(clusters_d), histView(hits_d),file)
+        getHits(cpeParams, bs_d, digiView(digis_d), n_digis(digis_d), clusterView(clusters_d), histView(hits_d))
     end
 
     if (nHits != 0)
