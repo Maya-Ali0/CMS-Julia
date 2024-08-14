@@ -729,6 +729,7 @@ module pixelGPUDetails
         #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
         #     end
         # end
+        println(clusters_d.clus_module_start_d[1])
         return (digis_d,clusters_d)
     end
     """

@@ -13,8 +13,8 @@ export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_inde
     const last_row_in_module = num_rows_in_module - 1
     const last_col_in_module = num_cols_in_module - 1
     
-    const x_offset = -81
-    const y_offset = -54 * 4
+    const x_offset::Int16 = Int16(-81)
+    const y_offset::Int16 = Int16(-54 * 4)
 
     const num_pixs_in_module = num_rows_in_module * num_cols_in_module
 

@@ -131,6 +131,7 @@ function toGlobal_Special(frame::SOAFrame{T}, vx::T, vy::T) where {T}
     ux += frame.px
     uy += frame.py
     uz += frame.pz
+    #println(frame.pz)
     return ux, uy, uz
 end
 

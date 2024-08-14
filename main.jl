@@ -33,8 +33,11 @@ produce(gain_Calibration_producer,es);
 produce(CPE_Producer,es);
 produce(beam_Producer,es)
 
-function run()
+
+file = open("1234.txt", "w")
+i = 0
 for collection ∈ raw_events
+    i = i + 1
     reg = ProductRegistry()
     raw_token = produces(reg,FedRawDataCollection)
     rawToCluster = SiPixelRawToClusterCUDA(reg)
@@ -46,12 +49,9 @@ for collection ∈ raw_events
     produce(bs,event,es)
 
     recHit = SiPixelRecHitCUDA(reg)
-    produce(recHit,event,es)
-
+    produce(recHit,event,es,file)
+    if(i == 2)
+        break
+    end
 end
-end
-
-@time run()
-
-
 

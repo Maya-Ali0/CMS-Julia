@@ -33,9 +33,8 @@ function getHits(cpeParams::ParamsOnGPU,
                  pdigis::CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA.DeviceConstView,
                  numElements::Integer,
                  pclusters::CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA.DeviceConstView,
-                 phits::TrackingRecHit2DSOAView)
+                 phits::TrackingRecHit2DSOAView, file)
 
-        file = open("coooo.txt", "w")
 
         hits = phits
         digis = pdigis
@@ -77,18 +76,19 @@ function getHits(cpeParams::ParamsOnGPU,
         clusParams = ClusParamsT{100000}()
 
         firstModule = 1
-   #     write(file, "firstModule: $firstModule\n")
+        write(file, "firstModule: $firstModule\n")
 
         endModule = module_start(clusters, 1)
-   #     write(file, "endModule: $endModule\n")
-   #     write(file, "##############################################\n")
-   #     write(file, "FOR module 1 to $(endModule )\n")
+        #print(endModule)
+        write(file, "endModule: $endModule\n")
+        write(file, "##############################################\n")
+        write(file, "FOR module 1 to $(endModule )\n")
 
         for mod in firstModule:endModule
-       #     write(file, "me = $(module_id(clusters, mod))\n")
+            write(file, "me = $(module_id(clusters, mod))\n")
             me = module_id(clusters, mod)
             nclus = clus_in_module(clusters, UInt32(me + 1))
-       #     write(file, "nclus = $(nclus)\n")
+            write(file, "nclus = $(nclus)\n")
             
             if 0 == nclus
                 continue
@@ -96,59 +96,59 @@ function getHits(cpeParams::ParamsOnGPU,
             
         endClus = nclus
 
-   #     write(file, "FOR startClus 1 to $(nclus) incrementing by $MaxHitsInIter\n")
+        write(file, "FOR startClus 1 to $(nclus) incrementing by $MaxHitsInIter\n")
 
             for startClus in 1:MaxHitsInIter:(endClus)
                 first = module_start(clusters, mod + 1)
-           #     write(file, "first: $first\n")
+               #  write(file, "first: $first\n")
 
 
                 nClusInIter = min(MaxHitsInIter, nclus - startClus + 1)
-           #     write(file, "nClusInIter: $nClusInIter\n")
+               #  write(file, "nClusInIter: $nClusInIter\n")
                 lastClus = startClus - 1 + nClusInIter
-           #     write(file, "lastClus: $lastClus\n")
+               #  write(file, "lastClus: $lastClus\n")
                 @assert nClusInIter <= nclus
                 @assert nClusInIter > 0
                 @assert lastClus <= nclus
                 @assert nclus > MaxHitsInIter || (1 == startClus && nClusInIter == nclus && lastClus == nclus)
                 
-           #     write(file, "##############################################\n")
-           #     write(file, "FOR ic 1 to $(nClusInIter )\n")
+               #  write(file, "##############################################\n")
+               #  write(file, "FOR ic 1 to $(nClusInIter )\n")
 
                 for ic in 1:nClusInIter
                     clusParams.minRow[ic] = UInt32(typemax(UInt32))
-               #     write(file, "clusParams.minRow[$ic] = $(clusParams.minRow[ic])\n")
+                    #write(file, "clusParams.minRow[$ic] = $(clusParams.minRow[ic])\n")
                     
                     clusParams.maxRow[ic] = zero(UInt32)
-               #     write(file, "clusParams.maxRow[$ic] = $(clusParams.maxRow[ic])\n")
+                    #write(file, "clusParams.maxRow[$ic] = $(clusParams.maxRow[ic])\n")
                     
                     clusParams.minCol[ic] = UInt32(typemax(UInt32))
-               #     write(file, "clusParams.minCol[$ic] = $(clusParams.minCol[ic])\n")
+                    #write(file, "clusParams.minCol[$ic] = $(clusParams.minCol[ic])\n")
                     
                     clusParams.maxCol[ic] = zero(UInt32)
-               #     write(file, "clusParams.maxCol[$ic] = $(clusParams.maxCol[ic])\n")
+                    #write(file, "clusParams.maxCol[$ic] = $(clusParams.maxCol[ic])\n")
                     
                     clusParams.charge[ic] = zero(UInt32)
-               #     write(file, "clusParams.charge[$ic] = $(clusParams.charge[ic])\n")
+                    #write(file, "clusParams.charge[$ic] = $(clusParams.charge[ic])\n")
                     
                     clusParams.Q_f_X[ic] = zero(UInt32)
-               #     write(file, "clusParams.Q_f_X[$ic] = $(clusParams.Q_f_X[ic])\n")
+                    #write(file, "clusParams.Q_f_X[$ic] = $(clusParams.Q_f_X[ic])\n")
                     
                     clusParams.Q_l_X[ic] = zero(UInt32)
-               #     write(file, "clusParams.Q_l_X[$ic] = $(clusParams.Q_l_X[ic])\n")
+                    #write(file, "clusParams.Q_l_X[$ic] = $(clusParams.Q_l_X[ic])\n")
                     
                     clusParams.Q_f_Y[ic] = zero(UInt32)
-               #     write(file, "clusParams.Q_f_Y[$ic] = $(clusParams.Q_f_Y[ic])\n")
+                    #write(file, "clusParams.Q_f_Y[$ic] = $(clusParams.Q_f_Y[ic])\n")
                     
                     clusParams.Q_l_Y[ic] = zero(UInt32)
-               #     write(file, "clusParams.Q_l_Y[$ic] = $(clusParams.Q_l_Y[ic])\n")
+                    #write(file, "clusParams.Q_l_Y[$ic] = $(clusParams.Q_l_Y[ic])\n")
                 end
                 
-           #     write(file,"FOR i in $first to $numElements \n")
+                write(file,"FOR i in $first to $numElements \n")
 
                 for i in first:numElements
                     id = module_ind(digis, i)
-               #     write(file, "id = $id\n")
+                    #write(file, "id = $id\n")
                     if id == InvId
                         continue
                     end
@@ -156,17 +156,17 @@ function getHits(cpeParams::ParamsOnGPU,
                         break
                     end
                     cl = clus(digis, i)
-               #     write(file, "cl = $cl\n")
+                    #write(file, "cl = $cl\n")
                     
                     if cl < startClus || cl > lastClus
                         continue
                     end
                     
                     x = xx(digis, i)
-               #     write(file, "x = $x\n")
+                    #write(file, "x = $x\n")
                     
                     y = yy(digis, i)
-               #     write(file, "y = $y\n")
+                    #write(file, "y = $y\n")
                     
                     cl = cl - startClus + 1
                     @assert cl >= 1 
@@ -175,22 +175,22 @@ function getHits(cpeParams::ParamsOnGPU,
                     if clusParams.minRow[cl] > x
                         clusParams.minRow[cl] = x
                     end
-               #     write(file, "clusParams.minRow[$cl] = $(clusParams.minRow[cl])\n")
+                    #write(file, "clusParams.minRow[$cl] = $(clusParams.minRow[cl])\n")
                     
                     if clusParams.maxRow[cl] < x
                         clusParams.maxRow[cl] = x
                     end
-               #     write(file, "clusParams.maxRow[$cl] = $(clusParams.maxRow[cl])\n")
+                    #write(file, "clusParams.maxRow[$cl] = $(clusParams.maxRow[cl])\n")
                     
                     if clusParams.minCol[cl] > y
                         clusParams.minCol[cl] = y
                     end
-               #     write(file, "clusParams.minCol[$cl] = $(clusParams.minCol[cl])\n")
+                    #write(file, "clusParams.minCol[$cl] = $(clusParams.minCol[cl])\n")
                     
                     if clusParams.maxCol[cl] < y
                         clusParams.maxCol[cl] = y
                     end
-               #     write(file, "clusParams.maxCol[$cl] = $(clusParams.maxCol[cl])\n")
+                    #write(file, "clusParams.maxCol[$cl] = $(clusParams.maxCol[cl])\n")
                 end
 
                 pixmx = typemax(UInt16)
@@ -226,8 +226,11 @@ function getHits(cpeParams::ParamsOnGPU,
                     y = yy(digis, i)
                #     write(file, "y = $y\n")
                     
+
+                    # write(file, "$(adc(digis,i))\n")
+
                     ch = min(adc(digis, i), pixmx)
-               #     write(file, "ch = $ch\n")
+                    # write(file, "ch = $ch\n")
                     
                     clusParams.charge[cl] = clusParams.charge[cl] + ch
                #     write(file, "clusParams.charge[$cl] = $(clusParams.charge[cl])\n")
@@ -253,24 +256,24 @@ function getHits(cpeParams::ParamsOnGPU,
                #     write(file, "clusParams.Q_l_Y[$cl] = $(clusParams.Q_l_Y[cl])\n")
                 end
 
-           #     write(file,"###########################################\n")
+                #write(file,"###########################################\n")
 
                 first = clus_module_start(clusters, UInt32(me + 1)) + startClus
-           #     write(file, "first = $first\n")
+                #write(file, "first = $first\n")
 
                 # exit(404)
-           #     write(file, "FOR ic in 1 to $nClusInIter\n")
+                #write(file, "FOR ic in 1 to $nClusInIter\n")
                 for ic in 1:nClusInIter
-               #     write(file,"########################################// $ic \n")
+                    #write(file,"########################################// $ic \n")
                     h = UInt32(first - 1 + ic)
-               #     write(file,"h is: $h\n")
+                    #write(file,"h is: $h\n")
                     if (h > max_hits())
                         break
                     end
                     @assert h <= n_hits(hits)
                     @assert h <= clus_module_start(clusters, UInt32(me + 2))
-               #     write(file,"n_hits = $(n_hits(hits))\n")
-               #     write(file,"clus_module_start = $(clus_module_start(clusters, UInt32(me + 2)))\n")
+                    #write(file,"n_hits = $(n_hits(hits))\n")
+                    #write(file,"clus_module_start = $(clus_module_start(clusters, UInt32(me + 2)))\n")
 
 
                     position_corr(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic),file);
@@ -290,10 +293,10 @@ function getHits(cpeParams::ParamsOnGPU,
                #     write(file, "clusParams.ypos[$ic] = $(clusParams.ypos[ic])\n")
 
                     cluster_size_x(hits, h, clusParams.xsize[ic])
-                    write(file, "clusParams.xsize[$h] = $(clusParams.xsize[ic])\n")
+                    # write(file, "clusParams.xsize[$h] = $(clusParams.xsize[ic])\n")
 
                     cluster_size_y(hits, h, clusParams.ysize[ic])
-                    write(file, "clusParams.ysize[$h] = $(clusParams.ysize[ic])\n")
+                    # write(file, "clusParams.ysize[$h] = $(clusParams.ysize[ic])\n")
 
                     xerr_local(hits, h, clusParams.xerr[ic] * clusParams.xerr[ic])
                #     write(file, "clusParams.xerr[$ic] = $(clusParams.xerr[ic] * clusParams.xerr[ic])\n")
@@ -329,8 +332,7 @@ function getHits(cpeParams::ParamsOnGPU,
             end
 
         end
-        close(file)
-        exit()
+     #    close(file)
 end 
 
 
