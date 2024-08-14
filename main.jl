@@ -1,5 +1,5 @@
 using Patatrack
-using Profile, BenchmarkTools
+# using Profile, BenchmarkTools
 num_of_threads::Int = 1
 num_of_streams::Int = 0
 warm_up_events::Int = 0 # Number of events to process before starting the benchmark (default 0).
@@ -34,7 +34,6 @@ produce(CPE_Producer,es);
 produce(beam_Producer,es)
 
 
-file = open("1234.txt", "w")
 i = 0
 for collection ∈ raw_events
     i = i + 1
@@ -54,4 +53,7 @@ for collection ∈ raw_events
         break
     end
 end
+
+
+
 
