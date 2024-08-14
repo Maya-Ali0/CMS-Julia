@@ -21,14 +21,20 @@ struct SiPixelRecHitCUDA <: EDProducer
 end
 
 function produce(self::SiPixelRecHitCUDA,iEvent::Event, es::EventSetup)
+    
     fcpe = get(es, PixelCPEFast)
+    
     clusters = get(iEvent, self.token)
+    
     digis = get(iEvent, self.tokenDigi)
+    
     bs = get(iEvent, self.tBeamSpot)
+    
     nHits = nClusters(clusters)
     # print(nHits)
     if nHits >= max_hits()
         println("Clusters/Hits Overflow ",nHits," >= ", TrackingRecHit2DSOAView::maxHits())
     end
     emplace(iEvent, self.tokenHit, makeHits(digis, clusters, bs, getCPUProduct(fcpe)))
+    
 end

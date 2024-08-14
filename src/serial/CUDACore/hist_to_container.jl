@@ -58,8 +58,9 @@ module histogram
     tot_bins(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
     n_bits(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
     capacity(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = SIZE
-    hist_off(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS},nh::Int) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_BINS * nh
+    hist_off(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS},nh::Integer) where {T, N_BINS, SIZE, S, I, N_HISTS} = N_BINS * nh
     type_I(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = I
+    type_T(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = T
     """
     functions given only the type but not an instance. Analogous to static members within structs in c++"
     """
@@ -203,25 +204,31 @@ module histogram
     offsets[nh+1] contains the size of the data in vector V
     for nh elements in v, i need nh+1 elements for describing ranges in offsets
     """
-    function count_from_vector(h::Histo,nh::UInt32,v::Vector{T},offsets::Vector{UInt32}) where {Histo, T}
-        for i ∈ 1:offsets[nh+1]
-            h.off = searchsortedfirst(offsets,i+1)
+    function count_from_vector(h::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},nh::Integer,v::Vector{T},offsets::Vector{UInt32}) where {T,N_BINS,SIZE,S,I,N_HISTS}
+        for i ∈ 0:offsets[nh+1]-1
+            off = searchsortedfirst(offsets,i)
+            if offsets[off] == i
+                off+=1
+            end
             @assert(off > 1)
             ih::UInt32 = off - 1 - 1 # number of histograms start indices to the left are off - 1 and another -1 for histogram index
             @assert(ih >= 0 )
             @assert(ih < Int(nh))
-            count(h,v[i],ih)
+            count!(h,v[i+1],ih)
         end
     end
 
-    function fill_from_vector(h::Histo,nh::UInt32,v::Vector{T},offsets::Vector{UInt32}) where {Histo,T}
-        for i ∈ 1::offsets[nh+1]
-            h.off = searchsortedfirst(offsets,i+1)
-            @assert(off > 1 )
-            ih::UInt32 = off - 1 - 1
+    function fill_from_vector(h::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},nh::Integer,v::Vector{T},offsets::Vector{UInt32}) where {T,N_BINS,SIZE,S,I,N_HISTS}
+        for i::I ∈ 0:offsets[nh+1]-1
+            off = searchsortedfirst(offsets,i)
+            if offsets[off] == i
+                off+=1
+            end
+            @assert(off > 1)
+            ih = off - 1 - 1 # number of histograms start indices to the left are off - 1 and another -1 for histogram index
             @assert(ih >= 0 )
             @assert(ih < Int(nh))
-            fill(h,v[i],i,ih)
+            fill!(h,v[i+1],i+I(1),ih)
         end
     end
     
@@ -243,6 +250,7 @@ module histogram
     end
     
     function fill_many_from_vector(h::Hist,nh::Integer,v::Vector{T},offsets::Vector{UInt32},tot_size::UInt32) where {Hist,T}
+        zero(h)
         count_from_vector(h,nh,v,offsets)
         finalize(h)
         fill_from_vector(h,nh,v,offsets)

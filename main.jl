@@ -34,20 +34,24 @@ produce(CPE_Producer,es);
 produce(beam_Producer,es)
 
 function run()
-for collection ∈ raw_events
-    reg = ProductRegistry()
-    raw_token = produces(reg,FedRawDataCollection)
-    rawToCluster = SiPixelRawToClusterCUDA(reg)
-    event::Event = Event(reg)
-    emplace(event,raw_token,collection)
-    produce(rawToCluster,event,es)
+    e = 0
+    for collection ∈ raw_events
+        if(e == 1)
+            break
+        end
+        reg = ProductRegistry()
+        raw_token = produces(reg,FedRawDataCollection)
+        rawToCluster = SiPixelRawToClusterCUDA(reg)
+        event::Event = Event(reg)
+        emplace(event,raw_token,collection)
+        produce(rawToCluster,event,es)
 
-    bs =  BeamSpotToPOD(reg)
-    produce(bs,event,es)
+        bs =  BeamSpotToPOD(reg)
+        produce(bs,event,es)
 
-    recHit = SiPixelRecHitCUDA(reg)
-    produce(recHit,event,es)
-
+        recHit = SiPixelRecHitCUDA(reg)
+        produce(recHit,event,es)
+        e+=1
 end
 end
 

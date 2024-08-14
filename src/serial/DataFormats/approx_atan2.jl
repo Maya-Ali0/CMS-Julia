@@ -179,8 +179,11 @@ function unsafe_atan2s_impl(y::Float32, x::Float32,DEGREE::Int)::Int16
     return (y < 0) ? -angle : angle
 end
 
-function unsafe_atan2s(y::Float32, x::Float32,DEGREE::Int)::Int16 # TO FIX POLYMORPHISM ACCORDING TO DEGREE LATER !!!!
-    return unsafe_atan2s_impl(y, x, DEGREE)
+function unsafe_atan2s(y::Float32, x::Float32,DEGREE::Int)::UInt16 # TO FIX POLYMORPHISM ACCORDING TO DEGREE LATER !!!!
+    println(unsafe_atan2s_impl(y, x, DEGREE))
+    while(true)
+    end
+    return abs(unsafe_atan2s_impl(y, x, DEGREE))
 end
 
 

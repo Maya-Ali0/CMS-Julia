@@ -3,8 +3,8 @@ module caConstants
     export hindex_type
     using ..histogram:OneToManyAssoc
     using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants:MAX_NUMBER_OF_HITS
-    using Main:VecArray
-    using Main:SimpleVector
+    using Patatrack:VecArray
+    using Patatrack:SimpleVector
     const MAX_NUM_TUPLES = 48 * 1024
     const MAX_NUM_QUADRUPLETS = MAX_NUM_TUPLES
     const MAX_NUM_OF_DOUBLETS = 2 * 1024 * 1024

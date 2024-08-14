@@ -142,6 +142,7 @@ function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup
                         false) #make clusters
     emplace(event,self.digi_put_token,tmp[1])
     x = tmp[2]
+    
     emplace(event,self.cluster_put_token,tmp[2])
 
 end  # module SiPixelRawToClusterCUDA

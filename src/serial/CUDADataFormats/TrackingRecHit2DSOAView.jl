@@ -7,7 +7,7 @@ using ..SOA_h
 using ..PixelGPU_h
 const Hist = HisToContainer{UInt16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10}
 export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global, charge, detector_index, x_local, y_local, cluster_size_x, cluster_size_y, xerr_local, yerr_local, hits_layer_start, r_global, i_phi
-export Hist
+export Hist , phi_binner
 """
     Struct representing the 2D Structure of Arrays view of tracking hits.
 
@@ -41,7 +41,7 @@ mutable struct TrackingRecHit2DSOAView
     m_yg::Vector{Float32}
     m_zg::Vector{Float32}
     m_rg::Vector{Float32}
-    m_iphi::Vector{Int16}
+    m_iphi::Vector{UInt16}
     m_charge::Vector{UInt32}
     m_xsize::Vector{Int16}
     m_ysize::Vector{Int16}
@@ -90,11 +90,11 @@ mutable struct TrackingRecHit2DSOAView
             m_yg::Vector{Float64},
             m_zg::Vector{Float64},
             m_rg::Vector{Float64},
-            m_iphi::Vector{Int16},
+            m_iphi::Vector{Union{UInt16,Int16}},
             m_charge::Vector{UInt32},
-            m_xsize::Vector{Int16},
-            m_ysize::Vector{Int16},
-            m_det_ind::Vector{Int16},
+            m_xsize::Vector{Union{UInt16,Int16}},
+            m_ysize::Vector{Union{UInt16,Int16}},
+            m_det_ind::Vector{Union{UInt16,Int16}},
             m_average_geometry::AverageGeometry,
             m_cpe_params::ParamsOnGPU,
             m_hits_module_start::Vector{UInt32},
@@ -330,11 +330,11 @@ end
     # Returns
     - `UInt16`: The phi index (`m_iphi[i]`) of the hit at index `i`.
 """
-@inline function i_phi(self::TrackingRecHit2DSOAView, i::UInt32)::Int16
+@inline function i_phi(self::TrackingRecHit2DSOAView, i::Integer)
     return self.m_iphi[i]
 end
 
-@inline function i_phi(self::TrackingRecHit2DSOAView, i::UInt32, k::Int16)::Int16
+@inline function i_phi(self::TrackingRecHit2DSOAView, i::Integer, k::UInt16)
     self.m_iphi[i] = k
 end
 

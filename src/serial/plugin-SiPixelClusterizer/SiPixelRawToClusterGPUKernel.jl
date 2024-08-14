@@ -698,7 +698,7 @@ module pixelGPUDetails
         #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
         #     end
         # end
-        """
+        
         cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         
         # open("testingClustersDigisIds.txt","w") do file
@@ -729,7 +729,7 @@ module pixelGPUDetails
         #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
         #     end
         # end
-        """
+        
         return (digis_d,clusters_d)
     end
     """
