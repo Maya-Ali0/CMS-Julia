@@ -185,6 +185,10 @@ module histogram
         w = hist.off[b]
         hist.off[b] -= 1
         @assert(w > 0)
+        # if(N_BINS == 128 && hist.bins[w] == 2233)
+        #     println(b)
+        #     while(true)end
+        # end
         hist.bins[w] = j
     end
 
@@ -214,6 +218,7 @@ module histogram
             ih::UInt32 = off - 1 - 1 # number of histograms start indices to the left are off - 1 and another -1 for histogram index
             @assert(ih >= 0 )
             @assert(ih < Int(nh))
+            
             count!(h,v[i+1],ih)
         end
     end
@@ -252,7 +257,7 @@ module histogram
     function fill_many_from_vector(h::Hist,nh::Integer,v::Vector{T},offsets::Vector{UInt32},tot_size::UInt32) where {Hist,T}
         zero(h)
         count_from_vector(h,nh,v,offsets)
-        finalize(h)
+        finalize!(h)
         fill_from_vector(h,nh,v,offsets)
     end
 

@@ -3,6 +3,7 @@ using ..BeamSpotPOD_h
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
+using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:i_phi
 using ..heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat
 using ..pixelGPUDetails.pixelConstants
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
@@ -43,42 +44,40 @@ function makeHits(digis_d::SiPixelDigisSoA,
     end
 
     if (nHits != 0)
-       fill_many_from_vector(phi_binner(hits_d), 10, iphi(hits_d), hits_layer_start(hits_d), nHits)
+       fill_many_from_vector(phi_binner(hits_d), 10, i_phi(histView(hits_d)), hits_layer_start(hits_d), nHits)
     end
-    println(iphi(hits_d)[1])
-    println(iphi(hits_d)[1])
-    while(true)
-    end
+
     # counter = 0
     # for x ∈ phi_binner(hits_d).bins
     #     if counter == 101
     #         break
     #     end
-    #     println(counter, " ", x)
+    #     println(counter, " ", x, " ", i_phi(histView(hits_d))[x])
     #     counter+=1
     # end
-    # open("rechits.txt", "w") do file
-    #     hits = histView(hits_d)
-    #     nHits = length(hits.m_xl) 
+    open("rechits.txt", "w") do file
+        hits = histView(hits_d)
+        nHits = length(hits.m_xl) 
     
 
-        # for i in 1:nHits
-        #     write(file, "m_xl: ", @sprintf("%.4f", hits.m_xl[i]), "\n")
-        #     write(file, "m_yl: ", @sprintf("%.4f", hits.m_yl[i]), "\n")
-        #     write(file, "m_xerr: ", @sprintf("%.4f", hits.m_xerr[i]), "\n")
-        #     write(file, "m_yerr: ", @sprintf("%.4f", hits.m_yerr[i]), "\n")
-        #     write(file, "m_xg: ", @sprintf("%.4f", hits.m_xg[i]), "\n")
-        #     write(file, "m_yg: ", @sprintf("%.4f", hits.m_yg[i]), "\n")
-        #     write(file, "m_zg: ", @sprintf("%.4f", hits.m_zg[i]), "\n")
-        #     write(file, "m_rg: ", @sprintf("%.4f", hits.m_rg[i]), "\n")
-        #     write(file, "m_iphi: ", string(hits.m_iphi[i]), "\n")
-        #     write(file, "m_charge: ", string(hits.m_charge[i]), "\n")
-        #     write(file, "m_xsize: ", string(hits.m_xsize[i]), "\n")
-        #     write(file, "m_ysize: ", string(hits.m_ysize[i]), "\n")
-        #     write(file, "m_detInd: ", string(hits.m_det_ind[i]), "\n")  # Assuming m_det_ind is an integer
-        #     write(file, "\n")  
-        # end
-    # end
+        for i in 1:length(phi_binner(hits_d).bins)
+            write(file, @sprintf("%i", phi_binner(hits_d).bins[i]-1), "\n")
+            # write(file, "m_xl: ", @sprintf("%.4f", hits.m_xl[i]), "\n")
+            # write(file, "m_yl: ", @sprintf("%.4f", hits.m_yl[i]), "\n")
+            # write(file, "m_xerr: ", @sprintf("%.4f", hits.m_xerr[i]), "\n")
+            # write(file, "m_yerr: ", @sprintf("%.4f", hits.m_yerr[i]), "\n")
+            # write(file, "m_xg: ", @sprintf("%.4f", hits.m_xg[i]), "\n")
+            # write(file, "m_yg: ", @sprintf("%.4f", hits.m_yg[i]), "\n")
+            # write(file, "m_zg: ", @sprintf("%.4f", hits.m_zg[i]), "\n")
+            # write(file, "m_rg: ", @sprintf("%.4f", hits.m_rg[i]), "\n")
+            # write(file, "m_iphi: ", string(hits.m_iphi[i]), "\n")
+            # write(file, "m_charge: ", string(hits.m_charge[i]), "\n")
+            # write(file, "m_xsize: ", string(hits.m_xsize[i]), "\n")
+            # write(file, "m_ysize: ", string(hits.m_ysize[i]), "\n")
+            # write(file, "m_detInd: ", string(hits.m_det_ind[i]), "\n")  # Assuming m_det_ind is an integer
+            # write(file, "\n")  
+        end
+    end
     
 
     

@@ -24,11 +24,11 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
     - `m_hitsLayerStart::Union{Nothing, Vector{UInt32}}`: Optional start indices for hits in layers, initialized as Nothing or a vector of UInt32.
     - `m_iphi::Union{Nothing, Vector{UInt16}}`: Optional vector of indices in phi, initialized as Nothing or a vector of UInt16.
 """
-    const Hist = HisToContainer{UInt16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10}
+    const Hist = HisToContainer{Int16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10}
 mutable struct TrackingRecHit2DHeterogeneous
     n16::UInt32
     n32::UInt32
-    m_store16::Union{Nothing, Vector{Vector{UInt16}}}
+    m_store16::Union{Nothing, Vector{Vector{Int16}}}
     m_store32::Union{Nothing, Vector{Vector{Float64}}}
     m_HistStore::HisToContainer
     m_AverageGeometryStore::AverageGeometry
@@ -37,7 +37,7 @@ mutable struct TrackingRecHit2DHeterogeneous
     m_hitsModuleStart::Vector{UInt32}
     m_hist::Hist
     m_hitsLayerStart::Union{Nothing, Vector{UInt32}}
-    m_iphi::Union{Nothing, Vector{UInt16}}
+    m_iphi::Union{Nothing, Vector{Int16}}
 
     """
         Constructor for TrackingRecHit2DHeterogeneous.
@@ -67,7 +67,7 @@ mutable struct TrackingRecHit2DHeterogeneous
         end
     
         # Initialize storage vectors
-        m_store16 = [Vector{Union{UInt16,Int16}}(undef, nHits) for _ in 1:n16]
+        m_store16 = [Vector{Int16}(undef, nHits) for _ in 1:n16]
         m_store32 = [Vector{Float64}(undef, nHits) for _ in 1:n32]
         m_store32_UInt32 = [Vector{UInt32}(undef, nHits) for _ in 1:n32]
         append!(m_store32, [Vector{Float64}(undef, 11)])
@@ -190,7 +190,7 @@ iphi(hit::TrackingRecHit2DHeterogeneous) = hit.m_iphi
 function test_tracking_rec_hit()
     hitsModuleStart = Integer[1, 2, 3] 
     cpe_params = ParamsOnGPU()
-    Hist = HisToContainer{UInt16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10}()
+    Hist = HisToContainer{Int16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10}()
     hits = TrackingRecHit2DHeterogeneous(3, cpe_params, hitsModuleStart, Hist)
     
     println("Number of hits: ", n_hits(hits))
