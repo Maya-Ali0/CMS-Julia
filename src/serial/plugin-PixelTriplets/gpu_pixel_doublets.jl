@@ -61,6 +61,9 @@ module gpuPixelDoublets
     function get_doublets_from_histo(cells::Vector{GPUCACell},n_cells::Integer,cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,
                                      hhp::TrackingRecHit2DSOAView,is_outer_hit_of_cell::Vector{OuterHitOfCell},n_actual_pairs::Integer,
                                      ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,do_pt_cut::Bool,max_num_of_doublets::Integer)
+        doublets_from_histo(layer_pairs,n_actual_pairs,cells,n_cells,cell_neighbors,
+        cell_tracks,hhp,is_outer_hit_of_cell,phi_cuts,min_z,max_z,max_r,ideal_cond,
+        do_cluster_cut,do_z0_cut,do_pt_cut,max_num_of_doublets)
     end
 
     function doublets_from_histo(layer_pairs::Vector{UInt8},n_pairs::Integer,cells::Vector{GPUCACell},n_cells::Integer,cell_neighbors::CellNeighborsVector,
