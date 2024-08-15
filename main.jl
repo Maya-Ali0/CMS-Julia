@@ -32,7 +32,6 @@ produce(cabling_map_producer,es)
 produce(gain_Calibration_producer,es);
 produce(CPE_Producer,es);
 produce(beam_Producer,es)
-
 function run()
     e = 0
     for collection ∈ raw_events
@@ -53,6 +52,7 @@ function run()
         produce(recHit,event,es)
         e+=1
 end
-end
 
+end
+run()
 

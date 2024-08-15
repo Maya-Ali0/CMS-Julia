@@ -23,9 +23,9 @@ function readGain(io::IOStream,es::EventSetup)
     _max_gain = read(io,Float32)
 
     ped_precision = read(io,Float32)
-    println(ped_precision)
+    # println(ped_precision)
     gain_precision = read(io,Float32)
-    println(gain_precision)
+    # println(gain_precision)
 
     _number_of_rows_averaged_over = read(io,UInt32)
     _n_bins_to_use_for_encoding = read(io,UInt32)

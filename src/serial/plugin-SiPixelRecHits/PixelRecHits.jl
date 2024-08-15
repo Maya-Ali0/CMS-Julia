@@ -47,6 +47,8 @@ function makeHits(digis_d::SiPixelDigisSoA,
     end
     println(iphi(hits_d)[1])
     println(iphi(hits_d)[1])
+    while(true)
+    end
     # counter = 0
     # for x ∈ phi_binner(hits_d).bins
     #     if counter == 101
