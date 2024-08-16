@@ -1,5 +1,5 @@
 using Patatrack
-# using Profile, BenchmarkTools
+using Profile, BenchmarkTools, ProfileView
 num_of_threads::Int = 1
 num_of_streams::Int = 0
 warm_up_events::Int = 0 # Number of events to process before starting the benchmark (default 0).
@@ -35,9 +35,9 @@ produce(beam_Producer,es)
 function run()
     e = 0
     for collection ∈ raw_events
-        if(e == 1)
-            break
-        end
+        # if(e == 1)
+        #     break
+        # end
         reg = ProductRegistry()
         raw_token = produces(reg,FedRawDataCollection)
         raw_to_cluster = SiPixelRawToClusterCUDA(reg)
@@ -58,4 +58,5 @@ end
 
 end
 run()
-
+@profview run()
+@time run()
