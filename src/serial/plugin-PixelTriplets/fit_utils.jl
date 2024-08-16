@@ -1,5 +1,6 @@
 module RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
 using StaticArrays
+using ..RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h
 
 function printIt(m::C, prefix::String = "") where C
     for r in 1:size(m, 1)
@@ -10,7 +11,7 @@ function printIt(m::C, prefix::String = "") where C
 end
 
 function sqr(a::T) where T
-    return a*a
+    return a .*a
 end
 
 

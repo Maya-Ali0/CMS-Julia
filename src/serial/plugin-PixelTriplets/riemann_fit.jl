@@ -57,8 +57,8 @@ using .RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
                                       B::Float64,
                                       ret::Matrix{Float64}) where {V4,VNd1,VNd2,N}
         n = N
-        p_t = min(20, fast_fit(2) * B)
-        p_2 = p_t * p_t * ( 1 + 1/fast_fit(3) * fast_fit(3))
+        p_t = min(20, fast_fit[2] * B)
+        p_2 = p_t * p_t * ( 1 + 1/fast_fit[3] * fast_fit[3])
         rad_lengths_S = Vector{Float64}(undef, N)
         S_values =  Vector{Float64}(undef, N)
         S_values = s_arcs .* s_arcs + z_values .* z_values
@@ -98,25 +98,25 @@ using .RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
     # negligible).
     @inline function scatter_cov_rad(p2D::M2xN, fast_fit::V4, rad::Vector{Float64}, B::Float64) where {M2xN,V4,N}
         n = N
-        p_t = min(20, fast_fit(2) * B)
-        p_2 = p_t * p_t * ( 1 + 1/fast_fit(3) * fast_fit(3))
-        theta = atan(fast_fit(3))
+        p_t = min(20, fast_fit[2] * B)
+        p_2 = p_t * p_t * ( 1 + 1/fast_fit[3] * fast_fit[3])
+        theta = atan(fast_fit[3])
         theta = theta < 0 ? theta + pi : theta
         rad_lengths = Vector{Float64}(undef, N)
         S_values =  Vector{Float64}(undef, N)
         o =  Vector{Float64}(undef, 2)
-        push!(o, fast_fit(0))
-        push!(o, fast_fit(1))
+        push!(o, fast_fit[0])
+        push!(o, fast_fit[1])
 
         for i in 1:N
             p = p2D[0:i:2:1] - o
             cross = cross2D(-o, p)
             dot = (-o).* p
             atan2 = atan2(cross, dot)
-            S_values[i] = abs(atan2 * fast_fit(2))
+            S_values[i] = abs(atan2 * fast_fit[2])
         end
 
-        compute_rad_len_uniform_material(S_values .* sqrt(1 + 1/ (fast_fit(3) * fast_fit(3))),rad_lengths)
+        compute_rad_len_uniform_material(S_values .* sqrt(1 + 1/ (fast_fit[3] * fast_fit[3])),rad_lengths)
         scatter_cov_rad = zeros(Float64, N, N)
         sig2 = Vector{Float64}(undef, N)
         sig2 = abs2(1. + 0.038 * log.(rad_lengths_S)) .* rad_lengths
@@ -177,7 +177,7 @@ using .RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
         cov_rad = Vector{Float64}(undef, N)
         rad_inv2 = sqr(cwiseInverse(rad))
         for i in 1:N
-            if rad[i] < e*-4
+            if rad[i] < exp(-4)
             cov_rad[i] = cov_cart[i,i]
             else
                 cov_rad[i] = rad_inv2[i] * (cov_cart[i, i] * sqr(p2D[1, i]) + cov_cart[i + n, i + n] * sqr(p2D[2, i]) -
@@ -198,6 +198,25 @@ using .RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
     # \return cov_rad covariance matrix in the pre-fitted circle's
     # orthogonal system.
 
-    @inline function cov_carttorad_prefit(p2D::M2xN, cov_cart::Matrix{Float64},fast_fit::V4)
+    @inline function cov_carttorad_prefit(p2D::M2xN, cov_cart::Matrix{Float64},fast_fit::V4,rad::VectorNd{Float64}) where {M2xN, V4,N}
+        n = N
+        cov_rad = Vector{Float64}(undef, N, N)
+        for i in 1:N
+            if rad[i] < exp(-4)
+                cov_rad[i] = cov_cart[i,i]
+            else
+                a = p2D[:, i]
+                b = p2D[:, i] - fast_fit[2]
+                x2 = a .* b
+                y2 = cross2D(a,b)
+                tan_c = -y2 / x2
+                tan_c2 = sqr(tan_c)
+                cov_rad[i] = 1/ (1 + tan_c2) * (cov_cart[i,i] + cov_cart[i+n,i+n] * tan_c2 + 2 * cov_cart[i,i+n] * tan_c)
+            end
+        end
+        return cov_rad
     end
+
+
+
 end
