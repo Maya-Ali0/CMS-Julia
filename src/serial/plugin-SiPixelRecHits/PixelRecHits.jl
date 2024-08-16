@@ -55,13 +55,13 @@ function makeHits(digis_d::SiPixelDigisSoA,
     #     println(counter, " ", x, " ", i_phi(histView(hits_d))[x])
     #     counter+=1
     # end
-    open("rechits.txt", "w") do file
-        hits = histView(hits_d)
-        nHits = length(hits.m_xl) 
+    # open("rechits.txt", "w") do file
+    #     hits = histView(hits_d)
+    #     nHits = length(hits.m_xl) 
     
 
-        for i in 1:length(phi_binner(hits_d).bins)
-            write(file, @sprintf("%i", phi_binner(hits_d).bins[i]-1), "\n")
+        # for i in 1:length(phi_binner(hits_d).bins)
+        #     write(file, @sprintf("%i", phi_binner(hits_d).bins[i]-1), "\n")
             # write(file, "m_xl: ", @sprintf("%.4f", hits.m_xl[i]), "\n")
             # write(file, "m_yl: ", @sprintf("%.4f", hits.m_yl[i]), "\n")
             # write(file, "m_xerr: ", @sprintf("%.4f", hits.m_xerr[i]), "\n")
@@ -76,11 +76,8 @@ function makeHits(digis_d::SiPixelDigisSoA,
             # write(file, "m_ysize: ", string(hits.m_ysize[i]), "\n")
             # write(file, "m_detInd: ", string(hits.m_det_ind[i]), "\n")  # Assuming m_det_ind is an integer
             # write(file, "\n")  
-        end
-    end
-    
-
-    
+        # end
+    # end    
     return hits_d
 end
 

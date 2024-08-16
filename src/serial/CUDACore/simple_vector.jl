@@ -1,5 +1,5 @@
 using Base
-struct SimpleVector{T}
+mutable struct SimpleVector{T}
     m_size::Int
     m_capacity::Int
     m_data:: Vector{T}
@@ -21,10 +21,10 @@ end
 
 function extend!(self::SimpleVector{T},size::Integer = 1) where T # check feels wrong
     self.m_size += size
-    if(self.m_size <= m_capacity)
+    if(self.m_size <= self.m_capacity)
         return self.m_size - size
     else
-        m_size -= size
+        self.m_size -= size
         return -1 
     end
 end

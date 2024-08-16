@@ -40,16 +40,19 @@ function run()
         end
         reg = ProductRegistry()
         raw_token = produces(reg,FedRawDataCollection)
-        rawToCluster = SiPixelRawToClusterCUDA(reg)
+        raw_to_cluster = SiPixelRawToClusterCUDA(reg)
         event::Event = Event(reg)
         emplace(event,raw_token,collection)
-        produce(rawToCluster,event,es)
+        produce(raw_to_cluster,event,es)
 
         bs =  BeamSpotToPOD(reg)
         produce(bs,event,es)
 
-        recHit = SiPixelRecHitCUDA(reg)
-        produce(recHit,event,es)
+        rec_hit = SiPixelRecHitCUDA(reg)
+        produce(rec_hit,event,es)
+
+        n_tuplets = CAHitNtuplet(reg)
+        produce(n_tuplets,event,es)
         e+=1
 end
 

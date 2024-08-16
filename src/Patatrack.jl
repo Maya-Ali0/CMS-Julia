@@ -97,6 +97,8 @@ export set_z_global
 
 export toGlobal_special
 
+export CAHitNtuplet
+
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
 include("serial/CUDACore/vec_array.jl")
@@ -162,5 +164,10 @@ include("serial/plugin-SiPixelRecHits/PixelRecHits.jl")
 include("serial/plugin-SiPixelRecHits/SiPixelRecHitCUDA.jl")
 include("serial/plugin-PixelTriplets/ca_constants.jl")
 include("serial/plugin-PixelTriplets/fit_result.jl")
+include("serial/plugin-PixelTriplets/gpu_ca_cell.jl")
+include("serial/plugin-PixelTriplets/gpu_pixel_doublets.jl")
+include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator_kernels.jl")
+include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator.jl")
+include("serial/plugin-PixelTriplets/ca_hit_ntuplet.jl")
 #include("serial/plugin-PixelTriplets/helix_fit_on_gpu.jl")
 end

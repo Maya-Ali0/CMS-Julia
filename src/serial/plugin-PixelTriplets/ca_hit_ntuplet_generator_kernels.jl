@@ -1,9 +1,10 @@
 module cAHitNtupletGenerator
-    using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
+    # using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
+    using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
     using StaticArrays:MArray
     using ..caConstants
     using ..gpuCACELL
-    using ..gpuPixelDoublets
+    using ..gpuPixelDoublets:init_doublets,n_pairs,get_doublets_from_histo
     export Params, Counters
     #using Main::kernel_fill_hit_indices
     struct Counters
@@ -20,8 +21,8 @@ module cAHitNtupletGenerator
         n_zero_track_cells::UInt64
         Counters() = new(0,0,0,0,0,0,0,0,0,0,0)
     end
-    const HitsView = TrackingRecHit2DSOAView
-    const HitsOnCPU = TrackingRecHit2DSOAView
+    # const HitsView = TrackingRecHit2DSOAView
+    const HitsOnCPU = TrackingRecHit2DHeterogeneous
 
     struct Region
         max_tip::Float32 # cm
@@ -58,7 +59,7 @@ module cAHitNtupletGenerator
         dca_cut_inner_triplet::Float32
         dca_cut_outer_triplet::Float32
         cuts::QualityCuts
-        function params(on_gpu::Bool, min_hits_per_ntuplet::Integer, max_num_of_doublets::Integer, use_riemann_fit::Bool,
+        function Params(on_gpu::Bool, min_hits_per_ntuplet::Integer, max_num_of_doublets::Integer, use_riemann_fit::Bool,
                fit_5_as_4::Bool, include_jumping_forward_doublets::Bool, early_fish_bone::Bool, late_fish_bone::Bool,
                ideal_conditions::Bool, do_stats::Bool, do_cluster_cut::Bool, do_z0_cut::Bool, do_pt_cut::Bool,
                pt_min::AbstractFloat, ca_theta_cut_barrel::AbstractFloat, ca_theta_cut_forward::AbstractFloat, hard_curv_cut::AbstractFloat,
@@ -82,12 +83,12 @@ module cAHitNtupletGenerator
                                12.0)) # |Zip| < 12.0 cm
     
     
-    struct CAHitNTupletGeneratorKernels
+    mutable struct CAHitNTupletGeneratorKernels
         #cell_storage::Vector{UInt8}
         device_the_cell_neighbors::CellNeighborsVector
-        device_the_cell_neighbors_container::CellNeighbors
+        device_the_cell_neighbors_container::Vector{CellNeighbors}
         device_the_cell_tracks::CellTracksVector
-        device_the_cell_tracks_container::CellTracks
+        device_the_cell_tracks_container::Vector{CellTracks}
         device_the_cells::Vector{GPUCACell}
         device_is_outer_hit_of_cell::Vector{OuterHitOfCell}
         device_n_cells::UInt32
@@ -96,13 +97,13 @@ module cAHitNtupletGenerator
         m_params::Params
         counters::Counters
         function CAHitNTupletGeneratorKernels(params::Params)
-            is_outer_hit_of_cell = Vector{OuterHitOfCell}(undef,max(1,n_hits))
-            the_cell_neighbors_container = Vector{CellNeighbors}(undef,MAX_NUM_OF_ACTIVE_DOUBLETS)
-            the_cell_tracks_container = Vector{CellTracks}(undef,MAX_NUM_OF_ACTIVE_DOUBLETS)
+            is_outer_hit_of_cell = OuterHitOfCell[]
+            the_cell_neighbors_container = fill(CellNeighbors(),MAX_NUM_OF_ACTIVE_DOUBLETS)
+            the_cell_tracks_container = fill(CellTracks(),MAX_NUM_OF_ACTIVE_DOUBLETS)
             the_cells = Vector{GPUCACell}(undef,params.max_num_of_doublets)
             new(CellNeighborsVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_neighbors_container),the_cell_neighbors_container,
                 CellTracksVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_tracks_container),the_cell_tracks_container,the_cells,is_outer_hit_of_cell,
-                0,HitToTuple(),TupleMultiplicity(),params)
+                0,HitToTuple(),TupleMultiplicity(),params,Counters())
         end
     end
     # function fill_hit_det_indices(hv::TrackingRecHit2DSOAView, tracks_d::TkSoA)
@@ -110,24 +111,25 @@ module cAHitNtupletGenerator
     # end
 
     function build_doublets(self::CAHitNTupletGeneratorKernels,hh::HitsOnCPU)
-        n_hits = n_hits(hh)
-        println("Building Doublets out of ",n_hits," Hits")
+        current_n_hits = n_hits(hh)
+        self.device_is_outer_hit_of_cell = fill(OuterHitOfCell(),max(1,current_n_hits))
+        println("Building Doublets out of ",current_n_hits," Hits")
         # cell_storage
-        init_doublets(self.device_is_outer_hit_of_cell,n_hits,self.device_the_cell_neighbors,self.device_the_cell_tracks)
-        if(n_hits == 0)
+        init_doublets(self.device_is_outer_hit_of_cell,current_n_hits,self.device_the_cell_neighbors,self.device_the_cell_tracks)
+        if(current_n_hits == 0)
             return
         end
 
         n_actual_pairs = n_pairs
 
-        if(!m_params.include_jumping_forward_doublets)
+        if(!self.m_params.include_jumping_forward_doublets)
             n_actual_pairs = 15
         end
 
-        if(min_hits_per_ntuplet > 3)
+        if(self.m_params.min_hits_per_ntuplet > 3)
             n_actual_pairs = 13
         end
-
+        
         @assert(n_actual_pairs <= n_pairs)
         get_doublets_from_histo(self.device_the_cells,self.device_n_cells,self.device_the_cell_neighbors,self.device_the_cell_tracks,hh,
                                 self.device_is_outer_hit_of_cell,n_actual_pairs,self.m_params.ideal_conditions,self.m_params.do_cluster_cut,

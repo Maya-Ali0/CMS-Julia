@@ -1,8 +1,8 @@
 module gpuCACELL
     using ..caConstants
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
-    using Main:VecArray
-    using Main:SimpleVector
+    using Patatrack:VecArray
+    using Patatrack:SimpleVector
     using Printf
     const ptr_as_int = UInt64
     const Hits = TrackingRecHit2DSOAView

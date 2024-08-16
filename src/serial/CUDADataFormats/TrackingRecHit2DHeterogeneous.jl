@@ -1,6 +1,7 @@
 module CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 
 export TrackingRecHit2DHeterogeneous, histView, ParamsOnGPU, hits_layer_start, phi_binner, iphi
+export n_hits
 
 # Import necessary types and functions from other modules
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView, ParamsOnGPU

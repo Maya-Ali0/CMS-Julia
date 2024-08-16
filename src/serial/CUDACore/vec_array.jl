@@ -1,7 +1,7 @@
-struct VecArray{T,maxSize}
+mutable struct VecArray{T,maxSize}
     m_data::MArray{Tuple{maxSize},T}
     m_size::Int
-    VecArray{T,maxSize}() where {T,maxSize} = new(MArray{Tuple{maxSize},Int}(undef),0)
+    VecArray{T,maxSize}() where {T,maxSize} = new(MArray{Tuple{maxSize},T}(undef),0)
 end
 function Base.push!(self::VecArray{T,maxSize},element::T) where {T,maxSize}
     self.m_size += 1
@@ -29,7 +29,7 @@ empty(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_size == 0
 resize(self::VecArray{T,maxSize},size::Integer) where {T,maxSize} = (self.m_size = size) 
 data(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_data
 capacity(self::VecArray{T,maxSize}) where {T,maxSize} = maxSize
-resize(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_size = 0 
+reset!(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_size = 0 
 Base.getindex(self::VecArray{T,maxSize}, i::Int) where {T,maxSize} = self.m_data[i]
 begin_v(self::VecArray{T,maxSize}) where {T,maxSize} = 1
 end_v(self::VecArray{T,maxSize}) where {T,maxSize} = maxSize

@@ -2,8 +2,9 @@ module gpuPixelDoublets
     using StaticArrays
     using ..caConstants
     using ..gpuCACELL
-    using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
+    using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
     using ..histogram
+    using Patatrack:reset!,extend!
     export n_pairs
     export get_doublets_from_histo
     n_pairs = 13 + 2 + 4 
@@ -41,35 +42,35 @@ module gpuPixelDoublets
         phi0p05
     )
 
-    const minz = SArray{Tuple{n_pairs}}(-20., 0., -30., -22., 10., -30., -70., -70., -22., 15., -30, -70., -70., -20., -22., 0, -30., -70., -70.)
-    const maxz = SArray{Tuple{n_pairs}}(20., 30., 0., 22., 30., -10., 70., 70., 22., 30., -15., 70., 70., 20., 22., 30., 0., 70., 70.)
-    const maxr = SArray{Tuple{n_pairs}}(20., 9., 9., 20., 7., 7., 5., 5., 20., 6., 6., 5., 5., 20., 20., 9., 9., 9., 9.)
+    const min_z = SArray{Tuple{n_pairs}}(-20., 0., -30., -22., 10., -30., -70., -70., -22., 15., -30, -70., -70., -20., -22., 0, -30., -70., -70.)
+    const max_z = SArray{Tuple{n_pairs}}(20., 30., 0., 22., 30., -10., 70., 70., 22., 30., -15., 70., 70., 20., 22., 30., 0., 70., 70.)
+    const max_r = SArray{Tuple{n_pairs}}(20., 9., 9., 20., 7., 7., 5., 5., 20., 6., 6., 5., 5., 20., 20., 9., 9., 9., 9.)
     function init_doublets(is_outer_hit_of_cell::Vector{OuterHitOfCell},n_hits::Integer,cell_neighbors::CellNeighborsVector,
                            cell_tracks::CellTracksVector)
-        @assert(!empty(is_outer_hit_of_cell))
+        @assert(!isempty(is_outer_hit_of_cell))
         first = 1
         for i ∈ first:n_hits
-            reset(is_outer_hit_of_cell[i])
+            reset!(is_outer_hit_of_cell[i])
         end
-        i = extend(cell_neighbors)
-        @assert(i == 1)
-        reset(cell_neighbors[1])
-        i = extend(cell_tracks)
-        @assert(i == 1)
-        reset(cell_tracks[1])
+        i = extend!(cell_neighbors)
+        @assert(i == 0)
+        reset!(cell_neighbors[1])
+        i = extend!(cell_tracks)
+        @assert(i == 0)
+        reset!(cell_tracks[1])
     end
     function get_doublets_from_histo(cells::Vector{GPUCACell},n_cells::Integer,cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,
-                                     hhp::TrackingRecHit2DSOAView,is_outer_hit_of_cell::Vector{OuterHitOfCell},n_actual_pairs::Integer,
+                                     hhp::TrackingRecHit2DHeterogeneous,is_outer_hit_of_cell::Vector{OuterHitOfCell},n_actual_pairs::Integer,
                                      ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,do_pt_cut::Bool,max_num_of_doublets::Integer)
         doublets_from_histo(layer_pairs,n_actual_pairs,cells,n_cells,cell_neighbors,
         cell_tracks,hhp,is_outer_hit_of_cell,phi_cuts,min_z,max_z,max_r,ideal_cond,
         do_cluster_cut,do_z0_cut,do_pt_cut,max_num_of_doublets)
     end
 
-    function doublets_from_histo(layer_pairs::Vector{UInt8},n_pairs::Integer,cells::Vector{GPUCACell},n_cells::Integer,cell_neighbors::CellNeighborsVector,
-                                 cell_tracks::CellTracksVector,hh::TrackingRecHit2DSOAView,is_outer_hit_of_cell::Vector{OuterHitOfCell},phi_cuts::Vector{Int16},
-                                 min_z::Vector{Float32},max_z::Vector{Float32},max_r::Vector{Float32},ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,
-                                 do_pt_cut::Bool,max_num_of_doublets::Integer)
+    function doublets_from_histo(layer_pairs::SArray{Tuple{layer_pairs_2}},n_pairs::Integer,cells::Vector{GPUCACell},n_cells::Integer,cell_neighbors::CellNeighborsVector,
+                                 cell_tracks::CellTracksVector,hh::TrackingRecHit2DHeterogeneous,is_outer_hit_of_cell::Vector{OuterHitOfCell},phi_cuts:: SArray{Tuple{n_layer_pairs}},
+                                 min_z::SArray{Tuple{n_layer_pairs}},max_z::SArray{Tuple{n_layer_pairs}},max_r::SArray{Tuple{n_layer_pairs}},ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,
+                                 do_pt_cut::Bool,max_num_of_doublets::Integer) where {n_layer_pairs, layer_pairs_2}
         """
         Used for filtering doublets based on the y-size comparision of the hits
         """
