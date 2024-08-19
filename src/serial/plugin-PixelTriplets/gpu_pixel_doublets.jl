@@ -3,7 +3,8 @@ module gpuPixelDoublets
     using ..caConstants
     using ..gpuCACELL
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
-    using ..histogram
+    using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:detector_index,z_global,cluster_size_y,i_phi,r_global
+    using ..histogram:hist_off,bin,begin_h,end_h,val,n_bins
     using Patatrack:reset!,extend!
     export n_pairs
     export get_doublets_from_histo
@@ -59,18 +60,18 @@ module gpuPixelDoublets
         @assert(i == 0)
         reset!(cell_tracks[1])
     end
-    function get_doublets_from_histo(cells::Vector{GPUCACell},n_cells::Integer,cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,
+    function get_doublets_from_histo(cells::Vector{GPUCACell},n_cells::UInt32,cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,
                                      hhp::TrackingRecHit2DHeterogeneous,is_outer_hit_of_cell::Vector{OuterHitOfCell},n_actual_pairs::Integer,
-                                     ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,do_pt_cut::Bool,max_num_of_doublets::Integer)
+                                     ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,do_pt_cut::Bool,max_num_of_doublets::Integer,file)
         doublets_from_histo(layer_pairs,n_actual_pairs,cells,n_cells,cell_neighbors,
         cell_tracks,hhp,is_outer_hit_of_cell,phi_cuts,min_z,max_z,max_r,ideal_cond,
-        do_cluster_cut,do_z0_cut,do_pt_cut,max_num_of_doublets)
+        do_cluster_cut,do_z0_cut,do_pt_cut,max_num_of_doublets,file)
     end
 
-    function doublets_from_histo(layer_pairs::SArray{Tuple{layer_pairs_2}},n_pairs::Integer,cells::Vector{GPUCACell},n_cells::Integer,cell_neighbors::CellNeighborsVector,
+    function doublets_from_histo(layer_pairs::SArray{Tuple{layer_pairs_2}},n_pairs::Integer,cells::Vector{GPUCACell},n_cells::UInt32,cell_neighbors::CellNeighborsVector,
                                  cell_tracks::CellTracksVector,hh::TrackingRecHit2DHeterogeneous,is_outer_hit_of_cell::Vector{OuterHitOfCell},phi_cuts:: SArray{Tuple{n_layer_pairs}},
                                  min_z::SArray{Tuple{n_layer_pairs}},max_z::SArray{Tuple{n_layer_pairs}},max_r::SArray{Tuple{n_layer_pairs}},ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,
-                                 do_pt_cut::Bool,max_num_of_doublets::Integer) where {n_layer_pairs, layer_pairs_2}
+                                 do_pt_cut::Bool,max_num_of_doublets::Integer,file) where {n_layer_pairs, layer_pairs_2}
         """
         Used for filtering doublets based on the y-size comparision of the hits
         """
@@ -86,7 +87,7 @@ module gpuPixelDoublets
         is_outer_ladder = ideal_cond
         hist = phi_binner(hh)
         offsets = hits_layer_start(hh)
-        @assert(!empty(offsets))
+        @assert(!isempty(offsets))
         """
         lambda function layer_size: returns the total number of hits for a particular layer : li
         """
@@ -107,7 +108,7 @@ module gpuPixelDoublets
         """
         inner_layer_cumulative_size = MArray{Tuple{n_pairs_max},UInt32}(undef)
         n_tot = 0
-        inner_layer_cumulative_size[1] = layer_size(layer_pairs[1])
+        inner_layer_cumulative_size[1] = layer_size(layer_pairs[1]+1)
         """
         To fill the inner_layer_cumulative_size array, we need to search for the number of hits for the inner layer of the pair labeled with i.
         The layerPairs array contains all pairs p1, p2, p3, p4, ... Each pair contains two integers the first consisting of the inner layer, the 
@@ -115,7 +116,7 @@ module gpuPixelDoublets
         To find the inner layer index of the i'th pair, we look at index 2*i - 1. We add 1 because julia indexing starts at 1.
         """
         for i ∈ 2:n_pairs
-            inner_layer_cumulative_size[i] = inner_layer_cumulative_size[i-1] + layer_size(layerPairs[2*i-1]+1)
+            inner_layer_cumulative_size[i] = inner_layer_cumulative_size[i-1] + layer_size(layer_pairs[2*i-1]+1)
         end
         """
         n_total : The total number of inner hits
@@ -148,7 +149,7 @@ module gpuPixelDoublets
             inner = layer_pairs[2*pair_layer_id-1]
             outer = layer_pairs[2*pair_layer_id]
             @assert(outer > inner)
-            hoff = hist_off(Hist,outer)
+            h_off = hist_off(Hist,outer)
             """
             i is the index of the inner hit within the hits struct
             inner + 2 would never overflow becauses we are considering a hit on an inner layer
@@ -157,11 +158,12 @@ module gpuPixelDoublets
             i += offsets[inner+1] # +1 because indexed from 1 in julia
             @assert(i >= offsets[inner + 1]) # +1 because of indexing in julia
             @assert(i < offsets[inner + 2])
-            mi = detector_index(hh,i)
+            i+=1
+            mi = detector_index(hist_view(hh),i)
             if(mi > 2000)
                 continue 
             end
-            me_z = z_global(hh,i)
+            me_z = z_global(hist_view(hh),i)
             if (me_z < min_z[pair_layer_id] || me_z > max_z[pair_layer_id])
                 continue;
             end
@@ -178,7 +180,7 @@ module gpuPixelDoublets
                 is_outer_ladder = ideal_cond ? true : ((mi ÷ 8 ) % 2) == 0
 
                 #Always test me_s > 0 
-                me_s = (inner > 0 || is_outer_ladder) ? cluster_size_y(i) : -1
+                me_s = (inner > 0 || is_outer_ladder) ? cluster_size_y(hist_view(hh),i) : -1
                 
                 if (inner == 0 && outer > 3) && (me_s > 0 && me_s < min_y_size_B1)# B1 and F1
                     continue
@@ -189,8 +191,8 @@ module gpuPixelDoublets
                 end
             end
 
-            me_p = i_phi(hh,i)
-            me_r = r_global(hh,i)
+            me_p = i_phi(hist_view(hh),i)
+            me_r = r_global(hist_view(hh),i)
             
             z0_cut = 12. # cm
             hard_pt_cut = 0.5 # GeV
@@ -201,7 +203,7 @@ module gpuPixelDoublets
             """
             pt_cut = let r2t4 = min_radius_2T4 , ri = me_r, hh = hh
                 (j,idphi) -> begin
-                    ro = r_global(hh,j)
+                    ro = r_global(hist_view(hh),j)
                     dϕ = idphi * ((2*π)/(1<<16))
                     return dϕ^2 * (r2t4 - ri*ro) > (ro - ri)^2
                 end
@@ -211,8 +213,8 @@ module gpuPixelDoublets
             """
             z0_cut_off = let ri = me_r , zi = me_z, max_r = max_r, z0_cut = z0_cut, hh = hh, pair_layer_id = pair_layer_id
                 (j) -> begin
-                zo = z_global(hh,j)
-                ro = r_global(hh,j)
+                zo = z_global(hist_view(hh),j)
+                ro = r_global(hist_view(hh),j)
                 dr = ro - ri
                 return dr > max_r[pair_layer_id] || dr < 0 || abs(zi*ro - ri*zo) > z0_cut * dr
                 end
@@ -224,11 +226,11 @@ module gpuPixelDoublets
             z_size_cut = let hh = hh , outer = outer, inner = inner, max_dy_size_12 = max_dy_size_12, max_dy_size = max_dy_size, me_s = me_s, zi = me_z, ri = me_r, dz_dr_fact = dz_dr_fact, max_dy_pred = max_dy_pred
                 (j) -> begin
                     only_barrel = outer < 4
-                    so = cluster_size_y(hh,j)
+                    so = cluster_size_y(hist_view(hh),j)
                     dy = (inner == 0 ) ? max_dy_size_12 : max_dy_size
-                    zo = z_global(hh,j)
-                    ro = r_global(hh,j)
-                    return only_barrel ? (me_s > 0 && so > 0 && abs(so - me_s) > dy) : (inner < 4 ) && (me_s > 0 ) && abs(me_s - Int(abs((zi - zo)/(ri - ro))*dz_dr_fact + 0.5)) > max_dy_pred
+                    zo = z_global(hist_view(hh),j)
+                    ro = r_global(hist_view(hh),j)
+                    return only_barrel ? (me_s > 0 && so > 0 && abs(so - me_s) > dy) : (inner < 4 ) && (me_s > 0 ) && abs(me_s - Int(trunc(abs((zi - zo)/(ri - ro))*dz_dr_fact + 0.5))) > max_dy_pred
                 end
             end
             """
@@ -236,18 +238,29 @@ module gpuPixelDoublets
             """
             i_phi_cut = phi_cuts[pair_layer_id]
 
-            kl = bin(hh,Int16(me_p-i_phi_cut))
-            kh = bin(hh,Int16(me_p+i_phi_cut))
+            kl = bin(hist,Int16(me_p-i_phi_cut))
+            kh = bin(hist,Int16(me_p+i_phi_cut))
+            kh += 1
+            if(kh == (n_bins(hist)+1))
+                kh = 1 
+            end
             current_bin = kl
             while(current_bin != kh)
-                p = begin_h(hh,current_bin+h_off)
-                e = end_h(hh,current_bin+h_off)
+                p = begin_h(hist,current_bin+h_off)
+                e = end_h(hist,current_bin+h_off)
                 p += first
+                if i == 13
+                    println("Current Bin: ", current_bin)
+                end
                 for p ∈ p:e-1
-                    oi = val(p)
-                    @assert(oi >= offsets[outer+1])
-                    @assert(oi < offsets[outer+2])
-                    mo = detector_index(hh,oi)
+                    
+                    oi = val(hist,p)
+                    if i == 13
+                        println(oi-1)
+                    end
+                    @assert(oi > offsets[outer+1])
+                    @assert(oi <= offsets[outer+2])
+                    mo = detector_index(hist_view(hh),oi)
                     if (mo > 2000)
                         continue
                     end
@@ -255,7 +268,7 @@ module gpuPixelDoublets
                         continue
                     end
                     
-                    mo_p = i_phi(hh,oi)
+                    mo_p = i_phi(hist_view(hh),oi)
                     i_dphi = abs(mo_p - me_p)
 
                     if i_dphi > i_phi_cut
@@ -270,16 +283,19 @@ module gpuPixelDoublets
                         continue
                     end
 
-                    n_cells+=1
+                    n_cells+=UInt32(1)
                     if(n_cells > max_num_of_doublets)
-                        n_cells -=1
+                        n_cells -=UInt32(1)
                         break
                     end
-                    init(cells[n_cells],cell_neighbors,cell_tracks,hh,pair_layer_id,n_cells,i,oi)
+                    cells[n_cells] = GPUCACell(cell_neighbors,cell_tracks,hist_view(hh),pair_layer_id,n_cells,i,oi,file)
                     push!(is_outer_hit_of_cell[oi],n_cells)
                 end
+                current_bin = current_bin+1
+                if(current_bin == (n_bins(hist)+1))
+                    current_bin = 1 
                 end
-
+                end
 
 
         end

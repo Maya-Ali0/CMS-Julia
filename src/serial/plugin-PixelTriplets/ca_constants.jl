@@ -1,7 +1,7 @@
 module caConstants
     export MAX_CELLS_PER_HIT, OuterHitOfCell, CellNeighbors, CellTracks, CellNeighborsVector, CellTracksVector, HitToTuple, TupleMultiplicity
     export hindex_type
-    export MAX_NUM_OF_ACTIVE_DOUBLETS
+    export MAX_NUM_OF_ACTIVE_DOUBLETS, MAX_NUM_OF_LAYER_PAIRS
     using ..histogram:OneToManyAssoc
     using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants:MAX_NUMBER_OF_HITS
     using Patatrack:VecArray

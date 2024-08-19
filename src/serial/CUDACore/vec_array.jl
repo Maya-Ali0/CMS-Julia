@@ -7,7 +7,7 @@ function Base.push!(self::VecArray{T,maxSize},element::T) where {T,maxSize}
     self.m_size += 1
     current_size = self.m_size
     if(current_size <= maxSize)
-        m_data[current_size] = element
+        self.m_data[current_size] = element
         return current_size
     else
         self.m_size-=1

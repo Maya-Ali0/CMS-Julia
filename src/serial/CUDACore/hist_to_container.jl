@@ -203,7 +203,7 @@ module histogram
     end_h(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = size(hist)
     begin_h(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},b::H) where {T, N_BINS, SIZE, S, I, N_HISTS, H <: Integer} = hist.off[b]+1 
     end_h(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},b::H) where {T, N_BINS, SIZE, S, I, N_HISTS, H <: Integer} = hist.off[b+1]+1 # returns first index of next bin
-    val(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},b) where {T, N_BINS, SIZE, S, I, N_HISTS} = hist.bins[b]
+    val(hist::HisToContainer{T,N_BINS,SIZE, S,I,N_HISTS},b::Integer) where {T, N_BINS, SIZE, S, I, N_HISTS} = hist.bins[b]
     """
     offsets[nh+1] contains the size of the data in vector V
     for nh elements in v, i need nh+1 elements for describing ranges in offsets

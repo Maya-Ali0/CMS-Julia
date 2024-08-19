@@ -1,6 +1,6 @@
 module CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 
-export TrackingRecHit2DHeterogeneous, histView, ParamsOnGPU, hits_layer_start, phi_binner, iphi
+export TrackingRecHit2DHeterogeneous, hist_view, ParamsOnGPU, hits_layer_start, phi_binner, iphi, Hist
 export n_hits
 
 # Import necessary types and functions from other modules
@@ -131,7 +131,7 @@ end
     ## Returns
     - `hit.m_view`: The stored view of type `Vector{TrackingRecHit2DSOAView}`.
 """
-histView(hit::TrackingRecHit2DHeterogeneous) = hit.m_view
+hist_view(hit::TrackingRecHit2DHeterogeneous) = hit.m_view
 
 """
     Accessor function for retrieving the number of hits.

@@ -34,6 +34,7 @@ produce(CPE_Producer,es);
 produce(beam_Producer,es)
 function run()
     e = 0
+    open("doubletsTesting.txt", "a") do file
     for collection ∈ raw_events
         # if(e == 1)
         #     break
@@ -52,11 +53,12 @@ function run()
         produce(rec_hit,event,es)
 
         n_tuplets = CAHitNtuplet(reg)
-        produce(n_tuplets,event,es)
+        produce(n_tuplets,event,es,file)
         e+=1
+end
 end
 
 end
 run()
-@profview run()
-@time run()
+# @profview run()
+# @time run()

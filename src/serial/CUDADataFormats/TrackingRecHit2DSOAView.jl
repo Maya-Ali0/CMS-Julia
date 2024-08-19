@@ -310,7 +310,7 @@ end
     # Returns
     - `Float64`: The global r-coordinate (`m_rg[i]`) of the hit at index `i`.
 """
-@inline function r_global(self::TrackingRecHit2DSOAView, i::UInt32)::Float64
+@inline function r_global(self::TrackingRecHit2DSOAView, i::Integer)
     return self.m_rg[i]
 end
 
@@ -392,7 +392,7 @@ end
     # Returns
     - `UInt16`: The size of the hit cluster in the y direction (`m_ysize[i]`) at index `i`.
 """
-@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::UInt32)::Int16
+@inline function cluster_size_y(self::TrackingRecHit2DSOAView, i::Integer)
     return self.m_ysize[i]
 end
 
@@ -411,7 +411,7 @@ end
     # Returns
     - `UInt16`: The detector index (`m_det_ind[i]`) of the hit at index `i`.
 """
-@inline function detector_index(self::TrackingRecHit2DSOAView, i::UInt32)::UInt16
+@inline function detector_index(self::TrackingRecHit2DSOAView, i::Integer)
     return self.m_det_ind[i]
 end
 
