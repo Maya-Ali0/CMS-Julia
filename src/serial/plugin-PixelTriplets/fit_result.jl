@@ -1,7 +1,7 @@
 module RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h
 
 using StaticArrays
-
+export circle_fit, line_fit, helix_fit
 struct circle_fit
     par::SVector{3,Float64} # parameter: (X0,Y0,R)
     cov::SMatrix{3,3,Float64}
