@@ -6,6 +6,7 @@ module gpuPixelDoublets
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:detector_index,z_global,cluster_size_y,i_phi,r_global
     using ..histogram:hist_off,bin,begin_h,end_h,val,n_bins
     using Patatrack:reset!,extend!
+    using Printf
     export n_pairs
     export get_doublets_from_histo
     n_pairs = 13 + 2 + 4 
@@ -81,7 +82,7 @@ module gpuPixelDoublets
         max_dy_size_12 = 28
         max_dy_size = 20
         max_dy_pred = 20
-        dz_dr_fact = 8 * 0.0285 / 0.015 # from dz/dr to "DY"
+        dz_dr_fact::Float32 = 8 * 0.0285 / 0.015 # from dz/dr to "DY"
         ### used when do_cluster_cut is set to true
 
         is_outer_ladder = ideal_cond
@@ -194,7 +195,7 @@ module gpuPixelDoublets
             me_p = i_phi(hist_view(hh),i)
             me_r = r_global(hist_view(hh),i)
             
-            z0_cut = 12. # cm
+            z0_cut = 12.f0 # cm
             hard_pt_cut = 0.5 # GeV
             min_radius = hard_pt_cut * 87.78 # cm ( 1 GeV track has 1 GeV/c / (e * 3.8 T) ~ 87 cm radius in a 3.8 T field)
             min_radius_2T4 = 4. * min_radius * min_radius
@@ -212,10 +213,16 @@ module gpuPixelDoublets
             Ensure that the value Z0 the line in the rz plane formed by inner and outer hit is < z0_cut = 12 cm
             """
             z0_cut_off = let ri = me_r , zi = me_z, max_r = max_r, z0_cut = z0_cut, hh = hh, pair_layer_id = pair_layer_id
-                (j) -> begin
+                (j,i) -> begin
                 zo = z_global(hist_view(hh),j)
                 ro = r_global(hist_view(hh),j)
                 dr = ro - ri
+                # if i == 2870 && j == 5793
+                #         @printf("%.16f\n",abs(zi*ro - ri*zo))
+                #         @printf("%.16f\n",z0_cut * dr)
+                #         println(typeof(dr))
+                #         println(typeof(z0_cut))
+                #     end
                 return dr > max_r[pair_layer_id] || dr < 0 || abs(zi*ro - ri*zo) > z0_cut * dr
                 end
             end
@@ -223,14 +230,14 @@ module gpuPixelDoublets
             Delta y of inner and outer hit must not be bigger than some upper bound. Depends on layer pair.
             Here, if both hits are on barrrels, or if the inner hit is on a barrel, and the outer hit is on a disk.
             """
-            z_size_cut = let hh = hh , outer = outer, inner = inner, max_dy_size_12 = max_dy_size_12, max_dy_size = max_dy_size, me_s = me_s, zi = me_z, ri = me_r, dz_dr_fact = dz_dr_fact, max_dy_pred = max_dy_pred
+            z_size_cut = let hh = hh , outer = outer, inner = inner, max_dy_size_12 = max_dy_size_12, max_dy_size = max_dy_size, me_s = me_s, zi = me_z, ri = me_r, dz_dr_fact::Float32 = dz_dr_fact::Float32, max_dy_pred = max_dy_pred
                 (j) -> begin
                     only_barrel = outer < 4
                     so = cluster_size_y(hist_view(hh),j)
                     dy = (inner == 0 ) ? max_dy_size_12 : max_dy_size
                     zo = z_global(hist_view(hh),j)
                     ro = r_global(hist_view(hh),j)
-                    return only_barrel ? (me_s > 0 && so > 0 && abs(so - me_s) > dy) : (inner < 4 ) && (me_s > 0 ) && abs(me_s - Int(trunc(abs((zi - zo)/(ri - ro))*dz_dr_fact + 0.5))) > max_dy_pred
+                    return only_barrel ? (me_s > 0 && so > 0 && abs(so - me_s) > dy) : (inner < 4 ) && (me_s > 0 ) && abs(me_s - Int(trunc(abs((zi - zo)/(ri - ro))*dz_dr_fact::Float32 + 0.5))) > max_dy_pred
                 end
             end
             """
@@ -249,37 +256,41 @@ module gpuPixelDoublets
                 p = begin_h(hist,current_bin+h_off)
                 e = end_h(hist,current_bin+h_off)
                 p += first
-                if i == 13
-                    println("Current Bin: ", current_bin)
-                end
                 for p ∈ p:e-1
                     
                     oi = val(hist,p)
-                    if i == 13
-                        println(oi-1)
-                    end
                     @assert(oi > offsets[outer+1])
                     @assert(oi <= offsets[outer+2])
+                    if oi == 5936 && i == 1091 && n_cells == 12734
+                        println("YAYAYA1")
+                    end
                     mo = detector_index(hist_view(hh),oi)
                     if (mo > 2000)
                         continue
                     end
-                    if (do_z0_cut && z0_cut_off(oi))
+                    if (do_z0_cut && z0_cut_off(oi,i))
+                        if oi == 5936 && i == 1091 && n_cells == 12734
+                            println("YAYAYA2")
+                        end
                         continue
                     end
                     
                     mo_p = i_phi(hist_view(hh),oi)
                     i_dphi = abs(mo_p - me_p)
-
                     if i_dphi > i_phi_cut
                         continue
                     end
-
                     if do_cluster_cut && z_size_cut(oi)
+                        if oi == 5936 && i == 1091 && n_cells == 12734
+                            println("YAYAYA3")
+                        end
                         continue
                     end
 
                     if do_pt_cut && pt_cut(oi,i_dphi)
+                        if oi == 5936 && i == 1091 && n_cells == 12734
+                            println("YAYAYA4")
+                        end
                         continue
                     end
 

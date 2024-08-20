@@ -33,12 +33,10 @@ produce(gain_Calibration_producer,es);
 produce(CPE_Producer,es);
 produce(beam_Producer,es)
 function run()
-    e = 0
+    e = 1
     open("doubletsTesting.txt", "a") do file
     for collection ∈ raw_events
-        # if(e == 1)
-        #     break
-        # end
+        # write(file,"EVENTT",string(e))
         reg = ProductRegistry()
         raw_token = produces(reg,FedRawDataCollection)
         raw_to_cluster = SiPixelRawToClusterCUDA(reg)
@@ -50,10 +48,11 @@ function run()
         produce(bs,event,es)
 
         rec_hit = SiPixelRecHitCUDA(reg)
-        produce(rec_hit,event,es)
-
+        produce(rec_hit,event,es)   
+        if e > 500
         n_tuplets = CAHitNtuplet(reg)
         produce(n_tuplets,event,es,file)
+        end
         e+=1
 end
 end

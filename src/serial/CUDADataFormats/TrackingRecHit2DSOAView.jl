@@ -228,11 +228,11 @@ end
     # Returns
     - `Float64`: The error in the local y-coordinate (`m_yerr[i]`) of the hit at index `i`.
 """
-@inline function yerr_local(self::TrackingRecHit2DSOAView, i::UInt32)::Float64
+@inline function yerr_local(self::TrackingRecHit2DSOAView, i::UInt32)
     return self.m_yerr[i]
 end
 
-@inline function yerr_local(self::TrackingRecHit2DSOAView, i::UInt32, k::Float32)::Float64
+@inline function yerr_local(self::TrackingRecHit2DSOAView, i::UInt32, k::Float32)
     self.m_yerr[i] = k
 end
 
@@ -248,7 +248,7 @@ end
     # Returns
     - `Float64`: The global x-coordinate (`m_xg[i]`) of the hit at index `i`.
 """
-@inline function x_global(self::TrackingRecHit2DSOAView, i)::Float64
+@inline function x_global(self::TrackingRecHit2DSOAView, i)
     return self.m_xg[i]
 end
 
@@ -264,7 +264,7 @@ end
     # Returns
     - `Float64`: The global y-coordinate (`m_yg[i]`) of the hit at index `i`.
 """
-@inline function y_global(self::TrackingRecHit2DSOAView, i)::Float64
+@inline function y_global(self::TrackingRecHit2DSOAView, i)
     return self.m_yg[i]
 end
 
@@ -280,7 +280,7 @@ end
     # Returns
     - `Float64`: The global z-coordinate (`m_zg[i]`) of the hit at index `i`.
 """
-@inline function z_global(self::TrackingRecHit2DSOAView, i)::Float64
+@inline function z_global(self::TrackingRecHit2DSOAView, i)
     return self.m_zg[i]
 end
 
@@ -314,7 +314,7 @@ end
     return self.m_rg[i]
 end
 
-@inline function r_global(self::TrackingRecHit2DSOAView, i::UInt32, l::Float32)::Float32
+@inline function r_global(self::TrackingRecHit2DSOAView, i::UInt32, l::Float32)
     self.m_rg[i] = l
 end
 
