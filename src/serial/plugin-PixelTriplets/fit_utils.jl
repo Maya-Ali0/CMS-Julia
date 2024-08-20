@@ -1,7 +1,7 @@
 module RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
 using StaticArrays
 using ..RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h
-
+export cross2D, printIt, sqr
 function printIt(m::C, prefix::String = "") where C
     for r in 1:size(m, 1)
         for c in 1:size(m, 2)
