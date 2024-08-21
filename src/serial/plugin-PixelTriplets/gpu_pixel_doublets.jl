@@ -84,7 +84,7 @@ module gpuPixelDoublets
         max_dy_pred = 20
         dz_dr_fact::Float32 = 8 * 0.0285 / 0.015 # from dz/dr to "DY"
         ### used when do_cluster_cut is set to true
-
+        
         is_outer_ladder = ideal_cond
         hist = phi_binner(hh)
         offsets = hits_layer_start(hh)
@@ -107,9 +107,11 @@ module gpuPixelDoublets
             If the index of a hit i was >= inner_layer_cumulative_size[pair_layer_id] but < inner_layer_cumulative_size[pair_layer_id+1],
             then we associate it with that specific pair_layer_id
         """
+        
         inner_layer_cumulative_size = MArray{Tuple{n_pairs_max},UInt32}(undef)
         n_tot = 0
         inner_layer_cumulative_size[1] = layer_size(layer_pairs[1]+1)
+        
         """
         To fill the inner_layer_cumulative_size array, we need to search for the number of hits for the inner layer of the pair labeled with i.
         The layerPairs array contains all pairs p1, p2, p3, p4, ... Each pair contains two integers the first consisting of the inner layer, the 
@@ -119,6 +121,7 @@ module gpuPixelDoublets
         for i ∈ 2:n_pairs
             inner_layer_cumulative_size[i] = inner_layer_cumulative_size[i-1] + layer_size(layer_pairs[2*i-1]+1)
         end
+        
         """
         n_total : The total number of inner hits
         """
@@ -132,6 +135,7 @@ module gpuPixelDoublets
         """
         Go over all inner hits by indexing them from 0 to the total number of inner hits - 1
         """
+        
         for j ∈ idy:n_tot-1
             """
             update the pair_layer_id to ensure the correct type of pair the hit j belongs to.
@@ -199,6 +203,7 @@ module gpuPixelDoublets
             hard_pt_cut = 0.5 # GeV
             min_radius = hard_pt_cut * 87.78 # cm ( 1 GeV track has 1 GeV/c / (e * 3.8 T) ~ 87 cm radius in a 3.8 T field)
             min_radius_2T4 = 4. * min_radius * min_radius
+            
             """
             Assuming Zero impact parameter, ensures that the calculated value for pt satisfies the lower bound
             """
@@ -243,6 +248,7 @@ module gpuPixelDoublets
             """
             Consider hits that are delta phi away from inner hit.
             """
+            
             i_phi_cut = phi_cuts[pair_layer_id]
 
             kl = bin(hist,Int16(me_p-i_phi_cut))
@@ -252,6 +258,7 @@ module gpuPixelDoublets
                 kh = 1 
             end
             current_bin = kl
+            
             while(current_bin != kh)
                 p = begin_h(hist,current_bin+h_off)
                 e = end_h(hist,current_bin+h_off)
@@ -261,39 +268,28 @@ module gpuPixelDoublets
                     oi = val(hist,p)
                     @assert(oi > offsets[outer+1])
                     @assert(oi <= offsets[outer+2])
-                    if oi == 5936 && i == 1091 && n_cells == 12734
-                        println("YAYAYA1")
-                    end
+                    
                     mo = detector_index(hist_view(hh),oi)
                     if (mo > 2000)
                         continue
                     end
+                    
                     if (do_z0_cut && z0_cut_off(oi,i))
-                        if oi == 5936 && i == 1091 && n_cells == 12734
-                            println("YAYAYA2")
-                        end
                         continue
                     end
-                    
                     mo_p = i_phi(hist_view(hh),oi)
                     i_dphi = abs(mo_p - me_p)
                     if i_dphi > i_phi_cut
                         continue
                     end
                     if do_cluster_cut && z_size_cut(oi)
-                        if oi == 5936 && i == 1091 && n_cells == 12734
-                            println("YAYAYA3")
-                        end
                         continue
                     end
 
                     if do_pt_cut && pt_cut(oi,i_dphi)
-                        if oi == 5936 && i == 1091 && n_cells == 12734
-                            println("YAYAYA4")
-                        end
                         continue
                     end
-
+                    
                     n_cells+=UInt32(1)
                     if(n_cells > max_num_of_doublets)
                         n_cells -=UInt32(1)
@@ -306,10 +302,11 @@ module gpuPixelDoublets
                 if(current_bin == (n_bins(hist)+1))
                     current_bin = 1 
                 end
-                end
+            end
 
-
-        end
+            
+        end 
+        
 
     end
 end

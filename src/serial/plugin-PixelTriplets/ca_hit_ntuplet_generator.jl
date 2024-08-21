@@ -36,7 +36,7 @@ end
 function make_tuples(self::CAHitNtupletGeneratorOnGPU,hits_d::TrackingRecHit2DHeterogeneous,b_field::AbstractFloat,file)
     # Create PixelTrackHeterogeneous
     # soa = tracks.get()
-    kernels = CAHitNTupletGeneratorKernels(self.m_params)
+    kernels = CAHitNTupletGeneratorKernels(self.m_params) # m 
     kernels.counters = self.m_counters
     build_doublets(kernels,hits_d,file)
 end

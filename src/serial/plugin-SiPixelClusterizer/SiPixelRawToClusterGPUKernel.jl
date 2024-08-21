@@ -425,7 +425,7 @@ module pixelGPUDetails
             error_found = true 
         elseif error_found == 28
             if debug
-                prinf("Error fifo nearly full (error_type = 28) \n")
+                printf("Error fifo nearly full (error_type = 28) \n")
             end
             error_found = true 
         elseif error_found == 29
