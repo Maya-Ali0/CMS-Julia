@@ -4,3 +4,4 @@ data/cablingMap.bin
 data/fedIds.bin
 data/gain.bin
 data/raw.bin
+.vscode/

@@ -3,6 +3,7 @@ mutable struct VecArray{T,maxSize}
     m_size::Int
     VecArray{T,maxSize}() where {T,maxSize} = new(MArray{Tuple{maxSize},T}(undef),0)
 end
+
 function Base.push!(self::VecArray{T,maxSize},element::T) where {T,maxSize}
     self.m_size += 1
     current_size = self.m_size
@@ -14,6 +15,7 @@ function Base.push!(self::VecArray{T,maxSize},element::T) where {T,maxSize}
         return -1
     end
 end
+
 function Base.pop!(self::VecArray{T,maxSize}) where {T,maxSize}
     if(maxSize > 0)
         self.m_size -= 1
@@ -21,6 +23,10 @@ function Base.pop!(self::VecArray{T,maxSize}) where {T,maxSize}
     else
         return -1
     end
+end
+
+function reset(self::VecArray{T,maxSize}) where {T,maxSize}
+    self.m_size = 0
 end
 
 Base.last(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_data[self.m_size]

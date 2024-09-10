@@ -10,6 +10,14 @@ module gpuCACELL
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:z_global,r_global
     export GPUCACell
 
+    using Main:CircleEq
+    using Main:curvature
+    using Main:dca0
+    using Main:extend!
+    using Main:reset
+    using Main:push!
+    using Main:empty
+
     struct GPUCACell
         the_outer_neighbors::CellNeighbors
         the_tracks::CellTracks
@@ -67,3 +75,92 @@ module gpuCACELL
     end
     
 end
+
+function get_inner_hit_id(self::GPUCACell)
+    return self.the_inner_hit_id
+end
+
+function get_inner_x(self::GPUCACell, hh::TrackingRecHit2DSOAView)
+    return x_global(hh, self.the_inner_hit_id)
+end
+
+function get_inner_y(self::GPUCACell, hh::TrackingRecHit2DSOAView)
+    return y_global(hh, self.the_inner_hit_id)
+end
+
+function get_outer_x(self::GPUCACell, hh::TrackingRecHit2DSOAView)
+    return x_global(hh, self.the_outer_hit_id)
+end
+
+function get_outer_y(self::GPUCACell, hh::TrackingRecHit2DSOAView)
+    return y_global(hh, self.the_outer_hit_id)
+end
+
+function get_inner_r(self::GPUCACell, hh::TrackingRecHit2DSOAView)
+    return self.the_inner_r
+end
+
+function get_inner_z(self::GPUCACell, hh::TrackingRecHit2DSOAView)
+    return self.the_inner_z
+end
+
+function get_outer_r(self::GPUCACell, hh::TrackingRecHit2DSOAView)
+    return r_global(hh, self.the_outer_hit_id)
+end
+
+function get_outer_z(self::GPUCACell, hh::TrackingRecHit2DSOAView)
+    return z_global(hh, self.the_outer_hit_id)
+end
+
+function get_inner_det_index(self::GPUCACell, hh::TrackingRecHit2DSOAView)
+    return detector_index(hh, self.the_inner_hit_id)
+end
+
+function get_outer_det_index(self::GPUCACell, hh::TrackingRecHit2DSOAView)
+    return detector_index(hh, self.the_outer_hit_id)
+end
+
+function are_aligned(r1, z1, ri, zi, ro, zo, pt_min, theta_cut)
+    radius_diff = abs(r1 - ro)
+    distance_13_squared = radius_diff * radius_diff + (z1 - zo) * (z1 - zo)
+    p_min = pt_min * √(distance_13_squared)
+    tan_12_13_half_mul_distance_13_squared = abs(z1 * (ri - ro) + zi * (ro - r1) + zo * (r1 - ri))
+    return tan_12_13_half_mul_distance_13_squared * p_min <= theta_cut * distance_13_squared * radius_diff
+end
+
+function dca_cut(cell::GPUCACell, other_cell::GPUCACell, hh::TrackingRecHit2DSOAView, region_origin_radius_plus_tolerance, max_curv)
+    x1 = get_inner_x(other_cell, hh)
+    y1 = get_inner_y(other_cell, hh)
+
+    x2 = get_inner_x(cell, hh)
+    y2 = get_inner_y(cell, hh)
+
+    x3 = get_outer_x(cell, hh)
+    y3 = get_outer_y(cell, hh)
+
+    eq = CircleEq{Float32}(x1, y1, x2, y2, x3, y3)
+    curvature = curvature(eq)
+    if curvature > max_curv
+        return false
+    end
+    return abs(dca0(eq)) < region_origin_radius_plus_tolerance * abs(curvature)
+end
+
+function outer_neighbors(self::GPUCACell)
+    return self.the_outer_neighbors
+end
+
+function add_outer_neighbor(other_cell::GPUCACell, t::UInt32, cell_neighbors::CellNeighborsVector)
+    outer_neighbors = outer_neighbors(other_cell)
+    if empty(outer_neighbors)
+        i = extend!(cell_neighbors)
+        if i > 1
+            reset(cell_neighbors[i])
+            other_cell.the_outer_neighbors = cell_neighbors[i]
+        else
+            return -1
+        end
+    end
+    return push!(outer_neighbors, t)
+end
+

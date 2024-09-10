@@ -57,4 +57,10 @@ function dca(self::CircleEq{T},x::T,y::T) where T
     return  √(x^2 + y^2) - T(1)
 end
 
+function dca0(self::CircleEq{T}) where T
+    x = self.m_c * self.m_xp + self.m_alpha
+    y = self.m_c * self.m_yp + self.m_beta
+    return  √(x^2 + y^2) - T(1)
+end
+
 radius(self::CircleEq{T}) where T = T(1)/m_c
