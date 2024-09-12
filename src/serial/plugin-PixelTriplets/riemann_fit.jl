@@ -1,5 +1,6 @@
 module RecoPixelVertexing_PixelTrackFitting_interface_RiemannFit_h
 using LinearAlgebra
+using Statistics
 using Test
 using StaticArrays
 using ..RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
@@ -289,7 +290,7 @@ using ..RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
     # - weights estimation and chi2 computation in circle fit (useful);
     # - computation of error due to multiple scattering.
     @inline function fast_fit(hits::Matrix{Float64}, result::Vector{Float64})
-        N = size(matrix, 2)
+        N = size(hits, 2)
         printIt(hits, "Fast_fit - hits: ")
 
         # circle fit
@@ -352,6 +353,465 @@ using ..RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
     # \bug for small pt (<0.3 Gev/c) chi2 could be slightly underestimated.
     # \bug further investigation needed for error propagation with multiple
     # scattering.
+    function circle_fit(hits2D::Matrix{Float64}, hits_cov2D::Matrix{Float64}, fast_fit::Vector{Float64}, rad::Vector{Float64}, B::Float64, error::Bool)
+        V = hits_cov2D
+        n = size(hits2D,2)
+        printIt(hits2D, "circle_fit - hits2D:")
+        printIt(hits_cov2D, "circle_fit - hits_cov2D:")
+        
+        # weight computation
+        cov_rad = diagonal(cov_carttorad_prefit(hits2D, V, fast_fit, rad))
+        scatter_cov_rad = scatter_cov_rad(hits2D, fast_fit, rad, B)
+        printIt(scatter_cov_rad, "circle_fit - scatter_cov_rad:")
+        printIt(hits2D, "circle_fit - hits2D bis:")
+
+        V += cov_radtocart(hits2D, scatter_cov_rad, rad)
+        printIt(V, "circle_fit - V:")
+        cov_rad += scatter_cov_rad
+        printIt(cov_rad, "circle_fit - cov_rad:")
+        
+        invert(cov_rad, G)
+        renorm = sum(G)
+
+        G =  G .* 1/renorm 
+        weight = weight_circle(G)
+
+        printIt(weight, "circle_fit - weight:")
+
+        h_ = mean.(eachrow(hits2D))
+        printIt(h, "circle_fit - h:")
+        p3D = zeros(size(hits2D))
+        p3D[1:2, 1:n] = hits2D .- hits_cov2D
+        printIt(p3D, "circle_fit: p3D:a) ")
+        
+        mc = vcat(p3D[1, :]', p3D[2, :]')
+        printIt(mc, "circle_fit: mc(centered hits): ")
+
+        # scale
+        squared_norm = dot(mc, mc)
+        q = squared_norm
+        s = sqrt(n/ q)
+        p3D = p3D .* s
+
+        # Project on Paraboloid
+        block = p3D[1:2, 1:n]
+        colwise_squared_norms = sum(abs2, block; dims=1)
+        p3D[3, 1:n] .= colwise_squared_norms 
+        printIt(p3D, "circle_fit - p3D: b)")
+
+        # cost function
+        # compute
+        r0 = p3D .* weight
+        X = p3D .- r0
+        A = X .* G * X'
+        printIt(A, "circle_fit - A:")
+
+        printIt(v, "v BEFORE INVERSION")
+        v = v .* (v[3] > 0 ) ? 1 : -1
+        printIt(v, "v AFTER INVERSION")
+
+        # This hack to be able to run on GPU where the automatic assignment to a
+        # double from the vector multiplication is not working.
+
+        # COMPUTE CIRCLE PARAMETER
+
+        # auxiliary quantities
+        h = sqrt(1 - sqrt(v[3]) - 4 .*c .* v[3])
+        v2x2_inv = 1 / (2 .* v[3])
+        s_inv = 1 / s
+
+        par_uvr_ = Vector{Float64}(undef, 3)
+
+        par_uvr_[1] = -v[1] * v2x2_inv       
+        par_uvr_[2] = -v[2] * v2x2_inv      
+        par_uvr_[3] = h * v2x2_inv         
+
+        circle::circle_fit
+        circle.par[1] = par_uvr_[1] * s_inv + h_[1]   
+        circle.par[2] = par_uvr_[2] * s_inv + h_[2] 
+        circle.par[3] = par_uvr_[3] * s_inv   
+
+        circle.q = Charge(hits2D, circle.par)
+        circle.chi2 = abs(chi2) * renorm * 1 / sqr(2 * v[3] * par_uvr_[3] * s)
+
+        printIt(circle.par, "circle_fit - CIRCLE PARAMETERS:")
+        printIt(circle.cov, "circle_fit - CIRCLE COVARIANCE:")
+
+        # ERROR PROPAGATION
+        if(error) 
+            Vcs_ = [zeros(n, n) for _ in 1:2, _ in 1:2]  # Covariance matrix of center & scaled points
+            C = [zeros(n, n) for _ in 1:3, _ in 1:3]     # Covariance matrix of 3D transformed points
+            
+            cm = zeros(1, 1)
+            cm2 = zeros(1, 1)
+            
+            cm .= mc' * V * mc 
+            c = cm[1, 1] 
+            Vcs = zeros(n, n)
+            Vcs .= sqr(s) * V .+ sqr(sqr(s)) * 1. / (4. * q * n) *
+                (2. * norm(V)^2 + 4. * c) * (mc * mc')  
+            
+            printIt(Vcs, "circle_fit - Vcs:")
+
+            C[1][1] .= Symmetric(Vcs[1:n, 1:n]) 
+            Vcs_[1][2] .= Vcs[1:n, n+1:2n]       
+            C[2][2] .= Symmetric(Vcs[n+1:2n, n+1:2n]) 
+            Vcs_[2][1] .= Vcs_[1][2]'  
+            
+            printIt(Vcs, "circle_fit - Vcs:")
+
+            t0 = ones(n) * p3D[1, :]  
+            t1 = ones(n) * p3D[2, :]  
+            t00 = p3D[1, :]' * p3D[1, :]
+            t01 = p3D[1, :]' * p3D[2, :]
+            t11 = p3D[2, :]' * p3D[2, :]
+            t10 = t01'
+
+            Vcs_[1][1] = C[1][1]
+            C[1][2] = Vcs_[1][2]
+            C[1][3] = 2.0 * (Vcs_[1][1] * t0 + Vcs_[1][2] * t1)
+            Vcs_[2][2] = C[2][2]
+            C[2][3] = 2.0 * (Vcs_[2][1] * t0 + Vcs_[2][2] * t1)
+
+            tmp = zeros(N, N)
+            tmp .= 2.0 * (Vcs_[1][1]^2 + Vcs_[1][1] * Vcs_[1][2] + Vcs_[2][2] * Vcs_[2][1] + Vcs_[2][2]^2) +
+                4.0 * (Vcs_[1][1] * t00 + Vcs_[1][2] * t01 + Vcs_[2][1] * t10 + Vcs_[2][2] * t11)
+
+            C[3][3] = Symmetric(tmp)
+            printIt(C[1][1], "circle_fir - C[0][0]:")
+
+            C0 = Matrix{Float64}(undef, 3, 3)  
+            tmp = Float64(undef)     
+
+            for i in 1:3
+                for j in i:3
+                    tmp = weight' .* C[i][j] .* weight
+                    c = tmp
+                    C0[i, j] = c 
+                    C0[j, i] = C0[i][j]
+                end
+            end
+            printIt(C0, "circle_fit - C0:")
+
+            W = weight * weight'
+            H = I - weight'
+            s_v = H * p3D'
+            printIt(W, "circle_fit - W:")
+            printIt(H, "circle_fit - H:")
+            printIt(s_v, "circle_fit - s_v:")
+
+            D_ = Matrix{Float64}(undef, 3,3)
+
+            D_[1][1] = (H * C[1][1] * H') .* W   
+            D_[1][2] = (H * C[1][2] * H') .* W
+            D_[1][3] = (H * C[1][3] * H') .* W
+            D_[2][2] = (H * C[2][2] * H') .* W
+            D_[2][3] = (H * C[2][3] * H') .* W
+            D_[3][3] = (H * C[3][3] * H') .* W
+
+            D_[2][1] = D_[1][2]'   
+            D_[3][1] = D_[1][3]'
+            D_[3][2] = D_[2][3]'
+
+            printIt(D_[1][1] ,"circle_fit - D[1][1]:")
+
+            const nu = [0 0; 0 1; 0 2; 1 1; 1 2; 2 2]
+            E = Matrix{Float64}(undef, 6,6)
+
+            for a in 1:6
+                i = nu[a][1]
+                j = nu[a][2]
+
+                for b in a:6
+                    k = nu[b][1]
+                    l = nu[b][2]
+                    t0 = Vector{Float64}(undef, n)
+                    t1 = Vector{Float64}(undef, n)
+                    if ( l == k)
+                        t0 = 2 * D_[j][l] * s_v[:, l]
+                        if(i == j)
+                            t1 = t0
+                        else
+                            t1 = 2 * D_[i][l] * s_v[:, l]
+                        end
+                    else
+                        t0 = D_[j][l] * s_v[:k] + D_[j][k] * s_v[:l]
+                        if ( i ==j)
+                            t1 = t0
+                        else
+                            t1 = D_[i][l] * s_v[:k] + D[i][k] * s_v[:l]
+                        end
+                    end
+
+                    if(i == j)
+                        cm = s_v[:i]' * (t0 + t1)
+                        c = cm
+                        E[a,b] = c
+                    else
+                        cm = (s_v[:i]' * t0) + (s_v[:j]' * t1)
+                        c = cm
+                        E[a,b] = c
+                    end
+                    if (b != a)
+                        E[b,a] = E[a,b]
+                    end
+                end 
+            end
+
+            printIt(E, "circle_fit - E:")
+
+            J2 = Matrix{Float64}(undef, 3, 6)
+            for a in 1:6
+                i = nu[a][1] 
+                j = nu[a][2]
+                Delta = zeros(Float64, 3, 3)
+                Delta[i,j] = Delta[j,i] = abs(A[i,j] * d)
+                J2[:a] = min_eigen3D[A + Delta]
+                sign = J2[:a][2] > 0 ? 1 : -1
+                J2[:a] = J2[:a] * sign - v / Delta[i,j]
+            end
+            printIt(J2, "circle_fit - J2")
+
+            Cvc = Matrix{Float64}(undef, 4,4)
+
+            t0 = J2 * E * J2'
+            t1 = - t0 * r0
+            Cvc[1:3, 1:3] .= reshape(t0, 3, 1)  
+            Cvc[1:3, 4] .= t1  
+            Cvc[4, 1:3] .= t1'  
+            
+            cm1 = v' * C0 * v
+            cm3 = r0' * t0 * r0
+    
+            c = cm1[1, 1] + sum(C0 .* reshape(t0, 3, 1)) + cm3[1, 1]
+
+            Cvc[4, 4] = c
+
+            printIt(Cvc, "circle_fit - Cvc:")
+           
+            J3 = Matrix{Float64}(undef, 3,4)
+            t = 1/h
+            J3[1, 1] = -v2x2_inv
+            J3[1, 3] = v[1] * sqr(v2x2_inv) * 2.0
+            J3[2, 2] = -v2x2_inv
+            J3[2, 3] = v[2] * sqr(v2x2_inv) * 2.0
+            J3[3, 1] = v[1] * v2x2_inv * t
+            J3[3, 2] = v[2] * v2x2_inv * t
+            J3[3, 3] = -h * sqr(v2x2_inv) * 2.0 - (2.0 * c + v[3]) * v2x2_inv * t
+            J3[3, 4] = -t
+            
+            printIt(J3, "circle_fit - J3:")
+
+            Jq = mc' * s * 1/n
+            printIt(Jq ,"circle_fit - Jq: ")
+
+            cov_uvr = J3 * Cvc * J3' * sqr(s_inv) + (par_uvr_ * par_uvr_')* Jq * V * Jq'
+            circle.cov = cov_uvr
+
+         
+        end
+
+        printIt(circle.cov, "Circle cov:")
+        return circle
+    end
+
+#     *!  \brief Perform an ordinary least square fit in the s-z plane to compute
+#  * the parameters cotTheta and Zip.
+#  *
+#  * The fit is performed in the rotated S3D-Z' plane, following the formalism of
+#  * Frodesen, Chapter 10, p. 259.
+#  *
+#  * The system has been rotated to both try to use the combined errors in s-z
+#  * along Z', as errors in the Y direction and to avoid the patological case of
+#  * degenerate lines with angular coefficient m = +/- inf.
+#  *
+#  * The rotation is using the information on the theta angle computed in the
+#  * fast fit. The rotation is such that the S3D axis will be the X-direction,
+#  * while the rotated Z-axis will be the Y-direction. This pretty much follows
+#  * what is done in the same fit in the Broken Line approach.
+ 
+    @inline function line_fit(hits::Matrix{Float64},
+                              hits_ge::Matrix{Float64},
+                              circle::circle_fit,
+                              V4::fast_fit,
+                              B::Float64,
+                              error::Bool)
+
+        n = size(hits,2)
+        theta = - circle.q * atan(fast_fit[4])
+        theta = theta < 0 ? theta + M_PI : theta
+
+        rot = [sin(theta) cos(theta); -cos(theta) sin(theta)]
+
+        # PROJECTION ON THE CILINDER
+        
+        # p2D will be:
+        # [s1, s2, s3, ..., sn]
+        # [z1, z2, z3, ..., zn]
+        # s values will be ordinary x-values
+        # z values will be ordinary y-values
+
+        p2D = zeros(Float64, 2, n)
+        Jx = Matrix{Float64}(undef, 2,6)
+
+        #  x & associated Jacobian
+        #  cfr https://indico.cern.ch/event/663159/contributions/2707659/attachments/1517175/2368189/Riemann_fit.pdf
+        #  Slide 11
+        #  a ==> -o i.e. the origin of the circle in XY plane, negative
+        #  b ==> p i.e. distances of the points wrt the origin of the circle.
+        
+        o = [circle_par[1], circle_par[2]]
+        
+        # associated Jacobian, used in weights and errors computation
+        Cov = zeros(Float64, 6, 6)
+        cov_sz = [zeros(Float64, 2, 2) for _ in 1:n]
+
+        for i in 1:n
+            p = hits[1:2, i:i] - o
+            cross = cross2D(-o, p)
+            dot = dot(-o, p)
+            atan2_ = -circle.q * atan2(cross, dot)
+            p2D[1,i] = atan2_ * circle.par[3]
+
+            temp0 = -circle.q * circle.par[3] * 1/( sqr(dot) + sqr(cross))
+            d_X0 = 0
+            d_Y0 = 0
+            d_R = 0
+
+            if (error)
+                d_X0 = -temp0 * ((p[2] + o[2]) * dot - (p[1] - o[1]) * cross)
+                d_Y0 = temp0 * ((p[1] + o[1]) * dot - (o[2] - p[2]) * cross)
+                d_R = atan2_
+            end
+            d_x = temp0 * ( o[2] * dot + o[1] * cross)
+            d_y = temp0 * (-o[1] * dot + o[2] * cross)
+            
+            Jx = [d_X0  d_Y0  d_R   d_x  d_y  0.0;
+                0.0  0.0  0.0  0.0  0.0  0.0;
+                0.0  1.0]
+            Cov[1:3, 1:3] .= circle_cov
+
+               
+            Cov[4, 4] = hits_ge[i, 1]  # x errors
+            Cov[5, 5] = hits_ge[i, 3]  # y errors
+            Cov[6, 6] = hits_ge[i, 6]  # z errors
+            Cov[4, 5] = Cov[5, 4] = hits_ge[i, 2]  # cov_xy
+            Cov[4, 6] = Cov[6, 4] = hits_ge[i, 4]  # cov_xz
+            Cov[5, 6] = Cov[6, 5] = hits_ge[i, 5]  # cov_yz
+                
+            
+            tmp = Jx * Cov * Jx'
+            cov_sz[i] .= rot * tmp * rot'
+        end
+        
+        p2D[2, :] = hits[3, :] 
+
+        # The following matrix will contain errors orthogonal to the rotated S
+        # component only, with the Multiple Scattering properly treated!!
+        cov_with_ms = Matrix{Float64}(undef, n, n)
+        scatter_cov_line(cov_sz, fast_fit, p2D[1, :], p2D[2,:], theta, B, cov_with_ms)
+
+        p2D_rot = rot * p2D
+
+        ones_row = ones(Float64, 1, n)
+        
+        A = hcat(ones_row, p2D_rot[1, :])
+
+        Vy_inv =  Matrix{Float64}(undef, n, n)
+        invert(cov_with_ms, Vy_inv)
+
+        Cov_params = A * Vy_inv * A'
+        invert(Cov_params, Cov_params)
+
+        sol = Cov_params * A * Vy_inv * p2D_rot[2, :]'
+
+        # We need now to transfer back the results in the original s-z plane
+
+        common_factor = 1 / (sin(theta) - sol(2,1) * cos(theta) )
+        J = Matrix{Float64}(undef, 2,2)
+        J = [0.0  common_factor * common_factor;
+         common_factor  sol[1] * cos(theta) * common_factor * common_factor]
+
+        m = common_factor * (sol(2,1) * sin(theta) + cos(theta))
+        q = common_factor * sol(1,1)
+        cov_mq = J * Cov_params * J'
+
+        res = p2D_rot[2,:]' - A' * sol
+        chi2 = res' * Vy_inv * res
+
+        line::line_fit
+        line_par[1] = m
+        line_par[2] = q
+        line.cov = cov_mq
+        line.chi2 = chi2
+
+        return line
+
+    end
+    #     \brief Helix fit by three step:
+    #     -fast pre-fit (see Fast_fit() for further info); \n
+    #     -circle fit of hits projected in the transverse plane by Riemann-Chernov
+    #         algorithm (see Circle_fit() for further info); \n
+    #     -line fit of hits projected on cylinder surface by orthogonal distance
+    #         regression (see Line_fit for further info). \n
+    #     Points must be passed ordered (from inner to outer layer).
+    #     \param hits Matrix3xNd hits coordinates in this form: \n
+    #         |x0|x1|x2|...|xn| \n
+    #         |y0|y1|y2|...|yn| \n
+    #         |z0|z1|z2|...|zn|
+    #     \param hits_cov Matrix3Nd covariance matrix in this form (()->cov()): \n
+    #    |(x0,x0)|(x1,x0)|(x2,x0)|.|(y0,x0)|(y1,x0)|(y2,x0)|.|(z0,x0)|(z1,x0)|(z2,x0)| \n
+    #    |(x0,x1)|(x1,x1)|(x2,x1)|.|(y0,x1)|(y1,x1)|(y2,x1)|.|(z0,x1)|(z1,x1)|(z2,x1)| \n
+    #    |(x0,x2)|(x1,x2)|(x2,x2)|.|(y0,x2)|(y1,x2)|(y2,x2)|.|(z0,x2)|(z1,x2)|(z2,x2)| \n
+    #        .       .       .    .    .       .       .    .    .       .       .     \n
+    #    |(x0,y0)|(x1,y0)|(x2,y0)|.|(y0,y0)|(y1,y0)|(y2,x0)|.|(z0,y0)|(z1,y0)|(z2,y0)| \n
+    #    |(x0,y1)|(x1,y1)|(x2,y1)|.|(y0,y1)|(y1,y1)|(y2,x1)|.|(z0,y1)|(z1,y1)|(z2,y1)| \n
+    #    |(x0,y2)|(x1,y2)|(x2,y2)|.|(y0,y2)|(y1,y2)|(y2,x2)|.|(z0,y2)|(z1,y2)|(z2,y2)| \n
+    #        .       .       .    .    .       .       .    .    .       .       .     \n
+    #    |(x0,z0)|(x1,z0)|(x2,z0)|.|(y0,z0)|(y1,z0)|(y2,z0)|.|(z0,z0)|(z1,z0)|(z2,z0)| \n
+    #    |(x0,z1)|(x1,z1)|(x2,z1)|.|(y0,z1)|(y1,z1)|(y2,z1)|.|(z0,z1)|(z1,z1)|(z2,z1)| \n
+    #    |(x0,z2)|(x1,z2)|(x2,z2)|.|(y0,z2)|(y1,z2)|(y2,z2)|.|(z0,z2)|(z1,z2)|(z2,z2)|
+    #    \param B magnetic field in the center of the detector in Gev/cm/c
+    #    unit, in order to perform pt calculation.
+    #    \param error flag for error computation.
+    #    \param scattering flag for multiple scattering treatment.
+    #    (see Circle_fit() documentation for further info).
+    #    \warning see Circle_fit(), Line_fit() and Fast_fit() warnings.
+    #    \bug see Circle_fit(), Line_fit() and Fast_fit() bugs.
+    @inline function helix_fit(hits::Matrix{Float64},
+                            hits_ge::Matrix{Float64},
+                            B::Float64,
+                            error::Bool)
+
+        n = size(hits,2)
+        submatrix = hits[1:2, :]
+        rad = vecnorm(submatrix, 2, 1)
+
+        fast_fit = Vector{Float64}(undef, 4)
+        fast_fit(hits, fast_fit)
+        hits_cov =  zeros(Float64, 2 * n, 2 * n)
+        loadCovariance2D(hits_ge, hits_cov)
+        circle = circle_fit(hits[1:2, 1:n], hits_cov, fast_fit,rad, B, error)
+        line = line_fit(hits, hits_ge, circle, fast_fit, B, error)
+        
+        par_urvtopak(circle, B, error)
+
+        helix::helix_fit
+        helix.par[1] = circle.par
+        helix.par[2] = line.par
+
+        if (error)
+            helix.cov =  zeros(Float64, 5,5)
+            helix_cov[1:3, 1:3] .= circle_cov
+            helix_cov[4:5, 4:5] .= line_cov
+        end
+        helix.q = circle.q
+        helix.chi2_circle = circle.chi2
+        helix.chi2_line = line.chi2
+
+        return helix
+    end
+
 end
 
 

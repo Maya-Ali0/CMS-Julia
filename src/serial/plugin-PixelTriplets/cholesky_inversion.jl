@@ -165,48 +165,35 @@ module DataFormat_Math_choleskyInversion_h
         dst[4, 6] = dst[6, 4]
         dst[5, 6] = dst[6, 5]
     end
-    abstract type Inverter{M1, M2, N} end
-
-    struct Inverter11{M1, M2} <: Inverter{M1, M2, 1} end
-
-    struct Inverter22{M1, M2} <: Inverter{M1, M2, 2} end
-
-    struct Inverter33{M1, M2} <: Inverter{M1, M2, 3} end
-
-    struct Inverter44{M1, M2} <: Inverter{M1, M2, 4} end
-
-    struct Inverter55{M1, M2} <: Inverter{M1, M2, 5} end
-
-    struct Inverter66{M1, M2} <: Inverter{M1, M2, 6} end
     
-    function eval(::Inverter11{M1, M2}, src::M1, dst::M2) where {M1, M2}
-        invert11(src, dst)
+    function eval(src::M1, dst::M2) where {M1, M2}
+        number_of_col = size(src,2)
+        if number_of_col == 1
+            invert11(src, dst)
+        end
+        if number_of_col == 2
+            invert22(src, dst)
+            symmetrize22!(dst)
+        end
+        if number_of_col == 3
+            invert33(src, dst)
+            symmetrize33!(dst)
+        end
+        if number_of_col == 4
+            invert44(src, dst)
+            symmetrize44!(dst)
+        end
+        if number_of_col == 5
+            invert55(src, dst)
+            symmetrize55!(dst)
+        end
+        if number_of_col == 6 
+            invert66(src, dst)
+            symmetrize66!(dst)
+        end
+            
     end
-    
-    function eval(::Inverter22{M1, M2}, src::M1, dst::M2) where {M1, M2}
-        invert22(src, dst)
-        symmetrize22!(dst)
-    end
-    
-    function eval(::Inverter33{M1, M2}, src::M1, dst::M2) where {M1, M2}
-        invert33(src, dst)
-        symmetrize33!(dst)
-    end
-    
-    function eval(::Inverter44{M1, M2}, src::M1, dst::M2) where {M1, M2}
-        invert44(src, dst)
-        symmetrize44!(dst)
-    end
-    
-    function eval(::Inverter55{M1, M2}, src::M1, dst::M2) where {M1, M2}
-        invert55(src, dst)
-        symmetrize55!(dst)
-    end
-    
-    function eval(::Inverter66{M1, M2}, src::M1, dst::M2) where {M1, M2}
-        invert66(src, dst)
-        symmetrize66!(dst)
-    end
+ 
 
 end
 
