@@ -5,7 +5,7 @@ module gpuCalibPixel
 
 using ...condFormatsSiPixelObjectsSiPixelGainForHLTonGPU: SiPixelGainForHLTonGPU, get_ped_and_gain
 
-using ...gpuConfig
+# using ...gpuConfig
 
 using ...CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
 using StaticArrays: MVector

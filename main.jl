@@ -34,11 +34,11 @@ produce(CPE_Producer,es);
 produce(beam_Producer,es)
 function run()
     e = 0
-    open("doubletsTesting.txt", "a") do file
+    # open("doubletsTesting.txt", "a") do file
     for collection ∈ raw_events
-        # if e == 3
-        #     break
-        # end
+        if e == 3
+            break
+        end
         # write(file,"EVENTT",string(e))
         reg = ProductRegistry()
         raw_token = produces(reg,FedRawDataCollection)
@@ -56,9 +56,9 @@ function run()
         produce(n_tuplets,event,es,0)
         e+=1
 end
-end
+# end
 
 end
-@time run()
+#run()
 # @profview run()
-# @time run()
+@time run()

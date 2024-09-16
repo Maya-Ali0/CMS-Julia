@@ -2,7 +2,7 @@ module condFormatsSiPixelObjectsSiPixelGainForHLTonGPU
 
 export RANGE_COUNT
 
-using ..gpuConfig
+# using ..gpuConfig
 
 using StaticArrays
 
