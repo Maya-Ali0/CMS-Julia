@@ -25,9 +25,9 @@ function Base.pop!(self::VecArray{T,maxSize}) where {T,maxSize}
     end
 end
 
-function reset(self::VecArray{T,maxSize}) where {T,maxSize}
-    self.m_size = 0
-end
+# function reset(self::VecArray{T,maxSize}) where {T,maxSize}
+#     self.m_size = 0
+# end
 
 Base.last(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_data[self.m_size]
 full(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_size == maxSize
@@ -37,6 +37,7 @@ data(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_data
 capacity(self::VecArray{T,maxSize}) where {T,maxSize} = maxSize
 reset!(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_size = 0 
 Base.getindex(self::VecArray{T,maxSize}, i::Int) where {T,maxSize} = self.m_data[i]
+Base.length(self::VecArray{T,maxSize}) where {T,maxSize} = length(self.m_data)
 begin_v(self::VecArray{T,maxSize}) where {T,maxSize} = 1
 end_v(self::VecArray{T,maxSize}) where {T,maxSize} = maxSize
 

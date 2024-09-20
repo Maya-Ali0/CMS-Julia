@@ -2,7 +2,7 @@ module RecoLocalTracker_SiPixelRecHits_plugins_gpuPixelRecHits_h
 
 using ..BeamSpotPOD_h: BeamSpotPOD
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
-using ..gpuConfig
+# using ..gpuConfig
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h

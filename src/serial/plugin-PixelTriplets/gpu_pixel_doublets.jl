@@ -61,20 +61,26 @@ module gpuPixelDoublets
         @assert(i == 0)
         reset!(cell_tracks[1])
     end
-    function get_doublets_from_histo(cells::Vector{GPUCACell},n_cells::UInt32,cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,
+    function get_doublets_from_histo(cells::Vector{GPUCACell},n_cells,cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,
                                      hhp::TrackingRecHit2DHeterogeneous,is_outer_hit_of_cell::Vector{OuterHitOfCell},n_actual_pairs::Integer,
                                      ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,do_pt_cut::Bool,max_num_of_doublets::Integer,file)
         doublets_from_histo(layer_pairs,n_actual_pairs,cells,n_cells,cell_neighbors,
         cell_tracks,hhp,is_outer_hit_of_cell,phi_cuts,min_z,max_z,max_r,ideal_cond,
         do_cluster_cut,do_z0_cut,do_pt_cut,max_num_of_doublets,file)
     end
-
-    function doublets_from_histo(layer_pairs::SArray{Tuple{layer_pairs_2}},n_pairs::Integer,cells::Vector{GPUCACell},n_cells::UInt32,cell_neighbors::CellNeighborsVector,
+    """
+    layer_pairs: vector containing encoding of layer pairs
+    n_pairs: number of actual layer pairs to go over
+    cells: Vector of GPUCACell representing Doublets
+    n_cells: set to 0 initially should increase while processing
+    is_outer_hit_of_cell: a vector of vectors for every outer hit which holds indices to all doublets that it participates in
+    """
+    function doublets_from_histo(layer_pairs::SArray{Tuple{layer_pairs_2}},n_pairs::Integer,cells::Vector{GPUCACell},n_cells,cell_neighbors::CellNeighborsVector,
                                  cell_tracks::CellTracksVector,hh::TrackingRecHit2DHeterogeneous,is_outer_hit_of_cell::Vector{OuterHitOfCell},phi_cuts:: SArray{Tuple{n_layer_pairs}},
                                  min_z::SArray{Tuple{n_layer_pairs}},max_z::SArray{Tuple{n_layer_pairs}},max_r::SArray{Tuple{n_layer_pairs}},ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,
                                  do_pt_cut::Bool,max_num_of_doublets::Integer,file) where {n_layer_pairs, layer_pairs_2}
         """
-        Used for filtering doublets based on the y-size comparision of the hits
+        Used for filtering doublets based on the y-size comparision of the hit[1]s
         """
         ###
         min_y_size_B1 = 36
@@ -116,7 +122,7 @@ module gpuPixelDoublets
         To fill the inner_layer_cumulative_size array, we need to search for the number of hits for the inner layer of the pair labeled with i.
         The layerPairs array contains all pairs p1, p2, p3, p4, ... Each pair contains two integers the first consisting of the inner layer, the 
         second consisting of the outer layer. So layerPairs contains p1.first, p1.second, p2.first, p2.second, p3.first, p3.second etc...
-        To find the inner layer index of the i'th pair, we look at index 2*i - 1. We add 1 because julia indexing starts at 1.
+        To find the inner layer index of the i'th pair, we look at index 2*i - 1. We add 1 because julia indexing starts at 1 and we have them encoded starting from 0 within layer_pairs
         """
         for i ∈ 2:n_pairs
             inner_layer_cumulative_size[i] = inner_layer_cumulative_size[i-1] + layer_size(layer_pairs[2*i-1]+1)
@@ -131,7 +137,6 @@ module gpuPixelDoublets
         first = 0 
         stride = 1
         pair_layer_id = 1 
-        #FIXME j may need to start from 1 for indexing 
         """
         Go over all inner hits by indexing them from 0 to the total number of inner hits - 1
         """
@@ -159,7 +164,7 @@ module gpuPixelDoublets
             i is the index of the inner hit within the hits struct
             inner + 2 would never overflow becauses we are considering a hit on an inner layer
             """
-            i = (1 == pair_layer_id) ? j : j - inner_layer_cumulative_size[pair_layer_id-1] # previous layer
+            i = (1 == pair_layer_id) ? j : j - inner_layer_cumulative_size[pair_layer_id-1] # bounded i between 0 and total number of hits on inner layer
             i += offsets[inner+1] # +1 because indexed from 1 in julia
             @assert(i >= offsets[inner + 1]) # +1 because of indexing in julia
             @assert(i < offsets[inner + 2])
@@ -290,13 +295,13 @@ module gpuPixelDoublets
                         continue
                     end
                     
-                    n_cells+=UInt32(1)
-                    if(n_cells > max_num_of_doublets)
-                        n_cells -=UInt32(1)
+                    n_cells[1]+=UInt32(1)
+                    if(n_cells[1] > max_num_of_doublets)
+                        n_cells[1] -=UInt32(1)
                         break
                     end
-                    cells[n_cells] = GPUCACell(cell_neighbors,cell_tracks,hist_view(hh),pair_layer_id,n_cells,i,oi,file)
-                    push!(is_outer_hit_of_cell[oi],n_cells)
+                    cells[n_cells[1]] = GPUCACell(cell_neighbors,cell_tracks,hist_view(hh),pair_layer_id,n_cells[1],i,oi,file)
+                    push!(is_outer_hit_of_cell[oi],n_cells[1])
                 end
                 current_bin = current_bin+1
                 if(current_bin == (n_bins(hist)+1))

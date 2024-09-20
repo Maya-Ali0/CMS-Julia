@@ -1,5 +1,5 @@
 using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
-using .cAHitNtupletGenerator:Counters, Params, CAHitNTupletGeneratorKernels, build_doublets
+using .cAHitNtupletGenerator:Counters, Params, CAHitNTupletGeneratorKernels, build_doublets, launch_kernels
 struct CAHitNtupletGeneratorOnGPU
     m_params::Params 
     m_counters::Counters
@@ -39,4 +39,5 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU,hits_d::TrackingRecHit2DHe
     kernels = CAHitNTupletGeneratorKernels(self.m_params) # m 
     kernels.counters = self.m_counters
     build_doublets(kernels,hits_d,file)
+    # launch_kernels(kernels,hits_d)
 end

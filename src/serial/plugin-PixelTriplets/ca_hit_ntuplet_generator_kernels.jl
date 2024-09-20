@@ -1,10 +1,12 @@
 module cAHitNtupletGenerator
     # using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
-    using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
-    using StaticArrays:MArray
+    using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h: n_hits, TrackingRecHit2DHeterogeneous, hist_view
+    using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
+    using StaticArrays:MArray, MVector
     using ..caConstants
     using ..gpuCACELL
     using ..gpuPixelDoublets:init_doublets,n_pairs,get_doublets_from_histo
+    using ..kernelsImplementation:kernel_connect
     export Params, Counters
     #using Main::kernel_fill_hit_indices
     struct Counters
@@ -91,7 +93,7 @@ module cAHitNtupletGenerator
         device_the_cell_tracks_container::Vector{CellTracks}
         device_the_cells::Vector{GPUCACell}
         device_is_outer_hit_of_cell::Vector{OuterHitOfCell}
-        device_n_cells::UInt32
+        device_n_cells::MVector{1,UInt32}
         device_hit_to_tuple::HitToTuple
         device_tuple_multiplicity::TupleMultiplicity
         m_params::Params
@@ -103,7 +105,7 @@ module cAHitNtupletGenerator
             the_cells = Vector{GPUCACell}(undef,params.max_num_of_doublets)
             new(CellNeighborsVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_neighbors_container),the_cell_neighbors_container,
                 CellTracksVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_tracks_container),the_cell_tracks_container,the_cells,is_outer_hit_of_cell,
-                0,HitToTuple(),TupleMultiplicity(),params,Counters())
+                MVector{1,UInt32}(0),HitToTuple(),TupleMultiplicity(),params,Counters())
         end
     end
     # function fill_hit_det_indices(hv::TrackingRecHit2DSOAView, tracks_d::TkSoA)
@@ -136,6 +138,18 @@ module cAHitNtupletGenerator
         get_doublets_from_histo(self.device_the_cells,self.device_n_cells,self.device_the_cell_neighbors,self.device_the_cell_tracks,hh,
                                 self.device_is_outer_hit_of_cell,n_actual_pairs,self.m_params.ideal_conditions,self.m_params.do_cluster_cut,
                                 self.m_params.do_z0_cut,self.m_params.do_pt_cut,self.m_params.max_num_of_doublets,file)
+    end
+
+    function launch_kernels(self::CAHitNTupletGeneratorKernels,hh,tracks_d = nothing)
+        #tuples_d
+        #quality_d
+        #launch_zero
+        num_hits = n_hits(hh)
+        @assert(num_hits <= MAX_NUMBER_OF_HITS)
+        kernel_connect(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_the_cell_neighbors,
+                       self.device_is_outer_hit_of_cell,self.m_params.hard_curv_cut,self.m_params.pt_min,
+                       self.m_params.ca_theta_cut_barrel,self.m_params.ca_theta_cut_forward,self.m_params.dca_cut_inner_triplet,
+                       self.m_params.dca_cut_outer_triplet)
     end
 
 end

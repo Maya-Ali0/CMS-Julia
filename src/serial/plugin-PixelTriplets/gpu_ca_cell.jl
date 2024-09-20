@@ -3,22 +3,24 @@ module gpuCACELL
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
     using Patatrack:VecArray
     using Patatrack:SimpleVector
+    using Patatrack:empty,extend!,reset!
     using Printf
     const ptr_as_int = UInt64
     const Hits = TrackingRecHit2DSOAView
     const TmpTuple = VecArray{UInt32,6}
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:z_global,r_global
+    using Patatrack:CircleEq, compute, dca0, curvature
     export GPUCACell
 
-    using Main:CircleEq
-    using Main:curvature
-    using Main:dca0
-    using Main:extend!
-    using Main:reset
-    using Main:push!
-    using Main:empty
+    # using Main:CircleEq
+    # using Main:curvature
+    # using Main:dca0
+    # using Main:extend!
+    # using Main:reset
+    # using Main:push!
+    # using Main:empty
 
-    struct GPUCACell
+    mutable struct GPUCACell
         the_outer_neighbors::CellNeighbors
         the_tracks::CellTracks
         the_doublet_id::Int32
@@ -74,7 +76,7 @@ module gpuCACELL
         #@assert()
     end
     
-end
+
 
 function get_inner_hit_id(self::GPUCACell)
     return self.the_inner_hit_id
@@ -128,7 +130,7 @@ function are_aligned(r1, z1, ri, zi, ro, zo, pt_min, theta_cut)
     return tan_12_13_half_mul_distance_13_squared * p_min <= theta_cut * distance_13_squared * radius_diff
 end
 
-function dca_cut(cell::GPUCACell, other_cell::GPUCACell, hh::TrackingRecHit2DSOAView, region_origin_radius_plus_tolerance, max_curv)
+function dca_cut(cell::GPUCACell, other_cell::GPUCACell, hh::TrackingRecHit2DSOAView, region_origin_radius_plus_tolerance::AbstractFloat, max_curv::AbstractFloat)
     x1 = get_inner_x(other_cell, hh)
     y1 = get_inner_y(other_cell, hh)
 
@@ -138,29 +140,31 @@ function dca_cut(cell::GPUCACell, other_cell::GPUCACell, hh::TrackingRecHit2DSOA
     x3 = get_outer_x(cell, hh)
     y3 = get_outer_y(cell, hh)
 
-    eq = CircleEq{Float32}(x1, y1, x2, y2, x3, y3)
-    curvature = curvature(eq)
-    if curvature > max_curv
+    eq = CircleEq{Float32}()
+    compute(eq,x1, y1, x2, y2, x3, y3)
+    curvature_c = curvature(eq)
+    if curvature_c > max_curv
         return false
     end
-    return abs(dca0(eq)) < region_origin_radius_plus_tolerance * abs(curvature)
+    return abs(dca0(eq)) < region_origin_radius_plus_tolerance * abs(curvature_c)
 end
 
 function outer_neighbors(self::GPUCACell)
     return self.the_outer_neighbors
 end
 
-function add_outer_neighbor(other_cell::GPUCACell, t::UInt32, cell_neighbors::CellNeighborsVector)
-    outer_neighbors = outer_neighbors(other_cell)
-    if empty(outer_neighbors)
+function add_outer_neighbor(other_cell::GPUCACell, t::Integer, cell_neighbors::CellNeighborsVector)
+    outer_neighbor = outer_neighbors(other_cell)
+    if empty(outer_neighbor)
         i = extend!(cell_neighbors)
         if i > 1
-            reset(cell_neighbors[i])
-            other_cell.the_outer_neighbors = cell_neighbors[i]
+            reset!(cell_neighbors[i])
+            outer_neighbor = cell_neighbors[i]
         else
             return -1
         end
     end
-    return push!(outer_neighbors, t)
+    return push!(outer_neighbor, UInt32(t))
 end
 
+end
