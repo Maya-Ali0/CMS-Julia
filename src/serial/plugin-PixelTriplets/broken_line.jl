@@ -44,7 +44,7 @@ end
     
 #     \return 2D rotation matrix.
 @inline function rotation_matrix(slope::Float64)
-    Rot = zeros(Float64, 2,2)
+    Rot = zeros( 2,2)
     Rot[1,1] = 1/ sqrt(1 + sqr(slope))
     Rot[1,2] = slope * Rot[1,1]
     Rot[2,1] = - Rot[1,2]
@@ -98,8 +98,8 @@ end
 #   */
 @inline function prepare_broken_line_data(hits::Matrix{Float64}, fast_fit::Vector{Float64}, B::Float64, results::PreparedBrokenLineData)
     n = size(hits,2)
-    d = zeros(Float64,2)
-    e = zeros(Float64,2)
+    d = zeros(2)
+    e = zeros(2)
     d = hits[1:2, 2] - hits[1:2, 1]
     e = hits[1:2, n] - hits[1:2, n-1]
     resutls.q = cross2D(d,e) > 0 ? -1 : 1
@@ -116,7 +116,7 @@ end
     end
     z = hits[3, :]'
     # //calculate S and Z
-    pointsSZ = zeros(Float64, 2, n)
+    pointsSZ = zeros( 2, n)
     for i in 1:n
         pointsSZ[1,i] = results.s[i]
         pointsSZ[2,i] = z[i]
@@ -141,7 +141,7 @@ end
 #     \return the n-by-n matrix of the linear system
 @inline function matrixc_u(w::Vector{Float64}, S::Vector{Float64}, VarBeta::Vector{Float64})
     n = size(w,2)
-    C_U = zeros(Float64,n,n)
+    C_U = zeros(n,n)
     for i in 1:n
         C_U[i, i] = w[i]
         
@@ -226,9 +226,9 @@ end
         Z[i] = nomr( radii[1:2, i]) - fast_fit[3]
     end
 
-    V = zeros(Float64,2,2)
-    w = zeros(Float64, n)
-    RR = zeros(Float64, 2,2)
+    V = zeros(2,2)
+    w = zeros( n)
+    RR = zeros(2,2)
 
     for i in 1:n
         V[1,1] = hits_ge[1,i]
@@ -344,7 +344,163 @@ end
 # The step 2 is the least square fit, done by imposing the minimum constraint on the cost function and solving the consequent linear system. It determines the fitted parameters u and their covariance matrix.
 # The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
 # */
-@inline function BL_Line_fit()
+@inline function BL_Line_fit(hits_ge::Matrix{Float64}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, line_results::line_fit)
+    n = size(hits_ge,2)
+    radii = data.radii
+    S = data.S
+    Z = data.Z
+    VarBeta = data.VarBeta
+
+    slope = - data.q / fast_fit[4]
+    R = rotation_matrix(slope)
+    V = zeros(3,3)
+    JacobXYZtosZ = zeros(2,3)
+    w = zeros(n)
+
+    for i in 1:n
+        V[1,1] = hits_ge[1,i]
+        V[1,2] = V[2,1] = hits_ge[2,i]
+        V[1,3] = v[3,1] = hits_ge[4,i]
+        V[2,2] = hits_ge[2,i]
+        V[3,2] = V[2,3] = hits_ge[4,i]
+        V[3,3] = hits_ge[6,i]
+        tmp = 1/ norm(radii[1:2, i])
+        JacobXYZtosZ[1,1] = radii[2, i] * tmp
+        JacobXYZtosZ[1,2] = - radii[1, i] * tmp
+        JacobXYZtosZ[2,3] = 1
+        w[i] = 1 / ( (R * JacobXYZtosZ * V * JacobXYZtosZ' * R')[2,2] )
+    end
+    
+    r_u = zeros( n)
+    for i in 0:n
+        r_u[i] = w[i] * Z[i]
+    end
+
+    I = zeros( n,n)
+    invert(matrixc_u(w, S, VarBeta), I)
+    u = I * r_u
+
+    line_results.par = [(u(1) - u(0)) / (S(1) - S(0)), u(0)]
+    idiff = 1.0 / (S(1) - S(0))
+
+    line_results.cov = [
+    (I(1, 1) - 2 * I(1, 2) + I(2, 2)) * idiff^2 + mult_scatt(S(1) - S(0), B, fast_fit(2), 2, slope),
+    (I(1, 2) - I(1, 1)) * idiff,
+    (I(1, 2) - I(1, 1)) * idiff,
+    I(1, 1)
+    ]   
+
+    jacobian = zeros(2,2)
+    jacobian[1,1] = 1
+    jacobian[1,2] = 0
+    jacobian[2,1] = - S[0]
+    jacobian[2,2] = 1
+
+    line_results.par[2] =  line_results.par[2] - line_results.par[1] * S[1]
+    line_results.cov = jacobian * line_results.cov * jacobian'
+
+    tmp = R[1,1] - line_results.par[1] * R[1,2]
+    jacobian[2,2] = 1 / tmp
+    jacobian[1,1] = jacobian[2,2] * jacobian[2,2]
+    jacobian[1,2] = 0
+    jacobian[2,1] = line_results.par[2] * R[1,2] * jacobian[1,1] 
+    line_results.par[2] = line_results.par[2] * jacobian[2,2]
+    line_results.par[1] = (R[1,2] + line_results.par[1] * R[1,1] * jacobian[2,2])
+    line_results.cov = jacobian * line_results.cov * jacobian'
+
+    line_results.chi2 = 0
+    for i in 0:n 
+        line_results.chi2 = line_results.chi2 + w[i] * sqr(Z[i] - u[i])
+        if i > 0 && i < n - 1
+            line_results.chi2 = line_results.chi2 + sqr(sqr(u(i - 1) / (S(i) - S(i - 1)) -
+                                                        u(i) * (S(i + 1) - S(i - 1)) / ((S(i + 1) - S(i)) * (S(i) - S(i - 1))) +
+                                                        u(i + 1) / (S(i + 1) - S(i))) /
+                                                        VarBeta(i))
+        end
+    end
+
 end
+
+# \brief Helix fit by three step:
+# -fast pre-fit (see Fast_fit() for further info); \n
+# -circle fit of the hits projected in the transverse plane by Broken Line algorithm (see BL_Circle_fit() for further info); \n
+# -line fit of the hits projected on the (pre-fitted) cilinder surface by Broken Line algorithm (see BL_Line_fit() for further info); \n
+# Points must be passed ordered (from inner to outer layer).
+
+# \param hits Matrix3xNd hits coordinates in this form: \n
+# |x1|x2|x3|...|xn| \n
+# |y1|y2|y3|...|yn| \n
+# |z1|z2|z3|...|zn|
+# \param hits_cov Matrix3Nd covariance matrix in this form (()->cov()): \n
+# |(x1,x1)|(x2,x1)|(x3,x1)|(x4,x1)|.|(y1,x1)|(y2,x1)|(y3,x1)|(y4,x1)|.|(z1,x1)|(z2,x1)|(z3,x1)|(z4,x1)| \n
+# |(x1,x2)|(x2,x2)|(x3,x2)|(x4,x2)|.|(y1,x2)|(y2,x2)|(y3,x2)|(y4,x2)|.|(z1,x2)|(z2,x2)|(z3,x2)|(z4,x2)| \n
+# |(x1,x3)|(x2,x3)|(x3,x3)|(x4,x3)|.|(y1,x3)|(y2,x3)|(y3,x3)|(y4,x3)|.|(z1,x3)|(z2,x3)|(z3,x3)|(z4,x3)| \n
+# |(x1,x4)|(x2,x4)|(x3,x4)|(x4,x4)|.|(y1,x4)|(y2,x4)|(y3,x4)|(y4,x4)|.|(z1,x4)|(z2,x4)|(z3,x4)|(z4,x4)| \n
+# .       .       .       .       . .       .       .       .       . .       .       .       .       . \n
+# |(x1,y1)|(x2,y1)|(x3,y1)|(x4,y1)|.|(y1,y1)|(y2,y1)|(y3,x1)|(y4,y1)|.|(z1,y1)|(z2,y1)|(z3,y1)|(z4,y1)| \n
+# |(x1,y2)|(x2,y2)|(x3,y2)|(x4,y2)|.|(y1,y2)|(y2,y2)|(y3,x2)|(y4,y2)|.|(z1,y2)|(z2,y2)|(z3,y2)|(z4,y2)| \n
+# |(x1,y3)|(x2,y3)|(x3,y3)|(x4,y3)|.|(y1,y3)|(y2,y3)|(y3,x3)|(y4,y3)|.|(z1,y3)|(z2,y3)|(z3,y3)|(z4,y3)| \n
+# |(x1,y4)|(x2,y4)|(x3,y4)|(x4,y4)|.|(y1,y4)|(y2,y4)|(y3,x4)|(y4,y4)|.|(z1,y4)|(z2,y4)|(z3,y4)|(z4,y4)| \n
+# .       .       .    .          . .       .       .       .       . .       .       .       .       . \n
+# |(x1,z1)|(x2,z1)|(x3,z1)|(x4,z1)|.|(y1,z1)|(y2,z1)|(y3,z1)|(y4,z1)|.|(z1,z1)|(z2,z1)|(z3,z1)|(z4,z1)| \n
+# |(x1,z2)|(x2,z2)|(x3,z2)|(x4,z2)|.|(y1,z2)|(y2,z2)|(y3,z2)|(y4,z2)|.|(z1,z2)|(z2,z2)|(z3,z2)|(z4,z2)| \n
+# |(x1,z3)|(x2,z3)|(x3,z3)|(x4,z3)|.|(y1,z3)|(y2,z3)|(y3,z3)|(y4,z3)|.|(z1,z3)|(z2,z3)|(z3,z3)|(z4,z3)| \n
+# |(x1,z4)|(x2,z4)|(x3,z4)|(x4,z4)|.|(y1,z4)|(y2,z4)|(y3,z4)|(y4,z4)|.|(z1,z4)|(z2,z4)|(z3,z4)|(z4,z4)|
+# \param B magnetic field in the center of the detector in Gev/cm/c, in order to perform the p_t calculation.
+
+# \warning see BL_Circle_fit(), BL_Line_fit() and Fast_fit() warnings.
+
+# \bug see BL_Circle_fit(), BL_Line_fit() and Fast_fit() bugs.
+
+# \return (phi,Tip,p_t,cot(theta)),Zip), their covariance matrix and the chi2's of the circle and line fits.
+@inline function BL_Helix_fit(hits::Matrix{Float64}, hits_ge::Matrix{Float64},B::Float64)
+    
+    helix = helix_fit(zeros(5), zeros(5,5), 0.0, 0.0, 1)
+    fast_fit = Vector{Float64}(undef, 4)
+    BL_Fast_fit(hits, fast_fit)
+
+    data = PreparedBrokenLineData(
+        0,
+        zeros(3, 3),
+        zeros(3),
+        zeros(3),
+        zeros(3),
+        zeros(3)
+    )
+    circle = circle_fit(
+        zeros(3),              
+        zeros(3, 3),          
+        0,                    
+        0.0                    
+    )
+    line = line_fit(
+        zeros(2),
+        zeros(2, 2),
+        0.0
+    )
+    jacobian =  zeros(3, 3) 
+    prepare_broken_line_data(hits, fast_fit, B, data)
+    BL_Line_fit(hits_ge, fast_fit, B, data, line)
+    BL_Circle_fit(hits, hits_ge, fast_fit, B, data, circle)
+    
+    jacobian .= [1.0 0 0; 
+              0 1.0 0; 
+              0 0 -abs(circle.par[3]) * B / (circle.par[3]^2 * circle.par[3])]
+    
+    circle.par[3] = B / abs(circle.par[3])
+    circle.cov = jacobian * circle.cov * jacobian'
+
+    helix.par = vcat(circle.par, line.par)
+    helix.cov = zeros(5, 5)
+    helix.cov[1:3, 1:3] .= circle.cov
+    helix.cov[4:5, 4:5] .= line.cov
+    helix.q = circle.q
+    helix.chi2_circle = circle.chi2
+    helix.chi2_line = line.chi2
+
+    
+    return helix
+end
+
 
 end
