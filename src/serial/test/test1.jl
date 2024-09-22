@@ -1,11 +1,10 @@
-function potato()
-    return 1 
-end
-module A
-    using Main:potato
-v = fill(5,5)
-x = potato()
+
+x = [fill(0,100) for i ∈ 1:1000]
+function test(x)
+    for i ∈ 1 :100
+        temp = length( x[i])
+        print(temp)
+    end
 end
 
-print(A.v)
-print(A.x)
+@time test(x)
