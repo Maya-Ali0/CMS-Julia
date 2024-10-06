@@ -41,14 +41,15 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
     Loops over all Doublets
     Gets the inner hit of the doublet
     Get all doublets where the inner hit is found as an outer hit 
-
+    Now loop over all neighboring doublets and check whether the three points are aligned within the r z plane
+    Also make sure that the curvature formed by the three points on cross sectional plane (circle) satisify a certain lower bound
     """
     for idx ∈ first_cell_index:n_cells[1]
         cell_index = idx
         this_cell = cells[cell_index]
 
         inner_hit_id = get_inner_hit_id(this_cell)
-        number_of_possible_neighbors = length(@view is_outer_hit_of_cell[inner_hit_id])
+        number_of_possible_neighbors = length(is_outer_hit_of_cell[inner_hit_id])
         vi = data(is_outer_hit_of_cell[inner_hit_id])
 
         last_bpix1_det_index::UInt32 = 96

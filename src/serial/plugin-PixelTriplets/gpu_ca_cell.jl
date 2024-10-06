@@ -152,7 +152,11 @@ end
 function outer_neighbors(self::GPUCACell)
     return self.the_outer_neighbors
 end
-
+"""
+check if oughter_neighbor vector for the other_doublet if it is empty
+if its empty, assign for it a neighbors slot within cell_neighbors by extending cell_neighbors.
+Finally push the second doublet index t to the oughter_neighbor forming the triplet
+"""
 function add_outer_neighbor(other_cell::GPUCACell, t::Integer, cell_neighbors::CellNeighborsVector)
     outer_neighbor = outer_neighbors(other_cell)
     if empty(outer_neighbor)

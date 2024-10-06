@@ -26,5 +26,7 @@ function t()
     x = Vector{Int64}(undef,1000000)
     @time test(x)
 end
+module x
+end
 
 t()

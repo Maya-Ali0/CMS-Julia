@@ -91,14 +91,14 @@ function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup
                 continue
             end
             trailer_byte_start = length(raw_data) - 7
-            trailer =  view(dataFormats.data(raw_data),trailer_byte_start:trailer_byte_start+7) # The last 8 bytes
+            trailer =  @views (dataFormats.data(raw_data)[trailer_byte_start:trailer_byte_start+7]) # The last 8 bytes
 
             #FIXME
             # if (!check_crc(error_check,errors_in_event, fed_id, trailer, self.errors)) 
             #     continue
             # end 
             header_byte_start = 1 
-            header = view(dataFormats.data(raw_data),header_byte_start:header_byte_start+7)
+            header = @views (dataFormats.data(raw_data)[header_byte_start:header_byte_start+7])
 
             moreHeaders = true
             while moreHeaders
@@ -106,7 +106,7 @@ function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup
                 moreHeaders = headerStatus
                 if moreHeaders
                     header_byte_start += 8
-                    header = view(data(rawData),header_byte_start:header_byte_start+7)
+                    header = @views (data(rawData)[header_byte_start:header_byte_start+7])
                 end
             end
 
@@ -116,7 +116,7 @@ function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup
                 moreTrailer = trailerStatus
                 if moreTrailer
                     trailer_byte_start -= 8
-                    trailer = view(dataFormats.data(rawData),trailer_byte_start:trailer_byte_start+7)
+                    trailer = @views (dataFormats.data(rawData),trailer_byte_start:trailer_byte_start+7)
                 end
             end 
             

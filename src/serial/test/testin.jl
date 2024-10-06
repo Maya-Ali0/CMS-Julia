@@ -24,14 +24,16 @@ using InteractiveUtils
 # end
 
 # @code_llvm test()
-function f()
-    for j in 1:100
-        a = (0x2,0xC,0xF0,0xFF00,0xFFFF0000)
-        acc = 0
-        for i in 1:5
-            acc += a[i]
-        end
-    end
-end
+# function f()
+#     for j in 1:100
+#         a = (0x2,0xC,0xF0,0xFF00,0xFFFF0000)
+#         acc = 0
+#         for i in 1:5
+#             acc += a[i]
+#         end
+#     end
+# end
 
-@time f()
+# @time f()
+
+x = 2.2 

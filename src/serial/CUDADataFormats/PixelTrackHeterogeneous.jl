@@ -1,4 +1,9 @@
 module TrackQuality
+using ..histogram:OneToManyAssoc
+using ..eigenSOA:ScalarSOA
+const hindex_type = UInt16
+
+
 """
 ChatGPT:
 
@@ -22,16 +27,22 @@ High Purity: Tracks that are identified with a high degree of certainty to be tr
     tight = 4
     highPurity = 5
 end
-end
 
-module PixelTrack
 
-struct TrackSOAT{S}
-
+struct TrackSOAT{S,many}
+    # const HitContainer = OneToManyAssoc{hindex_type,S,5*S}
+    m_quality::ScalarSOA{UInt8,S}
+    chi2::ScalarSOA{Float32,S}
+    eta::ScalarSOA{Float32,S}
+    pt::ScalarSOA{Float32,S}
+    hit_indices::OneToManyAssoc{hindex_type,S,many}
+    det_indices::OneToManyAssoc{hindex_type,S,many}
+    m_nTracks::UInt32
+    function TrackSOAT{S,many}() where {S,many}
+        new(ScalarSOA{UInt8,S}(),ScalarSOA{Float32,S}(),ScalarSOA{Float32,S}(),ScalarSOA{Float32,S}(),OneToManyAssoc{hindex_type,S,many}(),OneToManyAssoc{hindex_type,S,many}())
+    end
 end
 const MAX_NUMBER = 32 * 1024
-
-
 
 
 end

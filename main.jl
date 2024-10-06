@@ -36,9 +36,9 @@ function run()
     e = 0
     # open("doubletsTesting.txt", "a") do file
     for collection ∈ raw_events
-        if e == 3
-            break
-        end
+        # if e == 3
+        #     break
+        # end
         # write(file,"EVENTT",string(e))
         reg = ProductRegistry()
         raw_token = produces(reg,FedRawDataCollection)
@@ -61,4 +61,4 @@ end
 end
 #run()
 # @profview run()
-@time run()
+@btime run()

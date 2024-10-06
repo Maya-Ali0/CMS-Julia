@@ -1,5 +1,5 @@
 module eigenSOA
-
+    using StaticArrays:MArray
     is_power_2(v::Integer) = ((v != 0) && ((v & (v-1)) == 0)) # For positive integers
 
     """
