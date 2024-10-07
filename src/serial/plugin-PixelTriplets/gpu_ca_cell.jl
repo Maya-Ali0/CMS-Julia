@@ -171,4 +171,40 @@ function add_outer_neighbor(other_cell::GPUCACell, t::Integer, cell_neighbors::C
     return push!(outer_neighbor, UInt32(t))
 end
 
+function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0)
+    push!(temp_ntuplet,self.doublet_id)
+    @assert length(temp_ntuplet) <= 4
+    last = true
+    for i ∈ 1:length(self.the_outer_neighbors)
+        other_cell = self.the_outer_neighbors[i]
+
+        if cells[other_cell].the_doublet_id < 0 
+            continue # killed by early_fishbone
+        end
+        last = false
+        find_ntuplets(self,Val{DEPTH-1}(),cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0)
+    end
+    if last
+        if length(temp_ntuplet) >= min_hits_per_ntuplet - 1
+           hits = @MArray [0,0,0,0,0,0]
+           nh = length(temp_ntuplet)
+            for c ∈ temp_ntuplet
+                hits[nh] = cells[c].the_inner_hit_id
+                nh -= 1
+            end
+            hits[length(temp_ntuplet)+1] = self.the_outer_hit_id
+            it = bulk_fill(found_ntuplets,apc,hits,length(temp_ntuplet)+1)
+            
+            if it >= 0
+                for c ∈ temp_ntuplet
+                    add_track(cells[c],it,cell_tracks)
+                end
+                quality[it] = bad
+            end
+        end
+    end
+    pop!(temp_ntuplet)
+    @assert length(temp_ntuplet) < 4
+end
+
 end

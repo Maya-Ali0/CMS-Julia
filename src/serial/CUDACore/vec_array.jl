@@ -4,7 +4,7 @@ mutable struct VecArray{T,maxSize}
     VecArray{T,maxSize}() where {T,maxSize} = new(MArray{Tuple{maxSize},T}(undef),0)
 end
 
-function Base.push!(self::VecArray{T,maxSize},element::T) where {T,maxSize}
+function Base.push!(self::VecArray{T,maxSize},element::Integer) where {T,maxSize}
     self.m_size += 1
     current_size = self.m_size
     if(current_size <= maxSize)

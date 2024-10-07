@@ -95,6 +95,7 @@ module cAHitNtupletGenerator
         device_the_cells::Vector{GPUCACell}
         device_is_outer_hit_of_cell::Vector{OuterHitOfCell}
         device_n_cells::MVector{1,UInt32}
+        device_hit_tuple_counter::MVector{2,UInt32}
         device_hit_to_tuple::HitToTuple
         device_tuple_multiplicity::TupleMultiplicity
         m_params::Params
@@ -106,7 +107,7 @@ module cAHitNtupletGenerator
             the_cells = Vector{GPUCACell}(undef,params.max_num_of_doublets)
             new(CellNeighborsVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_neighbors_container),the_cell_neighbors_container,
                 CellTracksVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_tracks_container),the_cell_tracks_container,the_cells,is_outer_hit_of_cell,
-                MVector{1,UInt32}(0),HitToTuple(),TupleMultiplicity(),params,Counters())
+                MVector{1,UInt32}(0),MVector{2,UInt32}(0,0),HitToTuple(),TupleMultiplicity(),params,Counters())
         end
     end
     # function fill_hit_det_indices(hv::TrackingRecHit2DSOAView, tracks_d::TkSoA)
@@ -154,6 +155,8 @@ module cAHitNtupletGenerator
         if num_hits > 1 && self.m_params.early_fish_bone
             fish_bone(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_is_outer_hit_of_cell,num_hits,false)
         end
+        # kernel_find_ntuplets(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_the_cell_tracks,tuples_d,self.device_hit_tuple_counter,quality_d,self.m_params.min_hits_per_ntuplet)
+
 
     end
 
