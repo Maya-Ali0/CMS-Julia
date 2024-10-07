@@ -1,4 +1,4 @@
-module TrackQuality
+module Tracks
 using ..histogram:OneToManyAssoc
 using ..eigenSOA:ScalarSOA
 const hindex_type = UInt16
@@ -43,6 +43,6 @@ struct TrackSOAT{S,many}
     end
 end
 const MAX_NUMBER = 32 * 1024
-
+const TrackSOA = TrackSOAT{MAX_NUMBER,5*MAX_NUMBER}
 
 end

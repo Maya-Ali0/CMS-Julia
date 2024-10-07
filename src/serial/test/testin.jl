@@ -37,3 +37,7 @@ using InteractiveUtils
 # @time f()
 
 x = 2.2 
+
+struct test{N}
+    x::NTuple{5*N,Int64}
+end

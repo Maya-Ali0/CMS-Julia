@@ -169,7 +169,10 @@ include("serial/plugin-PixelTriplets/gpu_ca_cell.jl")
 include("serial/plugin-PixelTriplets/gpu_pixel_doublets.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator_kernels_impl.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator_kernels.jl")
+include("serial/CUDACore/eigen_soa.jl")
+include("serial/CUDADataFormats/PixelTrackHeterogeneous.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet.jl")
+
 #include("serial/plugin-PixelTriplets/helix_fit_on_gpu.jl")
 end

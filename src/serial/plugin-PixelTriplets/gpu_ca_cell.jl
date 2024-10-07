@@ -11,7 +11,7 @@ module gpuCACELL
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:z_global,r_global
     using Patatrack:CircleEq, compute, dca0, curvature
     export GPUCACell
-
+    export get_outer_x,get_outer_y,get_outer_z,get_inner_x,get_inner_y,get_inner_z,get_inner_det_index
     # using Main:CircleEq
     # using Main:curvature
     # using Main:dca0

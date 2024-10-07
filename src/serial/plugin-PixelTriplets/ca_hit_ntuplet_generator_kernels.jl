@@ -5,8 +5,9 @@ module cAHitNtupletGenerator
     using StaticArrays:MArray, MVector
     using ..caConstants
     using ..gpuCACELL
-    using ..gpuPixelDoublets:init_doublets,n_pairs,get_doublets_from_histo
+    using ..gpuPixelDoublets:init_doublets,n_pairs,get_doublets_from_histo,fish_bone
     using ..kernelsImplementation:kernel_connect
+    using ..histogram:zero
     export Params, Counters
     #using Main::kernel_fill_hit_indices
     struct Counters
@@ -140,16 +141,20 @@ module cAHitNtupletGenerator
                                 self.m_params.do_z0_cut,self.m_params.do_pt_cut,self.m_params.max_num_of_doublets,file)
     end
 
-    function launch_kernels(self::CAHitNTupletGeneratorKernels,hh,tracks_d = nothing)
-        #tuples_d
-        #quality_d
-        #launch_zero
+    function launch_kernels(self::CAHitNTupletGeneratorKernels,hh,tracks_d)
+        tuples_d = tracks_d.hit_indices
+        quality_d = tracks_d.m_quality
+        zero(tuples_d)
         num_hits = n_hits(hh)
         @assert(num_hits <= MAX_NUMBER_OF_HITS)
         kernel_connect(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_the_cell_neighbors,
                        self.device_is_outer_hit_of_cell,self.m_params.hard_curv_cut,self.m_params.pt_min,
                        self.m_params.ca_theta_cut_barrel,self.m_params.ca_theta_cut_forward,self.m_params.dca_cut_inner_triplet,
                        self.m_params.dca_cut_outer_triplet)
+        if num_hits > 1 && self.m_params.early_fish_bone
+            fish_bone(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_is_outer_hit_of_cell,num_hits,false)
+        end
+
     end
 
 end

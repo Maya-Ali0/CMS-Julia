@@ -1,5 +1,6 @@
 module gpuPixelDoublets
     using StaticArrays
+    include("gpu_fishbone.jl")
     using ..caConstants
     using ..gpuCACELL
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h

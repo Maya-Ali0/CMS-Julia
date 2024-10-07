@@ -1,4 +1,4 @@
-using Patatrack
+using .Patatrack
 using Profile, BenchmarkTools, ProfileView
 num_of_threads::Int = 1
 num_of_streams::Int = 0

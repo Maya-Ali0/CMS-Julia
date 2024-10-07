@@ -1,4 +1,5 @@
 using ..caConstants:MAX_CELLS_PER_HIT
+using ..gpuCACELL
 function fish_bone(hits,cells,n_cells,is_outer_hit_of_cell,n_hits,check_track)
     max_cells_per_hit = MAX_CELLS_PER_HIT
     δx = @MArray rand(Float32,max_cells_per_hit)
@@ -21,7 +22,7 @@ function fish_bone(hits,cells,n_cells,is_outer_hit_of_cell,n_hits,check_track)
         curr = 1 
 
         for ic ∈ 1:num_of_outer_doublets
-            ith_cell = cells[cells_vector[i]]
+            ith_cell = cells[cells_vector[ic]]
             if ith_cell.the_used == 0
                 continue 
             end
@@ -29,21 +30,21 @@ function fish_bone(hits,cells,n_cells,is_outer_hit_of_cell,n_hits,check_track)
                 continue
             end
             cell_indices_vector[curr] = cells_vector[ic]
-            d[curr] = get_inner_det_index(ith_cell,hits)
+            inner_detector_index[curr] = get_inner_det_index(ith_cell,hits)
             δx[curr] = get_inner_x(ith_cell,hits) - xo
             δy[curr] = get_inner_y(ith_cell,hits) - yo
             δz[curr] = get_inner_z(ith_cell,hits) - zo
             norms[curr] = δx[curr]^2 + δy[curr]^2 + δz[curr]^2
-            sg+=1
+            curr+=1
         end
         if curr < 2 
             continue
         end
-        for ic ∈ 1:curr
-            ci = cells[cells_indices_vector[ic]]
-            for jc ∈ ic+1:curr 
-                cj = cells[cells_indices_vector[jc]]
-                cos12 = x[ic] * x[jc] + y[ic] * y[jc] + z[ic] * z[jc]
+        for ic ∈ 1:curr-2
+            ci = cells[cell_indices_vector[ic]]
+            for jc ∈ ic+1:curr-1 
+                cj = cells[cell_indices_vector[jc]]
+                cos12 = δx[ic] * δx[jc] + δy[ic] * δy[jc] + δz[ic] * δz[jc]
                 if inner_detector_index[ic] != inner_detector_index[jc] && cos12*cos12 >= 0.99999f0*norms[ic]*norms[jc]
                     ## Kill the farthest (prefer consecutive layers)
                     if norms[ic] > norms[jc]
