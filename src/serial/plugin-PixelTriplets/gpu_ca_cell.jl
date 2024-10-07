@@ -1,4 +1,5 @@
 module gpuCACELL
+    using StaticArrays
     using ..caConstants
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
     using Patatrack:VecArray
@@ -159,7 +160,7 @@ Finally push the second doublet index t to the oughter_neighbor forming the trip
 """
 function add_outer_neighbor(other_cell::GPUCACell, t::Integer, cell_neighbors::CellNeighborsVector)
     outer_neighbor = outer_neighbors(other_cell)
-    if empty(outer_neighbor)
+    if isempty(outer_neighbor)
         i = extend!(cell_neighbors)
         if i > 1
             reset!(cell_neighbors[i])
@@ -173,7 +174,7 @@ end
 
 function add_track(other_cell::GPUCACell, t::Integer, cell_tracks::CellTracksVector)
     tracks = other_cell.the_tracks
-    if empty(tracks)
+    if isempty(tracks)
         i = extend!(cell_tracks)
         if i > 1 
             reset!(cell_tracks[i])
@@ -185,8 +186,8 @@ function add_track(other_cell::GPUCACell, t::Integer, cell_tracks::CellTracksVec
     return push!(tracks,t)
 end
 
-function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0)
-    push!(temp_ntuplet,self.doublet_id)
+function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0) where DEPTH
+    push!(temp_ntuplet,self.the_doublet_id)
     @assert length(temp_ntuplet) <= 4
     last = true
     for i ∈ 1:length(self.the_outer_neighbors)
@@ -196,7 +197,9 @@ function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,qu
             continue # killed by early_fishbone
         end
         last = false
-        find_ntuplets(self,Val{DEPTH-1}(),cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0)
+        print(cells[other_cell].the_inner_hit_id)
+        @assert(cells[other_cell].the_inner_hit_id != self.the_inner_hit_id)
+        find_ntuplets(cells[other_cell],Val{DEPTH-1}(),cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0)
     end
     if last
         if length(temp_ntuplet) >= min_hits_per_ntuplet - 1

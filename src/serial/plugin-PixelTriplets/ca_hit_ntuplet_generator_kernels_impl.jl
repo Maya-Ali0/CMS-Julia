@@ -4,9 +4,10 @@
 # using Main:data
 module kernelsImplementation
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView
-using ..gpuCACELL: GPUCACell, get_inner_hit_id, get_inner_r, get_inner_z, get_outer_r, get_outer_z, get_inner_det_index, are_aligned, dca_cut, add_outer_neighbor
+using ..gpuCACELL: GPUCACell, get_inner_hit_id, get_inner_r, get_inner_z, get_outer_r, get_outer_z, get_inner_det_index, are_aligned, dca_cut, add_outer_neighbor, find_ntuplets
 using ..caConstants
 using Patatrack:data
+using DataStructures
 function maxNumber() 
     return 32 * 1024
 end
@@ -82,9 +83,9 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
 end
 
 function kernel_find_ntuplets(hits,cells,n_cells,cell_tracks,found_ntuplets,hit_tuple_counter,quality,min_hits_per_ntuplet)
-    for idx ∈ 1:n_cells
+    for idx ∈ 1:n_cells[1]
         this_cell = cells[idx]
-        if this_cell.doublet_id < 0
+        if this_cell.the_doublet_id < 0
             continue # cut by early fishbone
         end
         p_id = this_cell.the_layer_pair_id

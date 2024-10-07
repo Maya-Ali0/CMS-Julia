@@ -14,19 +14,19 @@
 # @time test!(x)
 
 
-function test(x)
-    
-    r = -10
-    f = v -> x[v] = x[v-1- r] + 1
-    for i ∈ 1:1000
-        f(i)
+function factoriall(::Val{N}) where N
+    if N == 1
+        return 1
     end
+    return N*factoriall(Val{N-1}())
 end
-function t()
-    x = Vector{Int64}(undef,1000000)
-    @time test(x)
-end
-module x
+function factoriall(x)
+    if x == 1
+        return 1
+    end
+    return x*factoriall(x-1)
 end
 
-t()
+@btime factoriall(Val{15}())
+@btime factoriall(15)
+@btime factorial(15)

@@ -31,7 +31,7 @@ end
 
 Base.last(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_data[self.m_size]
 full(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_size == maxSize
-empty(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_size == 0
+Base.isempty(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_size == 0
 resize(self::VecArray{T,maxSize},size::Integer) where {T,maxSize} = (self.m_size = size) 
 data(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_data
 capacity(self::VecArray{T,maxSize}) where {T,maxSize} = maxSize

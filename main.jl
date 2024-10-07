@@ -1,3 +1,6 @@
+using Revise
+Revise.revise()
+
 using .Patatrack
 using Profile, BenchmarkTools, ProfileView
 num_of_threads::Int = 1
