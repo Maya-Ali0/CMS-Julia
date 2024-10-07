@@ -80,4 +80,22 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
         end
     end
 end
+
+function kernel_find_ntuplets(hits,cells,n_cells,cell_tracks,found_ntuplets,hit_tuple_counter,quality,min_hits_per_ntuplet)
+    for idx ∈ 1:n_cells
+        this_cell = cells[idx]
+        if this_cell.doublet_id < 0
+            continue # cut by early fishbone
+        end
+        p_id = this_cell.the_layer_pair_id
+
+        do_it = min_hits_per_ntuplet > 3 ? p_id < 3 : p_id < 8 || p_id > 12
+
+        if do_it 
+            stack = Stack{UInt32}()
+            find_ntuplets(this_cell,Val{6}(),cells,cell_tracks,found_ntuplets,hit_tuple_counter,quality,stack,min_hits_per_ntuplet,p_id < 3)
+            @assert isempty(stack)
+        end
+    end 
+end
 end

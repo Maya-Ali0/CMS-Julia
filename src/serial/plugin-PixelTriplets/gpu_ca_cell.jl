@@ -171,6 +171,20 @@ function add_outer_neighbor(other_cell::GPUCACell, t::Integer, cell_neighbors::C
     return push!(outer_neighbor, UInt32(t))
 end
 
+function add_track(other_cell::GPUCACell, t::Integer, cell_tracks::CellTracksVector)
+    tracks = other_cell.the_tracks
+    if empty(tracks)
+        i = extend!(cell_tracks)
+        if i > 1 
+            reset!(cell_tracks[i])
+            tracks = cell_tracks[i]
+        else
+            return -1
+        end
+    end
+    return push!(tracks,t)
+end
+
 function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0)
     push!(temp_ntuplet,self.doublet_id)
     @assert length(temp_ntuplet) <= 4
@@ -194,12 +208,11 @@ function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,qu
             end
             hits[length(temp_ntuplet)+1] = self.the_outer_hit_id
             it = bulk_fill(found_ntuplets,apc,hits,length(temp_ntuplet)+1)
-            
-            if it >= 0
+            if it >= 0 # no overflow of histogram
                 for c ∈ temp_ntuplet
-                    add_track(cells[c],it,cell_tracks)
+                    add_track(cells[c],it+1,cell_tracks)
                 end
-                quality[it] = bad
+                quality[it+1] = bad
             end
         end
     end

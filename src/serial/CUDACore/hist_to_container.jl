@@ -127,16 +127,20 @@ module histogram
     increment lower 32 bits by the number of elements to add to bin c.m. I don't know why set off[c.m] = c.n
     Doesnt resemble how i thought the representation was interms of offsets.
     """
-    @inline function bulk_fill(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS},apc::AtomicPairCounter,v::Vector{I},n::UInt32) where {T, N_BINS, SIZE, S, I, N_HISTS}
-        c = add(apc,n)
-        if c.m > n_bins(hist)
-            return -1*Int32(c.m)
+    @inline function bulk_fill(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS},apc::AbstractArray,v::Vector{I},n::UInt32) where {T, N_BINS, SIZE, S, I, N_HISTS}
+        c = @MArray [0,0]
+        c[1] = apc[1]
+        c[2] = apc[2]
+        apc[1] += 1
+        apc[2] += n
+        if c[1] > n_bins(hist)
+            return -1*Int32(c[1])
         end
-        off[c.m] = c.n 
+        off[c[1]+1] = c[2] 
         for i ∈ 0:n-1
-            bins[c.n+i] = v[i+1]
+            bins[c[2]+i+1] = v[i+1]
         end
-        return c.m
+        return c[1]
     end
 
     @inline bulk_finalize(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}, apc::AtomicPairCounter) where {T, N_BINS, SIZE, S, I, N_HISTS} = off[apc.m] = apc.n
