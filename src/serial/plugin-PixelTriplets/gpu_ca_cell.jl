@@ -2,20 +2,20 @@ module gpuCACELL
     using StaticArrays
     using ..caConstants
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
-    using Patatrack:VecArray
-    using Patatrack:SimpleVector
-    using Patatrack:empty,extend!,reset!
+    using ..Patatrack:VecArray
+    using ..Patatrack:SimpleVector
+    using ..Patatrack:empty,extend!,reset!
     using Printf
     const ptr_as_int = UInt64
     const Hits = TrackingRecHit2DSOAView
     const TmpTuple = VecArray{UInt32,6}
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:z_global,r_global
-    using Patatrack:CircleEq, compute, dca0, curvature
+    using ..Patatrack:CircleEq, compute, dca0, curvature
     export GPUCACell
     export get_outer_x,get_outer_y,get_outer_z,get_inner_x,get_inner_y,get_inner_z,get_inner_det_index
     # using Main:CircleEq
     # using Main:curvature
-    # using Main:dca0
+    # using Main:dca0%
     # using Main:extend!
     # using Main:reset
     # using Main:push!

@@ -10,8 +10,7 @@ function test(x)
     print(r)
 end
 
-using Base
-using Base
+
 
 include("test2.jl")
 include("test2.jl")

@@ -6,8 +6,9 @@ module kernelsImplementation
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView
 using ..gpuCACELL: GPUCACell, get_inner_hit_id, get_inner_r, get_inner_z, get_outer_r, get_outer_z, get_inner_det_index, are_aligned, dca_cut, add_outer_neighbor, find_ntuplets
 using ..caConstants
-using Patatrack:data
+using ..Patatrack:data
 using DataStructures
+using Printf
 function maxNumber() 
     return 32 * 1024
 end
@@ -75,6 +76,10 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
             cut = dca_cut(this_cell, other_cell, hhp, get_inner_det_index(other_cell, hhp) < last_bpix1_det_index ? dca_cut_inner_triplet : dca_cut_outer_triplet, hard_curv_cut)
             if aligned && cut
                 add_outer_neighbor(other_cell, cell_index, cell_neighbors)
+                triplet_info = @sprintf("%d %d",cell_index-1,other_cell_index-1)
+                open("tripletsTestingJulia.txt","a") do file
+                    write(file,triplet_info)
+                end
                 this_cell.the_used |= 1
                 other_cell.the_used |= 1
             end

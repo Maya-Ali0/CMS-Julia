@@ -4,8 +4,8 @@ module caConstants
     export MAX_NUM_OF_ACTIVE_DOUBLETS, MAX_NUM_OF_LAYER_PAIRS
     using ..histogram:OneToManyAssoc
     using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants:MAX_NUMBER_OF_HITS
-    using Patatrack:VecArray
-    using Patatrack:SimpleVector
+    using ..Patatrack:VecArray
+    using ..Patatrack:SimpleVector
     const MAX_NUM_TUPLES = 48 * 1024
     const MAX_NUM_QUADRUPLETS = MAX_NUM_TUPLES
     const MAX_NUM_OF_DOUBLETS = 2 * 1024 * 1024

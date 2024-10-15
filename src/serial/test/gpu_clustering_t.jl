@@ -1,4 +1,3 @@
-using Revise
 include("../plugin-SiPixelClusterizer/gpu_clustering.jl")
 using .gpuClustering:find_clus, count_modules
 

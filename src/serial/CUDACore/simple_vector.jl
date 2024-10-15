@@ -1,4 +1,3 @@
-using Base
 mutable struct SimpleVector{T}
     m_size::Int
     m_capacity::Int

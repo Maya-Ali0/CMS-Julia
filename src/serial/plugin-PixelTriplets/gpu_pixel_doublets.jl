@@ -6,7 +6,7 @@ module gpuPixelDoublets
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:detector_index,z_global,cluster_size_y,i_phi,r_global
     using ..histogram:hist_off,bin,begin_h,end_h,val,n_bins
-    using Patatrack:reset!,extend!
+    using ..Patatrack:reset!,extend!
     using Printf
     export n_pairs
     export get_doublets_from_histo

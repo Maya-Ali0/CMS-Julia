@@ -38,6 +38,8 @@ using InteractiveUtils
 
 x = 2.2 
 
-struct test{N}
-    x::NTuple{5*N,Int64}
+module x 
+#  export x 
+
+ x = 5
 end

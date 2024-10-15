@@ -1,6 +1,3 @@
-using Revise
-Revise.revise()
-
 using .Patatrack
 using Profile, BenchmarkTools, ProfileView
 num_of_threads::Int = 1
@@ -39,10 +36,10 @@ function run()
     e = 0
     # open("doubletsTesting.txt", "a") do file
     for collection ∈ raw_events
-        # if e == 3
-        #     break
-        # end
-        # write(file,"EVENTT",string(e))
+        if e == 1
+            break
+        end
+    #     # write(file,"EVENTT",string(e))
         reg = ProductRegistry()
         raw_token = produces(reg,FedRawDataCollection)
         raw_to_cluster = SiPixelRawToClusterCUDA(reg)
@@ -52,16 +49,15 @@ function run()
 
         bs =  BeamSpotToPOD(reg)
         produce(bs,event,es)
-
         rec_hit = SiPixelRecHitCUDA(reg)
         produce(rec_hit,event,es)   
         n_tuplets = CAHitNtuplet(reg)
         produce(n_tuplets,event,es,0)
         e+=1
-end
+    end
 # end
 
 end
 #run()
 # @profview run()
-@btime run()
+run()
