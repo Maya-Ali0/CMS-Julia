@@ -1,5 +1,3 @@
-using Revise
-
 module Patatrack
 import Base.length
 using Printf
@@ -177,6 +175,6 @@ include("serial/CUDADataFormats/PixelTrackHeterogeneous.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet.jl")
 
-#include("serial/plugin-PixelTriplets/helix_fit_on_gpu.jl")
+# include("serial/plugin-PixelTriplets/helix_fit_on_gpu.jl")
 
 end
