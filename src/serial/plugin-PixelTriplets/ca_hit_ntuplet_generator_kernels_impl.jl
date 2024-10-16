@@ -32,7 +32,12 @@ S = maxNumber()
 #           hitDetIndices.bins[idx] = detector_index(hh, tuples.bins[idx])
 #       end
 # end
-
+function test(x)
+    print(x)
+    while(true)
+        sleep(0.1)
+    end
+end
 function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hhp::TrackingRecHit2DSOAView, cells::Vector{GPUCACell}, n_cells, cell_neighbors::CellNeighborsVector, is_outer_hit_of_cell::Vector{OuterHitOfCell}, hard_curv_cut::AbstractFloat, pt_min::AbstractFloat, ca_theta_cut_barrel::AbstractFloat, ca_theta_cut_forward::AbstractFloat, dca_cut_inner_triplet::AbstractFloat, dca_cut_outer_triplet::AbstractFloat)
     first_cell_index = 1
     first = 1
@@ -51,6 +56,8 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
         this_cell = cells[cell_index]
 
         inner_hit_id = get_inner_hit_id(this_cell)
+        
+        
         number_of_possible_neighbors = length(is_outer_hit_of_cell[inner_hit_id])
         vi = data(is_outer_hit_of_cell[inner_hit_id])
 
@@ -71,15 +78,14 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
 
             r1 = get_inner_r(other_cell, hhp)
             z1 = get_inner_z(other_cell, hhp)
-
+            # triplet_info = @sprintf("%d %d \n",cell_index-1,other_cell_index-1)
+            # open("tripletsTestingJulia.txt","a") do file
+            #     write(file,triplet_info)
+            # end
             aligned = are_aligned(r1, z1, ri, zi, ro, zo, pt_min, is_barrel ? ca_theta_cut_barrel : ca_theta_cut_forward)
             cut = dca_cut(this_cell, other_cell, hhp, get_inner_det_index(other_cell, hhp) < last_bpix1_det_index ? dca_cut_inner_triplet : dca_cut_outer_triplet, hard_curv_cut)
             if aligned && cut
                 add_outer_neighbor(other_cell, cell_index, cell_neighbors)
-                triplet_info = @sprintf("%d %d",cell_index-1,other_cell_index-1)
-                open("tripletsTestingJulia.txt","a") do file
-                    write(file,triplet_info)
-                end
                 this_cell.the_used |= 1
                 other_cell.the_used |= 1
             end

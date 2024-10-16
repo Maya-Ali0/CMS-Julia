@@ -35,8 +35,8 @@ module gpuCACELL
             inner_hit_id::Integer,outer_hit_id::Integer,file)
             z_global_inner = z_global(hh,inner_hit_id)
             r_global_inner = r_global(hh,inner_hit_id)
-            # z_global_inner_str = @sprintf("%.8g", z_global_inner)
-            # r_global_inner_str = @sprintf("%.8g", r_global_inner)
+            # z_global_inner_str = @sprintf("%.7g", z_global_inner)
+            # r_global_inner_str = @sprintf("%.7g", r_global_inner)
             # Construct the string to append to the file
             # doublet_id -=1
             # layer_pair_id -=1

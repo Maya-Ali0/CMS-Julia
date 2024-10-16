@@ -117,7 +117,7 @@ module cAHitNtupletGenerator
     function build_doublets(self::CAHitNTupletGeneratorKernels,hh::HitsOnCPU,file)
         current_n_hits = n_hits(hh)
         
-        self.device_is_outer_hit_of_cell = fill(OuterHitOfCell(),max(1,current_n_hits))
+        self.device_is_outer_hit_of_cell = [OuterHitOfCell() for _ ∈ 1:max(1,current_n_hits)]
         println("Building Doublets out of ",current_n_hits," Hits")
         # cell_storage
         

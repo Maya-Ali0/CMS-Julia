@@ -1,4 +1,10 @@
 module gpuPixelDoublets
+function test(x)
+    print(x)
+    while(true)
+        sleep(0.1)
+    end
+end
     using StaticArrays
     include("gpu_fishbone.jl")
     using ..caConstants
@@ -266,8 +272,9 @@ module gpuPixelDoublets
             current_bin = kl
             
             while(current_bin != kh)
-                p = begin_h(hist,current_bin+h_off)
-                e = end_h(hist,current_bin+h_off)
+                
+                p = begin_h(hist,current_bin+h_off)# first index of current_bin
+                e = end_h(hist,current_bin+h_off) # first index of current_bin+1
                 p += first
                 for p ∈ p:e-1
                     
@@ -297,12 +304,14 @@ module gpuPixelDoublets
                     end
                     
                     n_cells[1]+=UInt32(1)
+                    
                     if(n_cells[1] > max_num_of_doublets)
                         n_cells[1] -=UInt32(1)
                         break
                     end
                     cells[n_cells[1]] = GPUCACell(cell_neighbors,cell_tracks,hist_view(hh),pair_layer_id,n_cells[1],i,oi,file)
                     push!(is_outer_hit_of_cell[oi],n_cells[1])
+                    
                 end
                 current_bin = current_bin+1
                 if(current_bin == (n_bins(hist)+1))
@@ -312,7 +321,6 @@ module gpuPixelDoublets
 
             
         end 
-        
 
     end
 end

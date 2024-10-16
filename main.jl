@@ -1,4 +1,4 @@
-using Revise
+# using Revise
 using .Patatrack
 using Profile, BenchmarkTools, ProfileView
 num_of_threads::Int = 1
@@ -35,7 +35,7 @@ produce(CPE_Producer,es);
 produce(beam_Producer,es)
 function run()
     e = 0
-    # open("doubletsTesting.txt", "a") do file
+    open("doubletsTesting.txt", "a") do file
     for collection ∈ raw_events
         if e == 1
             break
@@ -53,10 +53,10 @@ function run()
         rec_hit = SiPixelRecHitCUDA(reg)
         produce(rec_hit,event,es)   
         n_tuplets = CAHitNtuplet(reg)
-        produce(n_tuplets,event,es,0)
+        produce(n_tuplets,event,es,file)
         e+=1
     end
-# end
+end
 
 end
 #run()
