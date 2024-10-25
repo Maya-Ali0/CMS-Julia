@@ -37,9 +37,9 @@ function run()
     e = 0
     # open("doubletsTesting.txt", "a") do file
     for collection ∈ raw_events
-        if e == 2
-            break
-        end
+        # if e == 1
+        #     break
+        # end
     #     # write(file,"EVENTT",string(e))
         reg = ProductRegistry()
         raw_token = produces(reg,FedRawDataCollection)
@@ -56,7 +56,7 @@ function run()
         produce(n_tuplets,event,es,0)
         e+=1
     end
-# end
+# endA
 end
 #run()
 # @profview run()

@@ -9,6 +9,7 @@ using ..caConstants
 using ..Patatrack:data
 using DataStructures
 using Printf
+using ..Patatrack:CircleEq, compute, dca0, curvature
 function maxNumber() 
     return 32 * 1024
 end
@@ -43,6 +44,7 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
     first = 1
     apc1 = 0
     apc2 = 0
+    eq = CircleEq{Float32}()
     # print(n_cells[1])
     """
     Loops over all Doublets
@@ -71,7 +73,7 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
         zo = get_outer_z(this_cell, hhp)
 
         is_barrel = get_inner_det_index(this_cell, hhp) < last_barrel_det_index
-
+        
         for j in first:number_of_possible_neighbors
             other_cell_index = vi[j]
             other_cell = cells[other_cell_index]
@@ -81,7 +83,8 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
             
             
             aligned = are_aligned(r1, z1, ri, zi, ro, zo, pt_min, is_barrel ? ca_theta_cut_barrel : ca_theta_cut_forward)
-            cut = dca_cut(this_cell, other_cell, hhp, get_inner_det_index(other_cell, hhp) < last_bpix1_det_index ? dca_cut_inner_triplet : dca_cut_outer_triplet, hard_curv_cut)
+            
+            cut = dca_cut(this_cell, other_cell, hhp, get_inner_det_index(other_cell, hhp) < last_bpix1_det_index ? dca_cut_inner_triplet : dca_cut_outer_triplet, hard_curv_cut,eq)
             if aligned && cut
                 add_outer_neighbor(other_cell, cell_index, cell_neighbors)
                 # triplet_info = @sprintf("%d %d\n",cell_index-1,other_cell_index-1)
@@ -96,6 +99,7 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
 end
 
 function kernel_find_ntuplets(hits,cells,n_cells,cell_tracks,found_ntuplets,hit_tuple_counter,quality,min_hits_per_ntuplet)
+    stack = Stack{UInt32}()
     for idx ∈ 1:n_cells[1]
         this_cell = cells[idx]
         if this_cell.the_doublet_id < 0
@@ -106,8 +110,7 @@ function kernel_find_ntuplets(hits,cells,n_cells,cell_tracks,found_ntuplets,hit_
         do_it = min_hits_per_ntuplet > 3 ? p_id < 3 : p_id < 8 || p_id > 12
 
         if do_it 
-            stack = Stack{UInt32}()
-            # find_ntuplets(this_cell,Val{6}(),cells,cell_tracks,found_ntuplets,hit_tuple_counter,quality,stack,min_hits_per_ntuplet,p_id < 3)
+            find_ntuplets(this_cell,Val{6}(),cells,cell_tracks,found_ntuplets,hit_tuple_counter,quality,stack,min_hits_per_ntuplet,p_id < 3)
             @assert isempty(stack)
         end
     end 

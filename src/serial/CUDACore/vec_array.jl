@@ -1,7 +1,7 @@
 mutable struct VecArray{T,maxSize}
-    m_data::Vector{T}
+    m_data::MArray{Tuple{maxSize},T}
     m_size::Int
-    VecArray{T,maxSize}() where {T,maxSize} = new(Vector{T}(undef,maxSize),0)
+    VecArray{T,maxSize}() where {T,maxSize} = new(MArray{Tuple{maxSize},T}(undef),0)
 end
 
 function Base.push!(self::VecArray{T,maxSize},element::Integer) where {T,maxSize}

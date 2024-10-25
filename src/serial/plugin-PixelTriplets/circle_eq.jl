@@ -44,7 +44,7 @@ function compute(self::CircleEq{T},x1::T,y1::T,x2::T,y2::T,x3::T,y3::T) where T 
     al2 *= det
     self.m_xp = x2
     self.m_yp = y2
-    self.m_c = ct
+    self.m_c =  no_flip ? ct : -ct
     self.m_alpha = no_flip ? al2 : -be2
     self.m_beta = no_flip ? be2 : -al2
     return nothing

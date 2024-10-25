@@ -132,7 +132,7 @@ function are_aligned(r1, z1, ri, zi, ro, zo, pt_min, theta_cut)
     return tan_12_13_half_mul_distance_13_squared * p_min <= theta_cut * distance_13_squared * radius_diff
 end
 
-function dca_cut(cell::GPUCACell, other_cell::GPUCACell, hh::TrackingRecHit2DSOAView, region_origin_radius_plus_tolerance::AbstractFloat, max_curv::AbstractFloat)
+function dca_cut(cell::GPUCACell, other_cell::GPUCACell, hh::TrackingRecHit2DSOAView, region_origin_radius_plus_tolerance::AbstractFloat, max_curv::AbstractFloat,eq::CircleEq{Float32})
     x1 = get_inner_x(other_cell, hh)
     y1 = get_inner_y(other_cell, hh)
 
@@ -141,8 +141,6 @@ function dca_cut(cell::GPUCACell, other_cell::GPUCACell, hh::TrackingRecHit2DSOA
 
     x3 = get_outer_x(cell, hh)
     y3 = get_outer_y(cell, hh)
-
-    eq = CircleEq{Float32}()
     compute(eq,x1, y1, x2, y2, x3, y3)
     curvature_c = curvature(eq)
     if curvature_c > max_curv
