@@ -1,4 +1,5 @@
 module gpuCACELL
+    using InteractiveUtils
     using StaticArrays
     using ..caConstants
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h

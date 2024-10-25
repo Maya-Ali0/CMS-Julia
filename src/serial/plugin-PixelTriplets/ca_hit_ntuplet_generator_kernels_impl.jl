@@ -78,14 +78,16 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
 
             r1 = get_inner_r(other_cell, hhp)
             z1 = get_inner_z(other_cell, hhp)
-            # triplet_info = @sprintf("%d %d \n",cell_index-1,other_cell_index-1)
-            # open("tripletsTestingJulia.txt","a") do file
-            #     write(file,triplet_info)
-            # end
+            
+            
             aligned = are_aligned(r1, z1, ri, zi, ro, zo, pt_min, is_barrel ? ca_theta_cut_barrel : ca_theta_cut_forward)
             cut = dca_cut(this_cell, other_cell, hhp, get_inner_det_index(other_cell, hhp) < last_bpix1_det_index ? dca_cut_inner_triplet : dca_cut_outer_triplet, hard_curv_cut)
             if aligned && cut
                 add_outer_neighbor(other_cell, cell_index, cell_neighbors)
+                # triplet_info = @sprintf("%d %d\n",cell_index-1,other_cell_index-1)
+                # open("tripletsTestingJulia.txt","a") do file
+                #     write(file,triplet_info)
+                # end
                 this_cell.the_used |= 1
                 other_cell.the_used |= 1
             end
