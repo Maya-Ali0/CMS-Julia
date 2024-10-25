@@ -102,8 +102,8 @@ module cAHitNtupletGenerator
         counters::Counters
         function CAHitNTupletGeneratorKernels(params::Params)
             is_outer_hit_of_cell = OuterHitOfCell[]
-            the_cell_neighbors_container = fill(CellNeighbors(),MAX_NUM_OF_ACTIVE_DOUBLETS)
-            the_cell_tracks_container = fill(CellTracks(),MAX_NUM_OF_ACTIVE_DOUBLETS)
+            the_cell_neighbors_container = [CellNeighbors() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]
+            the_cell_tracks_container = [CellTracks() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]
             the_cells = Vector{GPUCACell}(undef,params.max_num_of_doublets)
             new(CellNeighborsVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_neighbors_container),the_cell_neighbors_container,
                 CellTracksVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_tracks_container),the_cell_tracks_container,the_cells,is_outer_hit_of_cell,

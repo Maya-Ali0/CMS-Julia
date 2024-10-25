@@ -37,7 +37,7 @@ function run()
     e = 0
     # open("doubletsTesting.txt", "a") do file
     for collection ∈ raw_events
-        if e == 1
+        if e == 2
             break
         end
     #     # write(file,"EVENTT",string(e))

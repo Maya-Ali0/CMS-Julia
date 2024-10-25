@@ -107,7 +107,7 @@ function kernel_find_ntuplets(hits,cells,n_cells,cell_tracks,found_ntuplets,hit_
 
         if do_it 
             stack = Stack{UInt32}()
-            find_ntuplets(this_cell,Val{6}(),cells,cell_tracks,found_ntuplets,hit_tuple_counter,quality,stack,min_hits_per_ntuplet,p_id < 3)
+            # find_ntuplets(this_cell,Val{6}(),cells,cell_tracks,found_ntuplets,hit_tuple_counter,quality,stack,min_hits_per_ntuplet,p_id < 3)
             @assert isempty(stack)
         end
     end 
