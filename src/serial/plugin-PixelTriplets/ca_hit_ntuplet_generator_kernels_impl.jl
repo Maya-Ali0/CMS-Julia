@@ -115,4 +115,13 @@ function kernel_find_ntuplets(hits,cells,n_cells,cell_tracks,found_ntuplets,hit_
         end
     end 
 end
+
+function kernel_marked_used(hits,cells,n_cells)
+    for idx ∈ 1:n_cells
+        this_cell = cells[idx]
+        if !isempty(this_cell.the_tracks)
+            this_cell.the_used 
+        end
+    end
+end
 end

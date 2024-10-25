@@ -6,7 +6,7 @@ module cAHitNtupletGenerator
     using ..caConstants
     using ..gpuCACELL
     using ..gpuPixelDoublets:init_doublets,n_pairs,get_doublets_from_histo,fish_bone
-    using ..kernelsImplementation:kernel_connect,kernel_find_ntuplets
+    using ..kernelsImplementation:kernel_connect,kernel_find_ntuplets,kernel_marked_used
     using ..histogram:zero
     export Params, Counters
     #using Main::kernel_fill_hit_indices
@@ -156,7 +156,10 @@ module cAHitNtupletGenerator
             fish_bone(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_is_outer_hit_of_cell,num_hits,false)
         end
         kernel_find_ntuplets(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_the_cell_tracks,tuples_d,self.device_hit_tuple_counter,quality_d,self.m_params.min_hits_per_ntuplet)
-
+        
+        if self.m_params.do_stats
+            kernel_mark_used((hist_view(hh),self.device_the_cells,self.device_n_cells))
+        end
 
     end
 
