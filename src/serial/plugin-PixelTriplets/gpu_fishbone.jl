@@ -2,12 +2,12 @@ using ..caConstants:MAX_CELLS_PER_HIT
 using ..gpuCACELL
 function fish_bone(hits,cells,n_cells,is_outer_hit_of_cell,n_hits,check_track)
     max_cells_per_hit = MAX_CELLS_PER_HIT
-    δx =  rand(Float32,max_cells_per_hit)
-    δy =  rand(Float32,max_cells_per_hit)
-    δz =  rand(Float32,max_cells_per_hit)
-    norms =  rand(Float32,max_cells_per_hit)
-    inner_detector_index =  rand(UInt16,max_cells_per_hit)
-    cell_indices_vector =  rand(UInt32,max_cells_per_hit)
+    δx =  Vector{Float32}(undef,max_cells_per_hit)
+    δy =  Vector{Float32}(undef,max_cells_per_hit)
+    δz =  Vector{Float32}(undef,max_cells_per_hit)
+    norms =  Vector{Float32}(undef,max_cells_per_hit)
+    inner_detector_index =  Vector{UInt16}(undef,max_cells_per_hit)
+    cell_indices_vector =  Vector{UInt32}(undef,max_cells_per_hit)
 
     for idy ∈ 1:n_hits
         cells_vector = is_outer_hit_of_cell[idy]

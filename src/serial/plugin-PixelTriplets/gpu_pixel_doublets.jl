@@ -67,6 +67,8 @@ end
         i = extend!(cell_tracks)
         @assert(i == 0)
         reset!(cell_tracks[1])
+        extend!(cell_neighbors)
+        extend!(cell_tracks)
     end
     function get_doublets_from_histo(cells::Vector{GPUCACell},n_cells,cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,
                                      hhp::TrackingRecHit2DHeterogeneous,is_outer_hit_of_cell::Vector{OuterHitOfCell},n_actual_pairs::Integer,

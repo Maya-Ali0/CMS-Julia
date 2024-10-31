@@ -12,6 +12,8 @@ module gpuCACELL
     const TmpTuple = VecArray{UInt32,6}
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:z_global,r_global
     using ..Patatrack:CircleEq, compute, dca0, curvature
+    using ..histogram:bulk_fill
+    import ..Tracks:Quality
     export GPUCACell
     export get_outer_x,get_outer_y,get_outer_z,get_inner_x,get_inner_y,get_inner_z,get_inner_det_index
     # using Main:CircleEq
@@ -132,7 +134,7 @@ function are_aligned(r1, z1, ri, zi, ro, zo, pt_min, theta_cut)
     return tan_12_13_half_mul_distance_13_squared * p_min <= theta_cut * distance_13_squared * radius_diff
 end
 
-function dca_cut(cell::GPUCACell, other_cell::GPUCACell, hh::TrackingRecHit2DSOAView, region_origin_radius_plus_tolerance::AbstractFloat, max_curv::AbstractFloat,eq::CircleEq{Float32})
+function dca_cut(cell::GPUCACell, other_cell::GPUCACell, hh::TrackingRecHit2DSOAView, region_origin_radius_plus_tolerance::AbstractFloat, max_curv::AbstractFloat,eq2)
     x1 = get_inner_x(other_cell, hh)
     y1 = get_inner_y(other_cell, hh)
 
@@ -141,7 +143,8 @@ function dca_cut(cell::GPUCACell, other_cell::GPUCACell, hh::TrackingRecHit2DSOA
 
     x3 = get_outer_x(cell, hh)
     y3 = get_outer_y(cell, hh)
-    compute(eq,x1, y1, x2, y2, x3, y3)
+    eq = CircleEq{Float32}(x1, y1, x2, y2, x3, y3)
+    # compute(eq,x1, y1, x2, y2, x3, y3)
     curvature_c = curvature(eq)
     if curvature_c > max_curv
         return false
@@ -161,14 +164,14 @@ function add_outer_neighbor(other_cell::GPUCACell, t::Integer, cell_neighbors::C
     outer_neighbor = outer_neighbors(other_cell)
     if isempty(outer_neighbor)
         i = extend!(cell_neighbors)
-        if i > 1
+        if i >= 1
             reset!(cell_neighbors[i])
-            outer_neighbor = cell_neighbors[i]
+            other_cell.the_outer_neighbors = cell_neighbors[i]
         else
             return -1
         end
     end
-    return push!(outer_neighbor, UInt32(t))
+    return push!(other_cell.the_outer_neighbors, UInt32(t))
 end
 
 function add_track(other_cell::GPUCACell, t::Integer, cell_tracks::CellTracksVector)
@@ -177,12 +180,12 @@ function add_track(other_cell::GPUCACell, t::Integer, cell_tracks::CellTracksVec
         i = extend!(cell_tracks)
         if i > 1 
             reset!(cell_tracks[i])
-            tracks = cell_tracks[i]
+            other_cell.the_tracks = cell_tracks[i]
         else
             return -1
         end
     end
-    return push!(tracks,t)
+    return push!(other_cell.the_tracks,t)
 end
 
 function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0) where DEPTH
@@ -191,7 +194,6 @@ function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,qu
     last = true
     for i ∈ 1:length(self.the_outer_neighbors)
         other_cell = self.the_outer_neighbors[i]
-
         if cells[other_cell].the_doublet_id < 0 
             continue # killed by early_fishbone
         end
@@ -202,19 +204,21 @@ function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,qu
     end
     if last
         if length(temp_ntuplet) >= min_hits_per_ntuplet - 1
-           hits = @MArray [0,0,0,0,0,0]
+           hits = @MArray fill(UInt16(0),6)
            nh = length(temp_ntuplet)
             for c ∈ temp_ntuplet
                 hits[nh] = cells[c].the_inner_hit_id
                 nh -= 1
             end
             hits[length(temp_ntuplet)+1] = self.the_outer_hit_id
+            print(typeof(found_ntuplets))
+            print(typeof(hits))
             it = bulk_fill(found_ntuplets,apc,hits,length(temp_ntuplet)+1)
             if it >= 0 # no overflow of histogram
                 for c ∈ temp_ntuplet
                     add_track(cells[c],it+1,cell_tracks)
                 end
-                quality[it+1] = bad
+            quality[it+1] = 0
             end
         end
     end

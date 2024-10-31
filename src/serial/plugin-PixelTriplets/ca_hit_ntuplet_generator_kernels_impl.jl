@@ -10,6 +10,7 @@ using ..Patatrack:data
 using DataStructures
 using Printf
 using ..Patatrack:CircleEq, compute, dca0, curvature
+using ..Tracks:Quality
 function maxNumber() 
     return 32 * 1024
 end
@@ -44,7 +45,7 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
     first = 1
     apc1 = 0
     apc2 = 0
-    eq = CircleEq{Float32}()
+    # eq = CircleEq{Float32}()
     # print(n_cells[1])
     """
     Loops over all Doublets
@@ -74,7 +75,7 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
 
         is_barrel = get_inner_det_index(this_cell, hhp) < last_barrel_det_index
         
-        for j in first:number_of_possible_neighbors
+        for j ∈ first:number_of_possible_neighbors
             other_cell_index = vi[j]
             other_cell = cells[other_cell_index]
 
@@ -84,7 +85,7 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
             
             aligned = are_aligned(r1, z1, ri, zi, ro, zo, pt_min, is_barrel ? ca_theta_cut_barrel : ca_theta_cut_forward)
             
-            cut = dca_cut(this_cell, other_cell, hhp, get_inner_det_index(other_cell, hhp) < last_bpix1_det_index ? dca_cut_inner_triplet : dca_cut_outer_triplet, hard_curv_cut,eq)
+            cut = dca_cut(this_cell, other_cell, hhp, get_inner_det_index(other_cell, hhp) < last_bpix1_det_index ? dca_cut_inner_triplet : dca_cut_outer_triplet, hard_curv_cut,0)
             if aligned && cut
                 add_outer_neighbor(other_cell, cell_index, cell_neighbors)
                 # triplet_info = @sprintf("%d %d\n",cell_index-1,other_cell_index-1)
@@ -123,5 +124,19 @@ function kernel_marked_used(hits,cells,n_cells)
             this_cell.the_used 
         end
     end
+end
+
+function kernel_early_duplicate_remover(cells,n_cells,found_ntuplets,quality)
+    duplicate = dup 
+    @assert(n_cells != 0)
+    for idx ∈ 1:n_cells
+        this_cell = cells[idx]
+        if size(this_cell.the_track) < 2 
+            continue
+        end
+
+    end
+    
+
 end
 end

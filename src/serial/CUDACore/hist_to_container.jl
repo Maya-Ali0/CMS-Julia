@@ -127,7 +127,7 @@ module histogram
     increment lower 32 bits by the number of elements to add to bin c.m. I don't know why set off[c.m] = c.n
     Doesnt resemble how i thought the representation was interms of offsets.
     """
-    @inline function bulk_fill(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS},apc::AbstractArray,v::Vector{I},n::UInt32) where {T, N_BINS, SIZE, S, I, N_HISTS}
+    @inline function bulk_fill(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS},apc::AbstractArray,v::AbstractArray{I},n::Integer) where {T, N_BINS, SIZE, S, I, N_HISTS}
         c = @MArray [0,0]
         c[1] = apc[1]
         c[2] = apc[2]
@@ -136,9 +136,9 @@ module histogram
         if c[1] > n_bins(hist)
             return -1*Int32(c[1])
         end
-        off[c[1]+1] = c[2] 
+        hist.off[c[1]+1] = c[2] 
         for i ∈ 0:n-1
-            bins[c[2]+i+1] = v[i+1]
+            hist.bins[c[2]+i+1] = v[i+1]
         end
         return c[1]
     end

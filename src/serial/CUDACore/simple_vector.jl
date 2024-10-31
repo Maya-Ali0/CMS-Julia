@@ -41,7 +41,7 @@ end
 Base.empty(self::SimpleVector{T}) where T = self.m_size <= 0
 full(self::SimpleVector{T}) where T = self.m_size >= self.m_capacity
 Base.getindex(self::SimpleVector{T},i::Integer) where T = self.m_data[i]
-reset(self::SimpleVector{T}) where T = (self.m_size = 0)
+reset!(self::SimpleVector{T}) where T = (self.m_size = 0)
 Base.length(self::SimpleVector{T}) where T = self.m_size
 capacity(self::SimpleVector{T}) where T = self.m_capacity
 data(self::SimpleVector{T}) where T = self.m_data

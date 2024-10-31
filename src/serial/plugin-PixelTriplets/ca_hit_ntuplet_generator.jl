@@ -1,6 +1,30 @@
 using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
-using .cAHitNtupletGenerator:Counters, Params, CAHitNTupletGeneratorKernels, build_doublets, launch_kernels
+using .cAHitNtupletGenerator:Counters, Params, CAHitNTupletGeneratorKernels, build_doublets, launch_kernels, resetCAHitNTupletGeneratorKernels
 using .Tracks:TrackSOA
+using TaskLocalValues
+const CACHED_KERNELS = TaskLocalValue(() -> CAHitNTupletGeneratorKernels(Params(
+    false,             # onGPU
+    3,                 # minHitsPerNtuplet,
+    458752,            # maxNumberOfDoublets
+    false,             # useRiemannFit
+    true,              # fit5as4,
+    true,              #includeJumpingForwardDoublets
+    true,              # earlyFishbone
+    false,             # lateFishbone
+    true,              # idealConditions
+    false,             # fillStatistics
+    true,              # doClusterCut
+    true,              # doZ0Cut
+    true,              # doPtCut
+    0.899999976158,    # ptmin
+    0.00200000009499,  # CAThetaCutBarrel
+    0.00300000002608,  # CAThetaCutForward
+    0.0328407224959,   # hardCurvCut
+    0.15000000596,     # dcaCutInnerTriplet
+    0.25,              # dcaCutOuterTriplet
+    cAHitNtupletGenerator.cuts
+)))
+
 struct CAHitNtupletGeneratorOnGPU
     m_params::Params 
     m_counters::Counters
@@ -39,6 +63,8 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU,hits_d::TrackingRecHit2DHe
     tracks = TrackSOA()
     # soa = tracks.get()
     kernels = CAHitNTupletGeneratorKernels(self.m_params) # m 
+    # kernels = CACHED_KERNELS[]
+    # resetCAHitNTupletGeneratorKernels(kernels)
     kernels.counters = self.m_counters
     build_doublets(kernels,hits_d,file)
     launch_kernels(kernels,hits_d,tracks)

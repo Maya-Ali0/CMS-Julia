@@ -8,6 +8,7 @@ module cAHitNtupletGenerator
     using ..gpuPixelDoublets:init_doublets,n_pairs,get_doublets_from_histo,fish_bone
     using ..kernelsImplementation:kernel_connect,kernel_find_ntuplets,kernel_marked_used
     using ..histogram:zero
+    using ..Patatrack:reset!
     export Params, Counters
     #using Main::kernel_fill_hit_indices
     struct Counters
@@ -102,13 +103,22 @@ module cAHitNtupletGenerator
         counters::Counters
         function CAHitNTupletGeneratorKernels(params::Params)
             is_outer_hit_of_cell = OuterHitOfCell[]
-            the_cell_neighbors_container = [CellNeighbors() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]
-            the_cell_tracks_container = [CellTracks() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]
+            the_cell_neighbors_container = [CellNeighbors() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellNeighbors
+            the_cell_tracks_container = [CellTracks() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellTracks
             the_cells = Vector{GPUCACell}(undef,params.max_num_of_doublets)
             new(CellNeighborsVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_neighbors_container),the_cell_neighbors_container,
                 CellTracksVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_tracks_container),the_cell_tracks_container,the_cells,is_outer_hit_of_cell,
                 MVector{1,UInt32}(0),MVector{2,UInt32}(0,0),HitToTuple(),TupleMultiplicity(),params,Counters())
         end
+    end
+    function resetCAHitNTupletGeneratorKernels(self)
+        for idx ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS
+            reset!(self.device_the_cell_neighbors[idx])
+            reset!(self.device_the_cell_tracks[idx])
+        end
+        reset!(self.device_the_cell_neighbors)
+        reset!(self.device_the_cell_tracks)
+        self.device_n_cells[1] = 0
     end
     # function fill_hit_det_indices(hv::TrackingRecHit2DSOAView, tracks_d::TkSoA)
     #     kernel_fill_hit_indices(tracks_d.hit_indices, hv, tracks_d.det_indices)
@@ -155,12 +165,12 @@ module cAHitNtupletGenerator
         if num_hits > 1 && self.m_params.early_fish_bone
             fish_bone(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_is_outer_hit_of_cell,num_hits,false)
         end
-        kernel_find_ntuplets(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_the_cell_tracks,tuples_d,self.device_hit_tuple_counter,quality_d,self.m_params.min_hits_per_ntuplet)
+        # kernel_find_ntuplets(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_the_cell_tracks,tuples_d,self.device_hit_tuple_counter,quality_d,self.m_params.min_hits_per_ntuplet)
         
-        if self.m_params.do_stats
-            kernel_mark_used((hist_view(hh),self.device_the_cells,self.device_n_cells))
-        end
-
+        # if self.m_params.do_stats
+        #     kernel_mark_used((hist_view(hh),self.device_the_cells,self.device_n_cells))
+        # end
+        
     end
 
 end
