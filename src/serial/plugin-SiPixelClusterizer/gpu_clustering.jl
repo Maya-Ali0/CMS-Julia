@@ -10,6 +10,8 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUCon
 using ..histogram: HisToContainer, zero, count!, finalize!, size, bin, val, begin_h, end_h, fill!, type_I
 
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
+using TaskLocalValues
+const CACHED_HIST = TaskLocalValue(() -> HisToContainer{Int16, 418, 4000, 9, UInt16, 1}()) # ? num_cols_in_module + 2 max_pix_in_module ? ? ?
 #using ..histogram: HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
 
 #using ..gpuConfig
@@ -116,7 +118,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         
         
         
-        hist = HisToContainer{Int16, nbins, max_pix_in_module, 9, UInt16, 1}() # why doesnt this cause allocations
+        hist = CACHED_HIST[]
         zero(hist)
         
         @assert msize == num_elements || (msize < num_elements && id[msize] != this_module_id)
@@ -142,7 +144,6 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             if id[i] == INV_ID
                 continue 
             end
-            
             fill!(hist, Int16(y[i]), type_I(hist)((i - first_pixel))) # m
         end
         

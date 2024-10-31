@@ -37,17 +37,16 @@ function run()
     e = 0
     # open("doubletsTesting.txt", "a") do file
     for collection ∈ raw_events
-        # if e == 100
-        #     break
-        # end
+        if e == 1
+            break
+        end
     #     # write(file,"EVENTT",string(e))
         reg = ProductRegistry()
         raw_token = produces(reg,FedRawDataCollection)
         raw_to_cluster = SiPixelRawToClusterCUDA(reg)
         event::Event = Event(reg)
         emplace(event,raw_token,collection)
-        produce(raw_to_cluster,event,es)
-
+        produce(raw_to_cluster,event,es) 
         bs =  BeamSpotToPOD(reg)
         produce(bs,event,es)
         rec_hit = SiPixelRecHitCUDA(reg)

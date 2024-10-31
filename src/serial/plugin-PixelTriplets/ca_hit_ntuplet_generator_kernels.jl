@@ -102,7 +102,7 @@ module cAHitNtupletGenerator
         m_params::Params
         counters::Counters
         function CAHitNTupletGeneratorKernels(params::Params)
-            is_outer_hit_of_cell = OuterHitOfCell[]
+            is_outer_hit_of_cell = [OuterHitOfCell() for _ ∈ 1:15e4]
             the_cell_neighbors_container = [CellNeighbors() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellNeighbors
             the_cell_tracks_container = [CellTracks() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellTracks
             the_cells = Vector{GPUCACell}(undef,params.max_num_of_doublets)
@@ -115,6 +115,9 @@ module cAHitNtupletGenerator
         for idx ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS
             reset!(self.device_the_cell_neighbors[idx])
             reset!(self.device_the_cell_tracks[idx])
+            if idx <= 15e4
+                reset!(self.device_is_outer_hit_of_cell[idx])
+            end
         end
         reset!(self.device_the_cell_neighbors)
         reset!(self.device_the_cell_tracks)
@@ -126,8 +129,6 @@ module cAHitNtupletGenerator
 
     function build_doublets(self::CAHitNTupletGeneratorKernels,hh::HitsOnCPU,file)
         current_n_hits = n_hits(hh)
-        
-        self.device_is_outer_hit_of_cell = [OuterHitOfCell() for _ ∈ 1:max(1,current_n_hits)]
         println("Building Doublets out of ",current_n_hits," Hits")
         # cell_storage
         
