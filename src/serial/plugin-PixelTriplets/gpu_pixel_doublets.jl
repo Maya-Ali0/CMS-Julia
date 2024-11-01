@@ -54,6 +54,40 @@ end
     const min_z = SArray{Tuple{n_pairs}}(-20., 0., -30., -22., 10., -30., -70., -70., -22., 15., -30, -70., -70., -20., -22., 0, -30., -70., -70.)
     const max_z = SArray{Tuple{n_pairs}}(20., 30., 0., 22., 30., -10., 70., 70., 22., 30., -15., 70., 70., 20., 22., 30., 0., 70., 70.)
     const max_r = SArray{Tuple{n_pairs}}(20., 9., 9., 20., 7., 7., 5., 5., 20., 6., 6., 5., 5., 20., 20., 9., 9., 9., 9.)
+
+    """
+        Assuming Zero impact parameter, ensures that the calculated value for pt satisfies the lower bound
+    """
+    function pt_cut(j, idphi, r2t4, ri, hh)
+        ro = r_global(hist_view(hh), j)
+        dϕ = idphi * ((2 * π) / (1 << 16))
+        return dϕ^2 * (r2t4 - ri * ro) > (ro - ri)^2
+    end
+    """
+    Determines if the z0 cut condition is satisfied based on the line in the rz plane formed by the inner and outer hits.
+    """
+    function z0_cut_off(j, i, ri, zi, max_r, z0_cut, hh, pair_layer_id)
+        zo = z_global(hist_view(hh), j)
+        ro = r_global(hist_view(hh), j)
+        dr = ro - ri
+        return dr > max_r[pair_layer_id] || dr < 0 || abs(zi * ro - ri * zo) > z0_cut * dr
+    end
+    """
+            Delta y of inner and outer hit must not be bigger than some upper bound. Depends on layer pair.
+            Here, if both hits are on barrrels, or if the inner hit is on a barrel, and the outer hit is on a disk.
+    """
+    function z_size_cut(j, hh, outer, inner, me_s, zi, ri, max_dy_size_12, max_dy_size,  dz_dr_fact::Float32, max_dy_pred)
+        only_barrel = outer < 4
+        so = cluster_size_y(hist_view(hh), j)           # Cluster size in y for the outer hit
+        dy = (inner == 0) ? max_dy_size_12 : max_dy_size
+        zo = z_global(hist_view(hh), j)                 # Z-position for the outer hit
+        ro = r_global(hist_view(hh), j)                 # Radius for the outer hit
+    
+        return only_barrel ? (me_s > 0 && so > 0 && abs(so - me_s) > dy) :
+                             (inner < 4) && (me_s > 0) && abs(me_s - Int(trunc(abs((zi - zo) / (ri - ro)) * dz_dr_fact + 0.5))) > max_dy_pred
+    end
+
+    
     function init_doublets(is_outer_hit_of_cell::Vector{OuterHitOfCell},n_hits::Integer,cell_neighbors::CellNeighborsVector,
                            cell_tracks::CellTracksVector)
         @assert(!isempty(is_outer_hit_of_cell))
@@ -218,47 +252,47 @@ end
             min_radius = hard_pt_cut * 87.78 # cm ( 1 GeV track has 1 GeV/c / (e * 3.8 T) ~ 87 cm radius in a 3.8 T field)
             min_radius_2T4 = 4. * min_radius * min_radius
             
-            """
-            Assuming Zero impact parameter, ensures that the calculated value for pt satisfies the lower bound
-            """
-            pt_cut = let r2t4 = min_radius_2T4 , ri = me_r, hh = hh
-                (j,idphi) -> begin
-                    ro = r_global(hist_view(hh),j)
-                    dϕ = idphi * ((2*π)/(1<<16))
-                    return dϕ^2 * (r2t4 - ri*ro) > (ro - ri)^2
-                end
-            end
-            """
-            Ensure that the value Z0 the line in the rz plane formed by inner and outer hit is < z0_cut = 12 cm
-            """
-            z0_cut_off = let ri = me_r , zi = me_z, max_r = max_r, z0_cut = z0_cut, hh = hh, pair_layer_id = pair_layer_id
-                (j,i) -> begin
-                zo = z_global(hist_view(hh),j)
-                ro = r_global(hist_view(hh),j)
-                dr = ro - ri
-                # if i == 2870 && j == 5793
-                #         @printf("%.16f\n",abs(zi*ro - ri*zo))
-                #         @printf("%.16f\n",z0_cut * dr)
-                #         println(typeof(dr))
-                #         println(typeof(z0_cut))
-                #     end
-                return dr > max_r[pair_layer_id] || dr < 0 || abs(zi*ro - ri*zo) > z0_cut * dr
-                end
-            end
-            """
-            Delta y of inner and outer hit must not be bigger than some upper bound. Depends on layer pair.
-            Here, if both hits are on barrrels, or if the inner hit is on a barrel, and the outer hit is on a disk.
-            """
-            z_size_cut = let hh = hh , outer = outer, inner = inner, max_dy_size_12 = max_dy_size_12, max_dy_size = max_dy_size, me_s = me_s, zi = me_z, ri = me_r, dz_dr_fact::Float32 = dz_dr_fact::Float32, max_dy_pred = max_dy_pred
-                (j) -> begin
-                    only_barrel = outer < 4
-                    so = cluster_size_y(hist_view(hh),j)
-                    dy = (inner == 0 ) ? max_dy_size_12 : max_dy_size
-                    zo = z_global(hist_view(hh),j)
-                    ro = r_global(hist_view(hh),j)
-                    return only_barrel ? (me_s > 0 && so > 0 && abs(so - me_s) > dy) : (inner < 4 ) && (me_s > 0 ) && abs(me_s - Int(trunc(abs((zi - zo)/(ri - ro))*dz_dr_fact::Float32 + 0.5))) > max_dy_pred
-                end
-            end
+            # """
+            # Assuming Zero impact parameter, ensures that the calculated value for pt satisfies the lower bound
+            # """
+            # pt_cut = let r2t4 = min_radius_2T4 , ri = me_r, hh = hh
+            #     (j,idphi) -> begin
+            #         ro = r_global(hist_view(hh),j)
+            #         dϕ = idphi * ((2*π)/(1<<16))
+            #         return dϕ^2 * (r2t4 - ri*ro) > (ro - ri)^2
+            #     end
+            # end
+            # """
+            # Ensure that the value Z0 the line in the rz plane formed by inner and outer hit is < z0_cut = 12 cm
+            # """
+            # z0_cut_off = let ri = me_r , zi = me_z, max_r = max_r, z0_cut = z0_cut, hh = hh, pair_layer_id = pair_layer_id
+            #     (j,i) -> begin
+            #     zo = z_global(hist_view(hh),j)
+            #     ro = r_global(hist_view(hh),j)
+            #     dr = ro - ri
+            #     # if i == 2870 && j == 5793
+            #     #         @printf("%.16f\n",abs(zi*ro - ri*zo))
+            #     #         @printf("%.16f\n",z0_cut * dr)
+            #     #         println(typeof(dr))
+            #     #         println(typeof(z0_cut))
+            #     #     end
+            #     return dr > max_r[pair_layer_id] || dr < 0 || abs(zi*ro - ri*zo) > z0_cut * dr
+            #     end
+            # end
+            # """
+            # Delta y of inner and outer hit must not be bigger than some upper bound. Depends on layer pair.
+            # Here, if both hits are on barrrels, or if the inner hit is on a barrel, and the outer hit is on a disk.
+            # """
+            # z_size_cut = let hh = hh , outer = outer, inner = inner, max_dy_size_12 = max_dy_size_12, max_dy_size = max_dy_size, me_s = me_s, zi = me_z, ri = me_r, dz_dr_fact::Float32 = dz_dr_fact::Float32, max_dy_pred = max_dy_pred
+            #     (j) -> begin
+            #         only_barrel = outer < 4
+            #         so = cluster_size_y(hist_view(hh),j)
+            #         dy = (inner == 0 ) ? max_dy_size_12 : max_dy_size
+            #         zo = z_global(hist_view(hh),j)
+            #         ro = r_global(hist_view(hh),j)
+            #         return only_barrel ? (me_s > 0 && so > 0 && abs(so - me_s) > dy) : (inner < 4 ) && (me_s > 0 ) && abs(me_s - Int(trunc(abs((zi - zo)/(ri - ro))*dz_dr_fact::Float32 + 0.5))) > max_dy_pred
+            #     end
+            # end
             """
             Consider hits that are delta phi away from inner hit.
             """
@@ -289,7 +323,7 @@ end
                         continue
                     end
                     
-                    if (do_z0_cut && z0_cut_off(oi,i))
+                    if (do_z0_cut && z0_cut_off(oi,i,me_r,me_z,max_r,z0_cut,hh,pair_layer_id))
                         continue
                     end
                     mo_p = i_phi(hist_view(hh),oi)
@@ -297,11 +331,11 @@ end
                     if i_dphi > i_phi_cut
                         continue
                     end
-                    if do_cluster_cut && z_size_cut(oi)
+                    if do_cluster_cut && z_size_cut(oi,hh,outer,inner,me_s,me_z,me_r,max_dy_size_12,max_dy_size,dz_dr_fact,max_dy_pred)
                         continue
                     end
 
-                    if do_pt_cut && pt_cut(oi,i_dphi)
+                    if do_pt_cut && pt_cut(oi,i_dphi,min_radius_2T4,me_r,hh)
                         continue
                     end
                     
