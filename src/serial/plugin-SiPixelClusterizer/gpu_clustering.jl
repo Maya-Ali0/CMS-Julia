@@ -18,7 +18,6 @@ const CACHED_HIST = TaskLocalValue(() -> HisToContainer{Int16, 418, 4000, 9, UIn
 
 #using ..heterogeneousCoreCUDAUtilitiesInterfaceCudaCompat.cms.cudacompat 
 
-
 ###
 # using ..pixelGPUConstants
 if isdefined(Main, :GPU_SMALL_EVENTS)
@@ -119,6 +118,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         
         
         hist = CACHED_HIST[]
+        # hist = HisToContainer{Int16, 418, 4000, 9, UInt16, 1}()
         zero(hist)
         
         @assert msize == num_elements || (msize < num_elements && id[msize] != this_module_id)
