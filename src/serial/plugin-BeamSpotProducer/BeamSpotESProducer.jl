@@ -1,3 +1,5 @@
+using .ESPluginFactory
+
 struct BeamSpotESProducer <: ESProducer
     data::String  # Use String to represent the path
 
@@ -35,3 +37,5 @@ function produce(producer::BeamSpotESProducer, eventSetup::EventSetup)
     end
 end
 
+
+add_plugin("BeamSpotESProducer",x -> BeamSpotESProducer(x))

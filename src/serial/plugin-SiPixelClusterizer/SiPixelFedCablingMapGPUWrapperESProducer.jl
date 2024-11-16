@@ -7,6 +7,9 @@ using .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper:SiPixelF
 
 using .condFormatsSiPixelFedIds
 
+using .ESPluginFactory
+
+
 struct SiPixelFedCablingMapGPUWrapperESProducer <: ESProducer
     data::String  # Use String to represent the path
 
@@ -65,5 +68,6 @@ end
 
 
 
+add_plugin("SiPixelFedCablingMapGPUWrapperESProducer",x -> SiPixelFedCablingMapGPUWrapperESProducer(x))
 
 

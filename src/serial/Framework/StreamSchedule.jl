@@ -1,0 +1,68 @@
+using .PluginFactory
+
+mutable struct StreamSchedule
+    registry::ProductRegistry
+    source::Source
+    event_setup::EventSetup
+    stream_id::Int
+    path::Vector{EDProducer}
+
+    function StreamSchedule(
+        reg::ProductRegistry,
+        source::Source,
+        event_setup::EventSetup,
+        stream_id::Int,
+        path::Vector{String}
+    )
+        reg = deepcopy(reg)  #important for creating a copy
+        path_storage = Vector{EDProducer}()
+        # print(source.raw_events)
+
+        modInd = 1
+
+        for name in path
+            begin_module_construction(reg,modInd)
+            push!(path_storage,create_plugin_module(name,reg))
+            modInd += 1
+        end
+
+        return new(reg, source, event_setup, stream_id, path_storage)
+    end
+end
+
+
+function run_stream(ss::StreamSchedule)
+    # print(ss.source.raw_events[1])
+    while true
+        # print("in run_stream")
+        event = produce(ss.source, ss.stream_id, ss.registry)
+        if event === nothing
+            @info "No more events to process. Stream $(ss.stream_id) exiting."
+            break
+        end
+        # println("Event ID::",event.eventId,"Stream ID:: ",event.streamId)
+
+        # # TaskClusterizer
+        produce(ss.path[1], event, ss.event_setup)
+
+        # # TaskBeamspot
+        # produce(ss.path[2], event, ss.event_setup)
+
+        # # TaskRecHit depends on TaskClusterizer and TaskBeamspot
+        # TaskRecHit = Dagger.@task begin
+        #     # Establish dependencies
+        #     fetch(TaskClusterizer)
+        #     fetch(TaskBeamspot)
+        #     # Process the third module
+        #     produce(ss.path[3], event, ss.event_setup)
+        # end
+        # produce(ss.path[3], event, ss.event_setup)
+
+        # # Wait for TaskRecHit to finish
+        # fetch(TaskClusterizer)
+
+    end
+end
+
+# tell dagger how many threads to use 
+# fetch

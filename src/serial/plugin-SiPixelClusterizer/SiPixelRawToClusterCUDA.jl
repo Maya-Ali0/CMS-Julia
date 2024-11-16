@@ -22,8 +22,9 @@ import .recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper.get_cpu
 
 using .pixelGPUDetails
 
+using .PluginFactory
 
-mutable struct SiPixelRawToClusterCUDA
+mutable struct SiPixelRawToClusterCUDA <: EDProducer
     gpu_algo::SiPixelRawToClusterGPUKernel
     word_fed_appender::WordFedAppender
     errors::PixelFormatterErrors
@@ -146,3 +147,6 @@ function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup
     emplace(event,self.cluster_put_token,tmp[2])
 
 end  # module SiPixelRawToClusterCUDA
+
+
+add_plugin_module("SiPixelRawToClusterCUDA",x -> SiPixelRawToClusterCUDA(x))
