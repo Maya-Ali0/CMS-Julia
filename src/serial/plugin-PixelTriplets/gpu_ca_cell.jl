@@ -187,38 +187,75 @@ function add_track(other_cell::GPUCACell, t::Integer, cell_tracks::CellTracksVec
     end
     return push!(other_cell.the_tracks,t)
 end
+"""
+Recursively identifies ntuplets (sequences of hits) in a set of cells. This function traverses through neighboring cells to construct valid ntuplets, ensuring constraints on depth, minimum hits, and memory management.
 
+# Arguments:
+- `self`: The current cell being processed.
+- `::Val{DEPTH}`: Compile-time constant representing the current depth of recursion. Helps optimize performance by reducing runtime overhead.
+- `cells`: An Vector of all cells, each representing a doublet with relevant attributes (e.g., `doublet_id`, `inner_hit_id`, `outer_hit_id`, etc.).
+- `cell_tracks`: Data structure tracking associations between cells and tracks (updated when valid ntuplets are found).
+- `found_ntuplets`: A histogram or storage structure where valid ntuplets are recorded.
+- `apc`: A parameter used for appending or managing data in `found_ntuplets`.
+- `quality`: An array storing the quality score of identified ntuplets.
+- `temp_ntuplet`: A temporary stack used to construct ntuplets during recursion.
+- `min_hits_per_ntuplet`: The minimum number of hits required for a sequence to qualify as a valid ntuplet.
+- `start_at_0`: 
+
+# Behavior:
+1. **Add Current Cell to Temporary Ntuplet:**
+   - Pushes the current cell's `doublet_id` to `temp_ntuplet` for processing.
+   - Asserts the maximum length of `temp_ntuplet` to 4 (max hits is 5)
+2. **Iterate Through Outer Neighbors:**
+   - For each valid neighbor of the current cell, recursively calls `find_ntuplets` to extend the ntuplet.
+   - Skips invalid neighbors (e.g., killed by preprocessing or marked by a negative `doublet_id`).
+3. **Handle Terminal Nodes:**
+   - If the current cell has no valid neighbors (`last == true`), checks if the ntuplet satisfies the minimum hits condition.
+   - Constructs an array of hits and records the ntuplet in `found_ntuplets` if valid.
+4. **Update Tracks and Quality:**
+   - Updates track information for all cells in the ntuplet and assigns a default quality score (`0`).
+5. **Backtrack for Recursion:**
+   - Removes the current cell from `temp_ntuplet` to prepare for the next recursive path.
+   - Asserts the consistency of the temporary ntuplet size.
+
+# Notes:
+- This function uses recursion with compile-time constants (`Val{DEPTH}`) for efficiency.
+- Memory allocations are optimized using structures like `@MArray` to reduce runtime overhead.
+- Assertions (`@assert`) and overflow checks ensure robustness and prevent invalid states.
+
+# Returns:
+The function does not explicitly return a value but updates `found_ntuplets`, `cell_tracks`, and `quality` as a side effect of processing.
+cells is a vector of GPUCACell, cell_tracks is device_the_cell_tracks, 
+""" 
 function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0) where DEPTH
     push!(temp_ntuplet,self.the_doublet_id)
     @assert length(temp_ntuplet) <= 4
     last = true
-    for i ∈ 1:length(self.the_outer_neighbors)
+    for i ∈ 1:length(self.the_outer_neighbors)  
         other_cell = self.the_outer_neighbors[i]
         if cells[other_cell].the_doublet_id < 0 
             continue # killed by early_fishbone
         end
         last = false
-        print(cells[other_cell].the_inner_hit_id)
+        # print(cells[other_cell].the_inner_hit_id)
         @assert(cells[other_cell].the_inner_hit_id != self.the_inner_hit_id)
         find_ntuplets(cells[other_cell],Val{DEPTH-1}(),cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0)
     end
     if last
-        if length(temp_ntuplet) >= min_hits_per_ntuplet - 1
+        if length(temp_ntuplet) >= min_hits_per_ntuplet - 1 # number of min doublets is min_hits - 1 
            hits = @MArray fill(UInt16(0),6)
-           nh = length(temp_ntuplet)
+           n_h = length(temp_ntuplet)
             for c ∈ temp_ntuplet
-                hits[nh] = cells[c].the_inner_hit_id
-                nh -= 1
+                hits[n_h] = cells[c].the_inner_hit_id
+                n_h -= 1
             end
             hits[length(temp_ntuplet)+1] = self.the_outer_hit_id
-            print(typeof(found_ntuplets))
-            print(typeof(hits))
             it = bulk_fill(found_ntuplets,apc,hits,length(temp_ntuplet)+1)
-            if it >= 0 # no overflow of histogram
+            if it > 0 # no overflow of histogram
                 for c ∈ temp_ntuplet
-                    add_track(cells[c],it+1,cell_tracks)
+                    add_track(cells[c],it,cell_tracks)
                 end
-            quality[it+1] = 0
+            quality[it] = 0
             end
         end
     end

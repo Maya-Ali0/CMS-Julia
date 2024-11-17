@@ -36,6 +36,7 @@ produce(beam_Producer,es)
 function run()
     e = 0
     # open("doubletsTesting.txt", "a") do file
+
     for collection ∈ raw_events
         if e == 1
             break
@@ -53,6 +54,10 @@ function run()
         produce(rec_hit,event,es)   
         n_tuplets = CAHitNtuplet(reg)
         produce(n_tuplets,event,es,0)
+        # track_token = produces(reg,TrackCount)
+        # digi_cluster_count = produces(reg,DigiClusterCount)
+        # track_count = TrackCount()
+        # emplace(event,track_token,)
         e+=1
     end
 # endAa
@@ -64,4 +69,4 @@ end
 
 
 
-@btime run()
+@time run()

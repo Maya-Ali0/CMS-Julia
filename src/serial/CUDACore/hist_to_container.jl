@@ -123,9 +123,9 @@ module histogram
         bins[w] = j
     end
     """
-    first upper 32 bits of apc represent the bin index while the lower 32 bits represent the number of elements within each bin
-    increment lower 32 bits by the number of elements to add to bin c.m. I don't know why set off[c.m] = c.n
-    Doesnt resemble how i thought the representation was interms of offsets.
+    c[1] is the overall number of tracks
+    c[2] is the overall number of hits
+    c[1]+1 will be the index of the new track added which will hold the index c[2] + 1 , the starting index within the bins array holding the hits for that track
     """
     @inline function bulk_fill(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS},apc::AbstractArray,v::AbstractArray{I},n::Integer) where {T, N_BINS, SIZE, S, I, N_HISTS}
         c = @MArray [0,0]
@@ -133,14 +133,14 @@ module histogram
         c[2] = apc[2]
         apc[1] += 1
         apc[2] += n
-        if c[1] > n_bins(hist)
+        if apc[1] > n_bins(hist)
             return -1*Int32(c[1])
         end
-        hist.off[c[1]+1] = c[2] 
+        hist.off[apc[1]] = c[2] + 1 
         for i ∈ 0:n-1
             hist.bins[c[2]+i+1] = v[i+1]
         end
-        return c[1]
+        return apc[1]
     end
 
     @inline bulk_finalize(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}, apc::AtomicPairCounter) where {T, N_BINS, SIZE, S, I, N_HISTS} = off[apc.m] = apc.n

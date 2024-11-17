@@ -102,6 +102,8 @@ export CAHitNtuplet
 
 #include("serial/bin/EventProcessor.jl")
 #include("serial/bin/source.jl")
+include("serial/DataFormats/track_count.jl")
+include("serial/DataFormats/digi_cluster_count.jl")
 include("serial/CUDACore/vec_array.jl")
 include("serial/CUDACore/simple_vector.jl")
 include("serial/CondFormats/si_pixel_fed_cabling_map_gpu.jl")

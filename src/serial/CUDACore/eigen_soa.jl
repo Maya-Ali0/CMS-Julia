@@ -28,7 +28,8 @@ module eigenSOA
         end
     end
     
-
+    Base.getindex(self::ScalarSOA,i::Integer) = self.data[i]
+    Base.setindex!(self::ScalarSOA,value,i::Integer) = self.data[i] = value
 
 
 

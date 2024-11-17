@@ -166,7 +166,7 @@ module cAHitNtupletGenerator
         if num_hits > 1 && self.m_params.early_fish_bone
             fish_bone(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_is_outer_hit_of_cell,num_hits,false)
         end
-        # kernel_find_ntuplets(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_the_cell_tracks,tuples_d,self.device_hit_tuple_counter,quality_d,self.m_params.min_hits_per_ntuplet)
+        kernel_find_ntuplets(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_the_cell_tracks,tuples_d,self.device_hit_tuple_counter,quality_d,self.m_params.min_hits_per_ntuplet)
         
         # if self.m_params.do_stats
         #     kernel_mark_used((hist_view(hh),self.device_the_cells,self.device_n_cells))
