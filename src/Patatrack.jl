@@ -105,8 +105,12 @@ export CAHitNtuplet
 export EventProcessor
 export Source
 export run_processor
+export DigiClusterCount
+export TrackCount
+export VertexCount
 include("serial/Framework/ESPluginFactory.jl")
 include("serial/DataFormats/track_count.jl")
+include("serial/DataFormats/vertex_count.jl")
 include("serial/DataFormats/digi_cluster_count.jl")
 include("serial/CUDACore/vec_array.jl")
 include("serial/CUDACore/simple_vector.jl")
