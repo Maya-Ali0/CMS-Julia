@@ -1,4 +1,5 @@
 module Tracks
+export TrackSOA
 using ..histogram:OneToManyAssoc
 using ..eigenSOA:ScalarSOA
 const hindex_type = UInt16

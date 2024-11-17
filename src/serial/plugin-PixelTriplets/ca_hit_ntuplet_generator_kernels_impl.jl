@@ -121,7 +121,7 @@ function kernel_marked_used(hits,cells,n_cells)
     for idx ∈ 1:n_cells
         this_cell = cells[idx]
         if !isempty(this_cell.the_tracks)
-            this_cell.the_used 
+            this_cell.the_used |= 2 
         end
     end
 end

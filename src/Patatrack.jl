@@ -108,6 +108,7 @@ export run_processor
 export DigiClusterCount
 export TrackCount
 export VertexCount
+export CountValidator
 include("serial/Framework/ESPluginFactory.jl")
 include("serial/DataFormats/track_count.jl")
 include("serial/DataFormats/vertex_count.jl")
@@ -186,7 +187,7 @@ include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator_kernels.jl")
 
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet.jl")
-
+include("serial/plugin-Validation/count_to_validator.jl")
 # include("serial/plugin-PixelTriplets/helix_fit_on_gpu.jl")
 
 include("serial/Framework/Source.jl")

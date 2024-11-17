@@ -20,9 +20,9 @@ end
                                                                                                                                            #Not Currently Used
 ##############################################################################################################################################################
 raw_events = readall(open((@__DIR__) * "/data/raw.bin")) # Reads 1000 event 
-digi_cluster_count = Vector{DigiClusterCount}()
-track_count = Vector{TrackCount}()
-vertex_count = Vector{VertexCount}()
+digi_cluster_count_v = Vector{DigiClusterCount}()
+track_count_v = Vector{TrackCount}()
+vertex_count_v = Vector{VertexCount}()
 
 
 open((@__DIR__) * "/data/digicluster.bin", "r") do io
@@ -30,21 +30,21 @@ open((@__DIR__) * "/data/digicluster.bin", "r") do io
     nm::UInt32 = read(io,UInt32)
     nd::UInt32 = read(io,UInt32)
     nc::UInt32 = read(io,UInt32)
-    push!(digi_cluster_count,DigiClusterCount(nm,nd,nc))
+    push!(digi_cluster_count_v,DigiClusterCount(nm,nd,nc))
     end
 end
 
 open((@__DIR__) * "/data/tracks.bin", "r") do io
     while(!eof(io))
         nt::UInt32 = read(io,UInt32)
-        push!(track_count,TrackCount(nt))
+        push!(track_count_v,TrackCount(nt))
         end
 end
 
 open((@__DIR__) * "/data/vertices.bin", "r") do io
     while(!eof(io))
         nv::UInt32 = read(io,UInt32)
-        push!(digi_cluster_count,DigiClusterCount(nm,nd,nc))
+        push!(vertex_count_v,VertexCount(nv))
         end
 end
 es::EventSetup = EventSetup()
@@ -64,16 +64,20 @@ function run()
     e = 0
     # open("doubletsTesting.txt", "a") do file
 
-    for collection ∈ raw_events
-        if e == 1
-            break
-        end
+    for (collection,digi_cluster_count,track_count) ∈ zip(raw_events,digi_cluster_count_v,track_count_v)
+        # if e == 1
+        #     break
+        # end
     #     # write(file,"EVENTT",string(e))
         reg = ProductRegistry()
         raw_token = produces(reg,FedRawDataCollection)
+        digi_cluster_count_token = produces(reg,DigiClusterCount)
+        track_count_token = produces(reg,TrackCount)
         raw_to_cluster = SiPixelRawToClusterCUDA(reg)
         event::Event = Event(reg)
         emplace(event,raw_token,collection)
+        emplace(event,digi_cluster_count_token,digi_cluster_count)
+        emplace(event,track_count_token,track_count)
         produce(raw_to_cluster,event,es) 
         bs =  BeamSpotToPOD(reg)
         produce(bs,event,es)
@@ -81,10 +85,8 @@ function run()
         produce(rec_hit,event,es)   
         n_tuplets = CAHitNtuplet(reg)
         produce(n_tuplets,event,es,0)
-        track_token = produces(reg,TrackCount)
-        # digi_cluster_count = produces(reg,DigiClusterCount)
-        # track_count = TrackCount()
-        # emplace(event,track_token,)
+        count_validator  = CountValidator(reg)
+        produce(count_validator,event,es)
         e+=1
     end
 # endAa

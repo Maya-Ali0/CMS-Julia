@@ -68,4 +68,5 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU,hits_d::TrackingRecHit2DHe
     kernels.counters = self.m_counters
     build_doublets(kernels,hits_d,file)
     launch_kernels(kernels,hits_d,tracks)
+    return tracks
 end
