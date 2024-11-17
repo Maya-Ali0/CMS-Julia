@@ -3,6 +3,8 @@ import Base.length
 using Printf
 using StaticArrays:MArray
 using Base
+using Base.Threads
+using Dagger
 export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT,
 FED_EVSZ_EXTRACT, FED_CRCS_EXTRACT, FED_STAT_EXTRACT, FED_TTSI_EXTRACT,
 FED_MORE_TRAILERS_EXTRACT, FED_CRC_MODIFIED_EXTRACT, FED_SLINK_ERROR_EXTRACT,
@@ -100,8 +102,10 @@ export toGlobal_special
 
 export CAHitNtuplet
 
-#include("serial/bin/EventProcessor.jl")
-#include("serial/bin/source.jl")
+export EventProcessor
+export Source
+export run_processor
+include("serial/Framework/ESPluginFactory.jl")
 include("serial/DataFormats/track_count.jl")
 include("serial/DataFormats/digi_cluster_count.jl")
 include("serial/CUDACore/vec_array.jl")
@@ -127,6 +131,7 @@ include("serial/DataFormats/fed_header.jl")
 include("serial/DataFormats/fed_trailer.jl")
 include("serial/Framework/EDTokens.jl")
 include("serial/Framework/ProductRegistry.jl")
+include("serial/Framework/PluginFactory.jl")
 include("serial/Framework/EandES.jl")
 include("serial/Framework/ESProducer.jl")
 include("serial/Framework/EDProducer.jl")
@@ -179,5 +184,10 @@ include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet.jl")
 
 # include("serial/plugin-PixelTriplets/helix_fit_on_gpu.jl")
+
+include("serial/Framework/Source.jl")
+include("serial/Framework/StreamSchedule.jl")
+include("serial/Framework/EventProcessor.jl")
+
 
 end

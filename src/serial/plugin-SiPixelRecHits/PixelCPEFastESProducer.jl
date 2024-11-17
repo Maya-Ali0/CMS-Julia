@@ -1,6 +1,8 @@
 using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
 using .PixelGPU_h
 using .SOA_h
+using .ESPluginFactory
+
 
 struct PixelCPEFastESProducer <: ESProducer
     data::String  # Use String to represent the path
@@ -110,3 +112,5 @@ function produce(producer::PixelCPEFastESProducer, eventSetup::EventSetup)
     end
 end
 
+
+add_plugin("PixelCPEFastESProducer",x -> PixelCPEFastESProducer(x))

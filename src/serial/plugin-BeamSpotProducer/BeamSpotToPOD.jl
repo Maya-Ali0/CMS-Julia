@@ -1,4 +1,5 @@
 using .BeamSpotPOD_h
+using .PluginFactory
 
 struct BeamSpotToPOD <: EDProducer
     bsPutToken_::EDPutTokenT{BeamSpotPOD}
@@ -11,6 +12,8 @@ end
 function produce(bs::BeamSpotToPOD , iEvent::Event, iSetup::EventSetup)
     emplace(iEvent,bs.bsPutToken_,get(iSetup,BeamSpotPOD))
 end
+
+add_plugin_module("BeamSpotToPOD",x -> BeamSpotToPOD(x))
 
 
 

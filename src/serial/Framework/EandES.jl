@@ -10,9 +10,10 @@ struct Event
     products::Vector{WrapperBase}  # Union type to allow for null elements
 
     function Event(streamIDD::Integer,eventIDD::Integer, reg::ProductRegistry)
-        return new(streamIDD,eventIDD,Vector{WrapperBase}(undef,20))
+        return new(streamIDD,eventIDD,Vector{WrapperBase}(undef,20)) # length(reg)
     end
 end
+
 Event(reg::ProductRegistry) = Event(0,0,reg)
 
 # Accessor functions for Event

@@ -1,5 +1,7 @@
 using .CalibTrackerSiPixelESProducersInterfaceSiPixelGainCalibrationForHLTGPU
 using .condFormatsSiPixelObjectsSiPixelGainForHLTonGPU
+using .ESPluginFactory
+
 
 struct SiPixelGainCalibrationForHLTGPUESProducer <: ESProducer
     data::String  # Use String to represent the path
@@ -54,3 +56,5 @@ function produce(producer::SiPixelGainCalibrationForHLTGPUESProducer, eventSetup
     end
 end
 
+
+add_plugin("SiPixelGainCalibrationForHLTGPUESProducer",x -> SiPixelGainCalibrationForHLTGPUESProducer(x))
