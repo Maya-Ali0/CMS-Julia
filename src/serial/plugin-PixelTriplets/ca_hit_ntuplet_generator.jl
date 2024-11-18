@@ -1,5 +1,5 @@
 using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
-using .cAHitNtupletGenerator:Counters, Params, CAHitNTupletGeneratorKernels, build_doublets, launch_kernels, resetCAHitNTupletGeneratorKernels
+using .cAHitNtupletGenerator:Counters, Params, CAHitNTupletGeneratorKernels, build_doublets, launch_kernels, resetCAHitNTupletGeneratorKernels,fill_hit_det_indices
 using .Tracks:TrackSOA
 using TaskLocalValues
 const CACHED_KERNELS = TaskLocalValue(() -> CAHitNTupletGeneratorKernels(Params(
@@ -68,5 +68,6 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU,hits_d::TrackingRecHit2DHe
     kernels.counters = self.m_counters
     build_doublets(kernels,hits_d,file)
     launch_kernels(kernels,hits_d,tracks)
+    fill_hit_det_indices(hist_view(hits_d),tracks)
     return tracks
 end

@@ -13,7 +13,7 @@ module gpuCACELL
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:z_global,r_global
     using ..Patatrack:CircleEq, compute, dca0, curvature
     using ..histogram:bulk_fill
-    import ..Tracks:Quality
+    import ..Patatrack:Quality,bad
     export GPUCACell
     export get_outer_x,get_outer_y,get_outer_z,get_inner_x,get_inner_y,get_inner_z,get_inner_det_index
     # using Main:CircleEq
@@ -255,7 +255,7 @@ function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,qu
                 for c ∈ temp_ntuplet
                     add_track(cells[c],it,cell_tracks)
                 end
-            quality[it] = 0
+            quality[it] = bad
             end
         end
     end

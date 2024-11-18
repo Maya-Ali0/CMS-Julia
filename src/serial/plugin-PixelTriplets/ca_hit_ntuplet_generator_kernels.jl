@@ -6,8 +6,8 @@ module cAHitNtupletGenerator
     using ..caConstants
     using ..gpuCACELL
     using ..gpuPixelDoublets:init_doublets,n_pairs,get_doublets_from_histo,fish_bone
-    using ..kernelsImplementation:kernel_connect,kernel_find_ntuplets,kernel_marked_used
-    using ..histogram:zero
+    using ..kernelsImplementation:kernel_connect,kernel_find_ntuplets,kernel_marked_used,kernel_early_duplicate_remover,kernel_countMultiplicity,kernel_fillMultiplicity,kernel_fill_hit_indices
+    using ..histogram:zero,bulk_finalize_fill,n_bins
     using ..Patatrack:reset!
     export Params, Counters
     #using Main::kernel_fill_hit_indices
@@ -122,16 +122,20 @@ module cAHitNtupletGenerator
         reset!(self.device_the_cell_neighbors)
         reset!(self.device_the_cell_tracks)
         self.device_n_cells[1] = 0
+        self.device_hit_tuple_counter[1] = 0
+        self.device_hit_tuple_counter[2] = 0 
+        zero(self.device_hit_to_tuple)
+        zero(self.device_tuple_multiplicity)
     end
-    # function fill_hit_det_indices(hv::TrackingRecHit2DSOAView, tracks_d::TkSoA)
-    #     kernel_fill_hit_indices(tracks_d.hit_indices, hv, tracks_d.det_indices)
-    # end
+    function fill_hit_det_indices(hv, tracks_d)
+        kernel_fill_hit_indices(tracks_d.hit_indices, hv, tracks_d.det_indices)
+    end
 
     function build_doublets(self::CAHitNTupletGeneratorKernels,hh::HitsOnCPU,file)
         current_n_hits = n_hits(hh)
         println("Building Doublets out of ",current_n_hits," Hits")
         # cell_storage
-        
+        # self.device_is_outer_hit_of_cell =  [OuterHitOfCell() for _ ∈ 1:current_n_hits]
         init_doublets(self.device_is_outer_hit_of_cell,current_n_hits,self.device_the_cell_neighbors,self.device_the_cell_tracks)
         if(current_n_hits == 0)
             return
@@ -167,10 +171,35 @@ module cAHitNtupletGenerator
             fish_bone(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_is_outer_hit_of_cell,num_hits,false)
         end
         kernel_find_ntuplets(hist_view(hh),self.device_the_cells,self.device_n_cells,self.device_the_cell_tracks,tuples_d,self.device_hit_tuple_counter,quality_d,self.m_params.min_hits_per_ntuplet)
-        
         if self.m_params.do_stats
             kernel_mark_used((hist_view(hh),self.device_the_cells,self.device_n_cells))
         end
+        bulk_finalize_fill(tuples_d,self.device_hit_tuple_counter)
+        kernel_early_duplicate_remover(self.device_the_cells,self.device_n_cells[1],tuples_d,quality_d)
+
+        kernel_countMultiplicity(tuples_d,quality_d,self.device_tuple_multiplicity)
+        finalize(self.device_tuple_multiplicity)
+        kernel_fillMultiplicity(tuples_d,quality_d,self.device_tuple_multiplicity)
+
+        if num_hits > 1 && self.m_params.late_fish_bone
+            fish_bone(hist_view(hh),self.device_the_cells,self.device_n_cells[1],self.device_is_outer_hit_of_cell,num_hits,true)
+        end
+
+        if(self.m_params.do_stats)
+            kernel_check_overflow(tuples_d,self.device_tuple_multiplicity,self.device_hit_to_tuple,self.device_the_cells,self.device_n_cells,
+                                  self.device_the_cell_neighbors,self.device_the_cell_tracks,self.device_is_outer_hit_of_cell,n_hits,
+                                  self.m_params.max_num_of_doublets,self.counters)
+        end
+       
+        # print(self.device_hit_to_tuple)
+        # checking_hist = IOBuffer()
+        # for it ∈ 1:n_bins(self.device_hit_to_tuple)-1
+        #     print(checking_hist,it)
+        #     for index ∈ self.device_hit_to_tuple.off[it]:self.device_hit_to_tuple.off[it+1]
+        #         print(checking_hist," ",self.device_hit_to_tuple.bins[index]," ")
+        #     end
+        #     print(checking_hist,"\n")
+        # end
         
     end
 

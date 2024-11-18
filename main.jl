@@ -1,5 +1,5 @@
 # using Revise
-using .Patatrack
+using Patatrack
 using Profile, BenchmarkTools, ProfileView
 num_of_threads::Int = 1
 num_of_streams::Int = 0
@@ -65,9 +65,9 @@ function run()
     # open("doubletsTesting.txt", "a") do file
 
     for (collection,digi_cluster_count,track_count) ∈ zip(raw_events,digi_cluster_count_v,track_count_v)
-        # if e == 1
-        #     break
-        # end
+        if e == 3
+            break
+        end
     #     # write(file,"EVENTT",string(e))
         reg = ProductRegistry()
         raw_token = produces(reg,FedRawDataCollection)
@@ -85,6 +85,7 @@ function run()
         produce(rec_hit,event,es)   
         n_tuplets = CAHitNtuplet(reg)
         produce(n_tuplets,event,es,0)
+        # break
         count_validator  = CountValidator(reg)
         produce(count_validator,event,es)
         e+=1

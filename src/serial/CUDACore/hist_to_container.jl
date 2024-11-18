@@ -117,10 +117,10 @@ module histogram
     """
     function fill_direct(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS},b::T,j::I) where {T, N_BINS, SIZE, S, I, N_HISTS}
         @assert b <= n_bins(hist)
-        w::UInt32 = off[b]
-        off[b] -= 1
+        w::UInt32 = hist.off[b]
+        hist.off[b] -= 1
         @assert w > 0
-        bins[w] = j
+        hist.bins[w] = j
     end
     """
     c[1] is the overall number of tracks
@@ -131,6 +131,7 @@ module histogram
         c = @MArray [0,0]
         c[1] = apc[1]
         c[2] = apc[2]
+        # println(c)
         apc[1] += 1
         apc[2] += n
         if apc[1] > n_bins(hist)
@@ -145,16 +146,16 @@ module histogram
 
     @inline bulk_finalize(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}, apc::AtomicPairCounter) where {T, N_BINS, SIZE, S, I, N_HISTS} = off[apc.m] = apc.n
 
-    @inline function bulk_finalize_fill(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}, apc::AtomicPairCounter) where {T, N_BINS, SIZE, S, I, N_HISTS}
-        m::UInt32 = apc.m
-        n::UInt32 = apc.n
-        n_bins = n_bins(hist)
-        if(m > n_bins) # OverFlow
-            off[n_bins+1] = UInt32(off[n_bins])
+    @inline function bulk_finalize_fill(hist::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}, apc) where {T, N_BINS, SIZE, S, I, N_HISTS}
+        m::UInt32 = apc[1]
+        n::UInt32 = apc[2]
+        num_bins = n_bins(hist)
+        if(m > num_bins) # OverFlow
+            hist.off[num_bins+1] = UInt32(hist.off[num_bins])
             return
         end
         for i ∈ m:tot_bins(hist)
-            off[i] = n
+            hist.off[i] = n
         end
     end
 

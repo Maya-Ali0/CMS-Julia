@@ -41,3 +41,21 @@ Base.length(self::VecArray{T,maxSize}) where {T,maxSize} = self.m_size
 begin_v(self::VecArray{T,maxSize}) where {T,maxSize} = 1
 end_v(self::VecArray{T,maxSize}) where {T,maxSize} = maxSize
 
+function Base.iterate(self::VecArray{T, maxSize}) where {T, maxSize}
+    if isempty(self)
+        return nothing  # No elements to iterate over
+    else
+        # Return the first element and the initial state (index 1)
+        return (self.m_data[1], 1)
+    end
+end
+
+function Base.iterate(self::VecArray{T, maxSize}, state::Int) where {T, maxSize}
+    next_state = state + 1
+    if next_state <= self.m_size
+        # Return the next element and update the state
+        return (self.m_data[next_state], next_state)
+    else
+        return nothing  # No more elements
+    end
+end

@@ -3,14 +3,15 @@
 # using ..ca_constants: OuterHitOfCell, CellNeighborsVector
 # using Main:data
 module kernelsImplementation
-using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView
+using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView, n_hits, detector_index
 using ..gpuCACELL: GPUCACell, get_inner_hit_id, get_inner_r, get_inner_z, get_outer_r, get_outer_z, get_inner_det_index, are_aligned, dca_cut, add_outer_neighbor, find_ntuplets
 using ..caConstants
 using ..Patatrack:data
 using DataStructures
 using Printf
 using ..Patatrack:CircleEq, compute, dca0, curvature
-using ..Tracks:Quality
+using ..Patatrack:Quality, dup, bad
+using ..histogram:n_bins,size,count_direct,fill_direct,tot_bins
 function maxNumber() 
     return 32 * 1024
 end
@@ -19,21 +20,20 @@ S = maxNumber()
   
 # HitContainer = HisToContainer{UInt32, S, 5 * S, sizeof(UInt32), 8 , UInt16, 1}
   
-# function kernel_fill_hit_indices(tuples::HitContainer, hhp::TrackingRecHit2DSOAView, hitDetIndices::HitContainer)
-#       first = 1
-#       ntot = tot_bins(tuples)
-#       size = size(tuples)
-#       for idx in first:ntot
-#           hitDetIndices.off[idx] = tuples.off[idx]
-#       end
-#       hh = hhp
-#       nhits = n_hits(hh)
-      
-#       for idx in first:size
-#           @assert bins(tuples, idx) < nhits
-#           hitDetIndices.bins[idx] = detector_index(hh, tuples.bins[idx])
-#       end
-# end
+function kernel_fill_hit_indices(tuples, hh,hit_det_index)
+      first = 1
+      ntot = tot_bins(tuples)
+      sz = size(tuples)
+      for idx in first:ntot
+          hit_det_index.off[idx] = tuples.off[idx]
+      end
+      num_hits = n_hits(hh)
+    #   println(num_hits)
+      for idx in first:sz
+          @assert tuples.bins[idx] <= num_hits
+          hit_det_index.bins[idx] = detector_index(hh, tuples.bins[idx])
+      end
+end
 function test(x)
     print(x)
     while(true)
@@ -127,16 +127,73 @@ function kernel_marked_used(hits,cells,n_cells)
 end
 
 function kernel_early_duplicate_remover(cells,n_cells,found_ntuplets,quality)
-    duplicate = dup 
+    duplicate = dup
     @assert(n_cells != 0)
     for idx ∈ 1:n_cells
         this_cell = cells[idx]
-        if size(this_cell.the_track) < 2 
+        if length(this_cell.the_tracks) < 2 
             continue
         end
+        max_num_hits = 0 
 
+        for it ∈ this_cell.the_tracks
+            n_h = size(found_ntuplets,it)
+            max_num_hits = max(max_num_hits,n_h)
+        end
+        
+        for it ∈ this_cell.the_tracks
+            n_h = size(found_ntuplets,it)
+            if n_h != max_num_hits
+                quality[it] = duplicate
+            end
+        end
     end
+end
+
+function kernel_check_overflow(found_ntuplets,tuple_multiplicity,hit_tuple_counter,cells,n_cells,cell_neighbors,
+                                cell_tracks,is_outer_hit_of_cell,n_hits,max_number_of_doublets,counters)
     
 
 end
+
+function kernel_countMultiplicity(found_ntuplets,quality,tuple_multiplicity)
+    nt = n_bins(found_ntuplets)
+
+    for it ∈ 1:nt 
+        n_hits = size(found_ntuplets,it)
+        if n_hits < 3 
+            continue
+        end
+        if quality[it] == dup
+            continue
+        end
+        @assert(quality[it] == bad)
+        if n_hits > 5
+            @printf "Wrong mult %d %d\n" it n_hits
+        end
+        @assert(n_hits < 8)
+        count_direct(tuple_multiplicity,n_hits)
+    end
+end
+
+function kernel_fillMultiplicity(found_ntuplets,quality,tuple_multiplicity)
+    nt = n_bins(found_ntuplets)
+
+    for it ∈ 1:nt 
+        n_hits = size(found_ntuplets,it)
+        if n_hits < 3 
+            continue
+        end
+        if quality[it] == dup
+            continue
+        end
+        @assert(quality[it] == bad)
+        if n_hits > 5
+            @printf "Wrong mult %d %d\n" it n_hits
+        end
+        @assert(n_hits < 8)
+        fill_direct(tuple_multiplicity,n_hits,UInt16(it))
+    end
+end
+
 end

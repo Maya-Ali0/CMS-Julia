@@ -1,7 +1,7 @@
 module eigenSOA
     using StaticArrays:MArray
     is_power_2(v::Integer) = ((v != 0) && ((v & (v-1)) == 0)) # For positive integers
-
+    using ..Patatrack:Quality,bad,dup,loose,strict,tight,highPurity
     """
     A structure that holds a static array of objects of type `Scalar`.
 
@@ -30,7 +30,7 @@ module eigenSOA
     
     Base.getindex(self::ScalarSOA,i::Integer) = self.data[i]
     Base.setindex!(self::ScalarSOA,value,i::Integer) = self.data[i] = value
-
+    Base.setindex!(self::ScalarSOA,value,i::Quality) = self.data[i] = value
 
 
 end
