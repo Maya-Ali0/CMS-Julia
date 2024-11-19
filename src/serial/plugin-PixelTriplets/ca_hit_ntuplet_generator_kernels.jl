@@ -190,17 +190,23 @@ module cAHitNtupletGenerator
                                   self.device_the_cell_neighbors,self.device_the_cell_tracks,self.device_is_outer_hit_of_cell,n_hits,
                                   self.m_params.max_num_of_doublets,self.counters)
         end
-       
-        # print(self.device_hit_to_tuple)
+        # for cell ∈ self.device_is_outer_hit_of_cell[2733]
+        #     if self.device_the_cells[cell].the_inner_hit_id == 650
+        #         print(self.device_the_cells[cell].the_outer_neighbors)
+        #     end
+        # end
         # checking_hist = IOBuffer()
-        # for it ∈ 1:n_bins(self.device_hit_to_tuple)-1
+        # for it ∈ 1:self.device_hit_tuple_counter[1]
         #     print(checking_hist,it)
-        #     for index ∈ self.device_hit_to_tuple.off[it]:self.device_hit_to_tuple.off[it+1]
-        #         print(checking_hist," ",self.device_hit_to_tuple.bins[index]," ")
+        #     for index ∈ tuples_d.off[it]:tuples_d.off[it+1]-1
+        #         print(checking_hist," ",tuples_d.bins[index]," ")
         #     end
         #     print(checking_hist,"\n")
         # end
-        
+        # buff = String(take!(checking_hist))
+        # open("hist_tesitng.txt","w") do file
+        #     print(file,buff)
+        # end
     end
 
 end

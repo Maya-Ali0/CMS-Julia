@@ -23,7 +23,7 @@ S = maxNumber()
 function kernel_fill_hit_indices(tuples, hh,hit_det_index)
       first = 1
       ntot = tot_bins(tuples)
-      sz = size(tuples)
+      sz = size(tuples)-1 # because that is the index of the last hit put in hist.bins. hist.off holds the starting index of the track in hist.bins so i had to add the last bins by 1
       for idx in first:ntot
           hit_det_index.off[idx] = tuples.off[idx]
       end
@@ -59,7 +59,8 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
         this_cell = cells[cell_index]
 
         inner_hit_id = get_inner_hit_id(this_cell)
-        
+        outer_hit_id = this_cell.the_outer_hit_id
+
         
         number_of_possible_neighbors = length(is_outer_hit_of_cell[inner_hit_id])
         vi = data(is_outer_hit_of_cell[inner_hit_id])
@@ -78,13 +79,13 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
         for j ∈ first:number_of_possible_neighbors
             other_cell_index = vi[j]
             other_cell = cells[other_cell_index]
-
+            inner_other_cell_hit = other_cell.the_inner_hit_id
+            outer_other_cell_hit = other_cell.the_outer_hit_id
             r1 = get_inner_r(other_cell, hhp)
             z1 = get_inner_z(other_cell, hhp)
             
             
             aligned = are_aligned(r1, z1, ri, zi, ro, zo, pt_min, is_barrel ? ca_theta_cut_barrel : ca_theta_cut_forward)
-            
             cut = dca_cut(this_cell, other_cell, hhp, get_inner_det_index(other_cell, hhp) < last_bpix1_det_index ? dca_cut_inner_triplet : dca_cut_outer_triplet, hard_curv_cut,0)
             if aligned && cut
                 add_outer_neighbor(other_cell, cell_index, cell_neighbors)
@@ -95,6 +96,9 @@ function kernel_connect(#=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=# hh
                 this_cell.the_used |= 1
                 other_cell.the_used |= 1
             end
+            # if inner_other_cell_hit == 9415 && outer_other_cell_hit == 10291
+            #     println(other_cell.the_doublet_id)
+            # end
         end
     end
 end
@@ -107,7 +111,7 @@ function kernel_find_ntuplets(hits,cells,n_cells,cell_tracks,found_ntuplets,hit_
             continue # cut by early fishbone
         end
         p_id = this_cell.the_layer_pair_id
-
+        p_id -= 1
         do_it = min_hits_per_ntuplet > 3 ? p_id < 3 : p_id < 8 || p_id > 12
 
         if do_it 

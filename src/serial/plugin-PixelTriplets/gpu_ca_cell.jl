@@ -230,10 +230,13 @@ cells is a vector of GPUCACell, cell_tracks is device_the_cell_tracks,
 function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0) where DEPTH
     push!(temp_ntuplet,self.the_doublet_id)
     @assert length(temp_ntuplet) <= 4
-    last = true
+    last = true 
     for i ∈ 1:length(self.the_outer_neighbors)  
         other_cell = self.the_outer_neighbors[i]
         if cells[other_cell].the_doublet_id < 0 
+            # if other_cell== 65098
+            #     print("YES")
+            # end
             continue # killed by early_fishbone
         end
         last = false

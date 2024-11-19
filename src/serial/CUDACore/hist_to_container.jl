@@ -154,8 +154,8 @@ module histogram
             hist.off[num_bins+1] = UInt32(hist.off[num_bins])
             return
         end
-        for i ∈ m:tot_bins(hist)
-            hist.off[i] = n
+        for i ∈ m+1:tot_bins(hist)
+            hist.off[i] = n+1
         end
     end
 
