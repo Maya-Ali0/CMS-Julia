@@ -49,7 +49,7 @@ export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_inde
         "E-2",
         "E-3"   # negative endcap
     ]
-
+    #  2, 3, 2, 4, 2, 7, 5, 6, 8, 9, 
     const number_of_module_in_barrel = 1184
     const number_of_ladders_in_barrel = number_of_module_in_barrel ÷ 8
 

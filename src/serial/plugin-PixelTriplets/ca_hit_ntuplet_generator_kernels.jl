@@ -7,7 +7,7 @@ module cAHitNtupletGenerator
     using ..gpuCACELL
     using ..gpuPixelDoublets:init_doublets,n_pairs,get_doublets_from_histo,fish_bone
     using ..kernelsImplementation:kernel_connect,kernel_find_ntuplets,kernel_marked_used,kernel_early_duplicate_remover,kernel_countMultiplicity,kernel_fillMultiplicity,kernel_fill_hit_indices
-    using ..histogram:zero,bulk_finalize_fill,n_bins
+    using ..histogram:zero,bulk_finalize_fill,n_bins,finalize!
     using ..Patatrack:reset!
     export Params, Counters
     #using Main::kernel_fill_hit_indices
@@ -106,9 +106,13 @@ module cAHitNtupletGenerator
             the_cell_neighbors_container = [CellNeighbors() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellNeighbors
             the_cell_tracks_container = [CellTracks() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellTracks
             the_cells = Vector{GPUCACell}(undef,params.max_num_of_doublets)
+            device_hit_to_tuple = HitToTuple()
+            device_tuple_multiplicity = TupleMultiplicity()
+            zero(device_hit_to_tuple)
+            zero(device_tuple_multiplicity)
             new(CellNeighborsVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_neighbors_container),the_cell_neighbors_container,
                 CellTracksVector(MAX_NUM_OF_ACTIVE_DOUBLETS,the_cell_tracks_container),the_cell_tracks_container,the_cells,is_outer_hit_of_cell,
-                MVector{1,UInt32}(0),MVector{2,UInt32}(0,0),HitToTuple(),TupleMultiplicity(),params,Counters())
+                MVector{1,UInt32}(0),MVector{2,UInt32}(0,0),device_hit_to_tuple,device_tuple_multiplicity,params,Counters())
         end
     end
     function resetCAHitNTupletGeneratorKernels(self)
@@ -135,7 +139,7 @@ module cAHitNtupletGenerator
         current_n_hits = n_hits(hh)
         println("Building Doublets out of ",current_n_hits," Hits")
         # cell_storage
-        # self.device_is_outer_hit_of_cell =  [OuterHitOfCell() for _ ∈ 1:current_n_hits]
+        # self.device_is_outer_hit_of_cell = [OuterHitOfCell() for _ ∈ 1:max(1,current_n_hits)]
         init_doublets(self.device_is_outer_hit_of_cell,current_n_hits,self.device_the_cell_neighbors,self.device_the_cell_tracks)
         if(current_n_hits == 0)
             return
@@ -178,7 +182,7 @@ module cAHitNtupletGenerator
         kernel_early_duplicate_remover(self.device_the_cells,self.device_n_cells[1],tuples_d,quality_d)
 
         kernel_countMultiplicity(tuples_d,quality_d,self.device_tuple_multiplicity)
-        finalize(self.device_tuple_multiplicity)
+        finalize!(self.device_tuple_multiplicity)
         kernel_fillMultiplicity(tuples_d,quality_d,self.device_tuple_multiplicity)
 
         if num_hits > 1 && self.m_params.late_fish_bone

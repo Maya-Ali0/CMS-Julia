@@ -39,17 +39,18 @@ module histogram
     function to find floor(log2(n)) in loglog(32)
     """
     function i_log_2(v::UInt32)::UInt32
-        b = SVector(0x2,0xC,0xF0,0xFF00,0xFFFF0000)
-        s = SVector{5,UInt32}(1,2,4,8,16)
-        r::UInt32 = 0 
+        # b = SVector(0x2,0xC,0xF0,0xFF00,0xFFFF0000)
+        # s = SVector{5,UInt32}(1,2,4,8,16)
+        # r::UInt32 = 0 
         
-        for i ∈ 5:-1:1
-            if (v & b[i]) != 0
-                v >>= s[i]
-                r |= s[i]
-            end
-        end
-        return r
+        # for i ∈ 5:-1:1
+        #     if (v & b[i]) != 0
+        #         v >>= s[i]
+        #         r |= s[i]
+        #     end
+        # end
+        # return r
+        return 31 - leading_zeros(v)
     end
 
     size_t(::HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS}) where {T, N_BINS, SIZE, S, I, N_HISTS} = S
