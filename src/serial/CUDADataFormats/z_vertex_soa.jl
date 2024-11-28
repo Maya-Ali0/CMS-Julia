@@ -10,7 +10,7 @@ struct ZVertexSoA
     ptv2::Vector{Float32}      # Transverse momentum squared of vertices
     ndof::Vector{Int32}        # Number of degrees of freedom (workspace for nearest neighbors)
     sortInd::Vector{UInt16}    # Sorted index (ascending order by pt^2)
-    nvFinal::UInt32            # Number of vertices
+    nv_final::UInt32            # Number of vertices
     # Constructor with default initialization
     function ZVertexSoA()
         new(

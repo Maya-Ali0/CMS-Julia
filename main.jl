@@ -65,7 +65,7 @@ function run()
     # open("doubletsTesting.txt", "a") do file
 
     for (collection,digi_cluster_count,track_count) ∈ zip(raw_events,digi_cluster_count_v,track_count_v)
-        if e == 3
+        if e == 1
             break
         end
     #     # write(file,"EVENTT",string(e))

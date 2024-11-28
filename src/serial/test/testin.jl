@@ -147,3 +147,4 @@ module B
 using ..A:bad
 x = bad
 end
+

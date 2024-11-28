@@ -215,6 +215,183 @@ function make(self::Producer,tk_soa::ZVertexSoA,pt_min::AbstractFloat)::ZVertexS
 
 end
 
+function fit_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
+    nt = ws.n_tracks
+    zt = ws.zt
+    ezt2 = ws.ezt2
+    zv = vertices.zv
+    wv = vertices.wv
+    chi2 = vertices.chi2
+    nv_final = vertices.nv_final
+    nv_intermediate = ws.nv_intermediate
+    nn = vertices.ndof
+    iv = ws.iv
+    
+    @assert nv_final <= nv_intermediate
+    nv_final = nv_intermediate
+    found_clusters = nv_final
+    # for i ∈ 1:found_clusters Already zerod out in constructor
+    #     zv[i] = 0
+    #     wv[i] = 0 
+    #     chi2[i] = 0 
+    # end
+    noise = 0 
+    for i ∈ 1:nt
+        if iv[i] > 9990
+            noise += 1
+            continue
+        end
+        @assert iv[i] >= 1
+        @assert iv[i] <= int(found_clusters)
+        w = 1 / ezt2[i]
+        zv[iv[i]] += zt[i]*w
+        wv[iv[i]] += w
+    end
+
+    for i ∈ 1:found_clusters
+        @assert wv[i] > 0 
+        zv[i] /= wv[i]
+        nn[i] = -1 
+    end
+    # compute chi2
+    for i ∈ 1:nt 
+        if iv[i] > 9990
+            continue
+        end
+        c2 = zv[iv[i]] - zt[i]
+        c2 *= c2 / ezt2[i]
+        if c2 > chi2_max
+            iv[i] = 9999
+            continue
+        end
+        chi2[iv[i]] += c2 
+        nn[iv[i]] += 1
+    end
+    for i ∈ 1:found_clusters
+        if nn[i] > 0 
+            wv[i] *= (nn[i] / chi2[i])
+        end
+    end
+end
+
+function split_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
+    nt = ws.n_tracks # total number of loaded tracks
+    zt = ws.zt  # zt of each track
+    ezt2 = ws.ezt2 # variance in zt of each track
+    zv = vertices.zv # z coordinate of each vertex
+    wv = vertices.wv # weight associated to each vertex
+    chi2 = vertices.chi2 
+    nv_final = vertices.nv_final # final number of vertices
+    nn = vertices.ndof # number of nearest neighbors to each track
+    iv = ws.iv  # vertex association to each track
+
+    for kv ∈ 1:nv_final
+        if nn[kv] < 4 
+            continue
+        end
+        if chi2[kv] < chi2_max * nn[kv]
+            continue
+        end
+        MAX_TK = 512
+        @assert nn[kv] < MAX_TK
+        it = Vector{UInt32}(undef,MAX_TK) # track index
+        zz = Vector{Float32}(undef,MAX_TK) # z pos
+        new_v = Vector{UInt8}(undef,MAX_TK) # 0 or 1 
+        ww = Vector{Float32}(undef,MAX_TK) # z weight which is 1 / variance
+        nq = 0 # number of tracks for this vertex
+
+        for k ∈ 1:nt 
+            if iv[k] == kv
+                nq += 1 
+                zz[nq] = zt[k] - zv[kv]
+                new_v[nq] = zz[nq] < 0 ? 1 : 2 
+                ww[nq] = 1 / ezt2[k]
+                it[nq] = k 
+            end
+        end
+        # the new vertices
+        z_new = @MArray [0,0]
+        w_new = @MArray [0,0]
+        @assert (nq == (nn[kv] + 1) )
+        
+        max_iter = 20
+        more = true 
+        while(more)
+            more = false 
+            z_new[1] = 0 
+            z_new[2] = 0 
+            w_new[1] = 0
+            w_new[2] = 0 
+            for k ∈ 1:nq
+                i = new_v[k]
+                z_new[i] += zz[k] * ww[k]
+                w_new[i] += ww[k]  
+            end
+            z_new[1] /= w_new[1]
+            z_new[2] /= w_new[2]
+
+            for k ∈ 1:nq
+                d0 = abs(z_new[1] - zz[k])
+                d1 = abs(z_new[2] - zz[k])
+                newer = d0 < d1 ? 1 : 2
+                more |= newer != new_v[k]
+                new_v[k] = newer
+            end
+            max_iter -= 1
+            if max_iter <= 0 
+                more = false 
+            end
+        end
+        if w_new[1] == 0 | w_new[2] == 0 
+            continue 
+        end
+        dist_2 = (z_new[1] - z_new[2]) ^ 2
+        chi2_dist = dist_2 / ((1/w_new[1]) + (1/w_new[2]))
+        if chi2_dist < 4 
+            continue 
+        end
+        new_vertex = (ws.nv_intermediate + 1)
+        for k ∈ 1:nq
+            if new_v[k] == 1
+                iv[it[k]] = new_vertex
+            end
+        end
+    end # loop on vertices
+end
+
+function sort_by_p2(vertices::ZVertexSoA,ws::Workspace)
+    n_tracks = ws.n_tracks
+    ptt2 = ws.ptt2
+    nv_final = vertices.nv_final
+    iv = ws.iv
+    ptv2 = vertices.ptv2
+    sort_ind = vertices.sort_ind
+
+    if nv_final < 1 
+        return
+    end
+
+    for i ∈ 1:n_tracks
+        vertices.idv[ws.index_track[i]] = iv[i]
+    end
+    # for i ∈ 1:nv_final
+    #     ptv2[i] = 0
+    # end
+    for i ∈ 1:n_tracks
+        if iv[i] > 9990
+            continue
+        end
+        ptv2[iv[i]] += ptt2[i]
+    end
+    if nv_final == 1
+        sort_ind[1] = 1 
+        return
+    end
+    sort_ind = collect(1:nv_final)
+    sort_ind = sort(sort_ind, lt = (i, j) -> ptv2[i] < ptv2[j])
+end
+
+
 
 
 end
