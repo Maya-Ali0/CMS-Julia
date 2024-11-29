@@ -88,6 +88,8 @@ function run()
         # break
         count_validator  = CountValidator(reg)
         produce(count_validator,event,es)
+        his_to_validator = HistoValidator(reg)
+        produce(his_to_validator,event,es)
         e+=1
     end
 # endAa

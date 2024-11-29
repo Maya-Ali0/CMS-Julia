@@ -139,7 +139,7 @@ module cAHitNtupletGenerator
         current_n_hits = n_hits(hh)
         println("Building Doublets out of ",current_n_hits," Hits")
         # cell_storage
-        @timev self.device_is_outer_hit_of_cell = [OuterHitOfCell() for _ ∈ 1:max(1,current_n_hits)]
+        # @timev self.device_is_outer_hit_of_cell = [OuterHitOfCell() for _ ∈ 1:max(1,current_n_hits)]
         init_doublets(self.device_is_outer_hit_of_cell,current_n_hits,self.device_the_cell_neighbors,self.device_the_cell_tracks)
         if(current_n_hits == 0)
             return
