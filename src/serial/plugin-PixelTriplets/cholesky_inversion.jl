@@ -2,7 +2,7 @@ module DataFormat_Math_choleskyInversion_h
 
 @inline function invert11(src::M1, dst::M2) where {M1,M2}
     F = typeof(src[1, 1])
-    dst[1, 1] = F(1.0) / src[0, 0]
+    dst[1, 1] = F(1.0) / src[1, 1]
 end
 
 @inline function invert22(src::M2, dst::M2) where {M1,M2}

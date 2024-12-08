@@ -1,22 +1,37 @@
 module RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h
 
 using ..RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
+using LinearAlgebra
+using Statistics
+using Test
+using StaticArrays
+using ..DataFormat_Math_choleskyInversion_h
+using ..RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
 
 #  Karimäki's parameters: (phi, d, k=1/R)
 # /*!< covariance matrix: \n
-#   |cov(phi,phi)|cov( d ,phi)|cov( k ,phi)| \n
+#   |cov(phi,phi)|cov( d ,phi)|cov(  k ,phi)| \n
 #   |cov(phi, d )|cov( d , d )|cov( k , d )| \n
 #   |cov(phi, k )|cov( d , k )|cov( k , k )|
 
-# brief data needed for the Broken Line fit procedure.
-struct PreparedBrokenLineData
-    q::Integer
-    radii::Matrix{Float64}
-    s::Vector{Float64}
-    S::Vector{Float64}
-    Z::Vector{Float64}
-    VarBeta::Vector{Float64}
+# Brief data needed for the Broken Line fit procedure.
+mutable struct PreparedBrokenLineData
+    q::Int                           # Particle charge
+    radii::Matrix{Float64}           # Matrix: xy data in the system where the pre-fitted center is the origin
+    s::Vector{Float64}               # Vector: total distance traveled in the transverse plane from the pre-fitted closest approach
+    S::Vector{Float64}               # Vector: total distance traveled (three-dimensional)
+    Z::Vector{Float64}               # Vector: orthogonal coordinate to the pre-fitted line in the sz plane
+    VarBeta::Vector{Float64}         # Vector: kink angles in the SZ plane
+
+    function PreparedBrokenLineData(q::Int64, radii::Matrix{Float64}, s::Vector{Float64}, S::Vector{Float64}, Z::Vector{Float64}, VarBeta::Vector{Float64})
+        new(q, radii, s, S, Z, VarBeta)
+    end
 end
+
+
+export PreparedBrokenLineData
+
+
 # \brief Computes the Coulomb multiple scattering variance of the planar angle.
 
 #     \param length length of the track in the material.
@@ -44,8 +59,8 @@ end
 
 #     \return 2D rotation matrix.
 @inline function rotation_matrix(slope::Float64)
-    Rot = zeros(2, 2)
-    Rot[1, 1] = 1 / sqrt(1 + sqr(slope))
+    Rot = zeros(Float64, 2, 2)
+    Rot[1, 1] = 1.0 / sqrt(1.0 + sqr(slope))
     Rot[1, 2] = slope * Rot[1, 1]
     Rot[2, 1] = -Rot[1, 2]
     Rot[2, 2] = Rot[1, 1]
@@ -64,30 +79,32 @@ end
     uu = 1 + circle.par[3] * circle.par[2]
     C = -circle.par[3] * y0 + uu * cos(circle.par[1])
     BB = circle.par[3] * x0 + uu * sin(circle.par[1])
-    A = 2 * DO + circle.par[3] * sqr(DO) + sqr(DP)
-    U = sqrt(1 + circle.par[3] * A)
-    xi = 1 / (sqr(BB) + sqr(C))
-    v = 1 + circle.par[3] * DO
-    lambda = (0.5 * A) / (U * sqr(1 + U))
-    mu = 1 / (U * (1 + U)) + circle.par[3] * lambda
-    zeta = sqr(DO) + sqr(DP)
+    A = 2.0 * DO + circle.par[3] * (DO^2 + DP^2)
+    U = sqrt(1.0 + circle.par[3] * A)
+    xi = 1.0 / (BB^2 + C^2)
+    v = 1.0 + circle.par[3] * DO
+    lambda = (0.5 * A) / (U * (1.0 + U)^2)
+    mu = 1.0 / (U * (1.0 + U)) + circle.par[3] * lambda
+    zeta = DO^2 + DP^2
 
     jacobian[1, 1] = xi * uu * v
-    jacobian[1, 2] = -xi * Rfit^2 * DP
+    jacobian[1, 2] = -xi * circle.par[3]^2 * DP
     jacobian[1, 3] = xi * DP
-    jacobian[1, 4] = 2.0 * mu * uu * DP
-    jacobian[1, 5] = 2.0 * mu * v
 
-    jacobian[2, 1] = mu * zeta - lambda * A
-    jacobian[2, 2] = 0
-    jacobian[2, 3] = 0
-    jacobian[2, 4] = 1.0
+    jacobian[2, 1] = 2.0 * mu * uu * DP
+    jacobian[2, 2] = 2.0 * mu * v
+    jacobian[2, 3] = mu * zeta - lambda * A
+
+    jacobian[3, 1] = 0.0
+    jacobian[3, 2] = 0.0
+    jacobian[3, 3] = 1.0
 
     circle.par[1] = atan2(BB, C)
-    circle.par[2] = A / (1 + U)
+    circle.par[2] = A / (1.0 + U)
 
     circle.cov = jacobian * circle.cov * jacobian'
 end
+
 # \brief Computes the data needed for the Broken Line fit procedure that are mainly common for the circle and the line fit.
 
 #     \param hits hits coordinates.
@@ -102,29 +119,34 @@ end
     e = zeros(2)
     d = hits[1:2, 2] - hits[1:2, 1]
     e = hits[1:2, n] - hits[1:2, n-1]
-    resutls.q = cross2D(d, e) > 0 ? -1 : 1
+    results.q = cross2D(d, e) > 0 ? -1 : 1
 
     slope = -results.q / fast_fit[4]
+    println("results.q: ", results.q)
+    println("fast_fit[4]: ", fast_fit[4])
+    println("slope: ", slope)
 
     R = rotation_matrix(slope)
-    #  calculate radii and s
+    println("R: ", R)
+    # Calculate radii and s
     results.radii = hits[1:2, :] .- fast_fit[1:2] * ones(1, n)
-    e = -fast_fit[3] * fast_fit[3] / norm(fast_fit[3])
+    e = -fast_fit[3] * fast_fit[1:2] / norm(fast_fit[1:2])
     for i in 1:n
         d = results.radii[1:2, i]
         results.s[i] = results.q * fast_fit[3] * atan2(cross2D(d, e), dot(d, e))
     end
-    z = hits[3, :]'
-    # //calculate S and Z
-    pointsSZ = zeros(2, n)
+    z = vec(hits[3, :])
+
+    # Calculate S and Z
+    pointsSZ = zeros(Float64, 2, n)
     for i in 1:n
         pointsSZ[1, i] = results.s[i]
         pointsSZ[2, i] = z[i]
         pointsSZ[1:2, i] = R * pointsSZ[1:2, i]
     end
 
-    results.S = pointsSZ[1, :]'
-    results.Z = pointsSZ[2, :]'
+    results.S = vec(pointsSZ[1, :]')
+    results.Z = vec(pointsSZ[2, :]')
 
     results.VarBeta[1] = results.VarBeta[n] = 0
     for i in 2:n-1
@@ -132,6 +154,7 @@ end
                              mult_scatt(results.S[i] - results.S[i-1], B, fast_fit[3], i + 1, slope)
     end
 end
+
 # \brief Computes the n-by-n band matrix obtained minimizing the Broken Line's cost function w.r.t u. This is the whole matrix in the case of the line fit and the main n-by-n block in the case of the circle fit.
 
 #     \param w weights of the first part of the cost function, the one with the measurements and not the angles (\sum_{i=1}^n w*(y_i-u_i)^2).
@@ -139,9 +162,9 @@ end
 #     \param VarBeta kink angles' variance.
 
 #     \return the n-by-n matrix of the linear system
-@inline function matrixc_u(w::Vector{Float64}, S::Vector{Float64}, VarBeta::Vector{Float64})
-    n = size(w, 2)
-    C_U = zeros(n, n)
+@inline function matrixc_u(w::Matrix{Float64}, S::Vector{Float64}, VarBeta::Vector{Float64})
+    n = size(w, 1)
+    C_U = zeros(Float64, n, n)
     for i in 1:n
         C_U[i, i] = w[i]
 
@@ -207,12 +230,19 @@ end
     results[1] = hits[1, 1] - (a[2] * squaredNorm(c) + c[2] * squaredNorm(a)) * tmp
     results[2] = hits[2, 1] + (a[1] * squaredNorm(c) + c[1] * squaredNorm(a)) * tmp
 
-    results[3] = sqrt(squaredNorm(a) * squaredNorm(b) * squaredNorm(c))
+    results[3] = sqrt(squaredNorm(a) * squaredNorm(b) * squaredNorm(c)) / (2.0 * abs(cross2D(b, a)))
 
     d = hits[1:2, 1] - results[1:2]
     e = hits[1:2, n] - results[1:2]
 
-    results[4] = results[3] * atan2(cross2D(d, e), dot(d, e)) / (hits[3:n-1] - hits[3, 1])
+    println("cross2D(d,e):", cross2D(d, e))
+    println(" dot(d,e):", dot(d, e))
+    println("atan2(cross2D(d,e), dot(d,e)): ", atan2(cross2D(d, e), dot(d, e)))
+    # println("hits[3, n-1]: ", hits[3, n])
+    # println(" hits[3, 1]: ", hits[3, 1])
+    # println("(hits[3, n-1] - hits[3, 1]): ", (hits[3, n] - hits[3, 1]))
+    results[4] = results[3] * atan2(cross2D(d, e), dot(d, e)) / (hits[3, n] - hits[3, 1])
+
 end
 
 # \brief Performs the Broken Line fit in the curved track case (that is, the fit parameters are the interceptions u and the curvature correction \Delta\kappa).
@@ -230,7 +260,7 @@ end
 #     \details The function implements the steps 2 and 3 of the Broken Line fit with the curvature correction.\n
 #     The step 2 is the least square fit, done by imposing the minimum constraint on the cost function and solving the consequent linear system. It determines the fitted parameters u and \Delta\kappa and their covariance matrix.
 #     The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
-@inline function BL_Circle_fit(hits::Matrix{Float64}, hits_ge::Matrix{Float64}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, circle_results::Main.RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h.circle_fit)
+@inline function BL_Circle_fit(hits::Matrix{Float64}, hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, circle_results::Main.RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h.circle_fit)
     n = size(hits, 2)
     circle_results.q = data.q
     radii = data.radii
@@ -238,34 +268,34 @@ end
     S = data.S
     Z = data.Z
     VarBeta = data.VarBeta
-    slope = -circle.results.q / fast_fit[4]
-    VarBeta = VarBeta * 1 + srq(slope)
+    slope = -circle_results.q / fast_fit[4]
+    VarBeta = VarBeta * (1 + sqr(slope))
 
     for i in 1:n
-        Z[i] = nomr(radii[1:2, i]) - fast_fit[3]
+        Z[i] = norm(radii[1:2, i]) - fast_fit[3]
     end
 
-    V = zeros(2, 2)
-    w = zeros(n)
-    RR = zeros(2, 2)
+    V = zeros(Float64, 2, 2)
+    w = zeros(Float64, n, 1)
+    RR = zeros(Float64, 2, 2)
 
     for i in 1:n
         V[1, 1] = hits_ge[1, i]
         V[1, 2] = V[2, 1] = hits_ge[2, i]
-        v[2, 2] = hits_ge[3, i]
+        V[2, 2] = hits_ge[3, i]
         RR = rotation_matrix(-radii[1, i] / radii[2, i])
-        w[i] = 1 / ((RR*V*RR')[1, 1])
+        w[i] = 1 / ((RR*V*RR')[2, 2])
     end
 
-    r_u = Vector{Float64}(undef, n + 1)
+    r_u = zeros(Float64, n + 1)
     r_u[n] = 0
     for i in 1:n
         r_u[i] = w[i] * Z[i]
     end
 
-    C_U = Matrix{Float64}(undef, n + 1, n + 1)
-    C_U[:, :] = matrixc_u(w, s, VarBeta)
-    C_U[n, n] = 0
+    C_U = zeros(Float64, n + 1, n + 1)
+    C_U[1:n, 1:n] = matrixc_u(w, s, VarBeta)
+    C_U[n+1, n+1] = 0.0
     for i in 1:n
         C_U[i, n+1] = 0.0
 
@@ -287,64 +317,82 @@ end
             C_U[n+1, n+1] += (s[i+1] - s[i-1])^2 / (4.0 * VarBeta[i])
         end
     end
-    I = Matrix{Float64}(undef, n + 1, n + 1)
-    invert(C_U, I)
+    I = zeros(Float64, n + 1, n + 1)
+    Main.DataFormat_Math_choleskyInversion_h.invert(C_U, I)
     u = I * r_u
+    println("u: ", u)
+    println("I: ", I)
+    println("r_u: ", r_u)
+
     radii[1:2, 1] /= norm(radii[1:2, 1])
     radii[1:2, 2] /= norm(radii[1:2, 2])
 
-    d = hits[1:2, 1] + (-Z[1] + u[1]) * radii[1:2, 1]
-    e = hits[1:2, 2] + (-Z[2] + u[2]) * radii[1:2, 2]
+    d = hits[1:2, 1] .+ (-Z[1] + u[1]) .* radii[1:2, 1]
+    e = hits[1:2, 2] .+ (-Z[2] + u[2]) .* radii[1:2, 2]
 
+    println("d: ", d)
+    println("e: ", e)
+
+    println("e-d: ", (e - d))
+    println("atan2((e-d)[2], (e-d)[1]): ", atan2((e-d)[2], (e-d)[1]))
     circle_results.par[1] = atan2((e-d)[2], (e-d)[1])
-    circle_results.par[2] = -circle_results.q * (fast_fit[3] - sqrt(fast_fit[3])) - (norm(0.25 * (e - d)))^2
-    circle_results.par[3] = circle_results.q * (1 / fast_fit[3] + u[n])
+    circle_results.par[2] = -circle_results.q * (fast_fit[3] - sqrt(sqr(fast_fit[3]) - 0.25 * norm(e - d)^2))
+    circle_results.par[3] = circle_results.q * (1.0 / fast_fit[3] + u[n+1])
 
+    println("Initial circle_results.par:", circle_results.par)
     @assert circle_results.q * circle_results.par[2] <= 0
+
     eMinusd = e - d
-    tmp1 = (norm(eMinusd))^2
-    jacobian = Matrix{Float64}(undef, 3, 3)
+    tmp1 = sqr(norm(eMinusd))
+    println("tmp1: ", tmp1)
+    println("radii: ", radii)
+    println("fast_fit: ", fast_fit)
+    jacobian = zeros(Float64, 3, 3)
 
 
     jacobian[1, 1] = (radii[2, 1] * eMinusd[1] - eMinusd[2] * radii[1, 1]) / tmp1
     jacobian[1, 2] = (radii[2, 2] * eMinusd[1] - eMinusd[2] * radii[1, 2]) / tmp1
     jacobian[1, 3] = 0
-
-
-    jacobian[2, 1] = (circle_results.q / 2) * (eMinusd[1] * radii[1, 1] + eMinusd[2] * radii[2, 1]) /
-                     sqrt((2 * fast_fit[3])^2 - tmp1)
-    jacobian[2, 2] = (circle_results.q / 2) * (eMinusd[1] * radii[1, 2] + eMinusd[2] * radii[2, 2]) /
-                     sqrt((2 * fast_fit[3])^2 - tmp1)
+    jacobian[2, 1] = floor(circle_results.q / 2) * (eMinusd[1] * radii[1, 1] + eMinusd[2] * radii[2, 1]) /
+                     sqrt(sqr(2 * fast_fit[3]) - tmp1)
+    jacobian[2, 2] = floor(circle_results.q / 2) * (eMinusd[1] * radii[1, 2] + eMinusd[2] * radii[2, 2]) /
+                     sqrt(sqr(2 * fast_fit[3]) - tmp1)
     jacobian[2, 3] = 0
     jacobian[3, 1] = 0
     jacobian[3, 2] = 0
     jacobian[3, 3] = circle_results.q
 
     circle_results.cov = [
-        I[1, 1], I[1, 2], I[1, n+1],
-        I[2, 1], I[2, 2], I[2, n+1],
-        I[n+1, 1], I[n+1, 2], I[n+1, n+1]
+        I[1, 1] I[1, 2] I[1, n+1];
+        I[2, 1] I[2, 2] I[2, n+1];
+        I[n+1, 1] I[n+1, 2] I[n+1, n+1]
     ]
+    println("circle_cov 1: ", circle_results.cov)
+    println("jacobian: ", jacobian)
 
     circle_results.cov = jacobian * circle_results.cov * jacobian'
+    println("circle_cov 2: ", circle_results.cov)
+
     translate_karimaki(circle_results, 0.5 * (e-d)[1], 0.5 * (e-d)[2], jacobian)
-    circle_results.cov[1, 1] += (1 + sqr(slope) * mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope))
+    println("circle_cov 3: ", circle_results.cov)
+
+    circle_results.cov[1, 1] += (1 + sqr(slope)) * mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope)
+    println("mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope): ", mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope))
 
     translate_karimaki(circle_results, d[1], d[2], jacobian)
+
+    println("circle_cov 4: ", circle_results.cov)
     circle_results.chi2 = 0
     for i in 1:n
         circle_results.chi2 += w[i] * sqr(Z[i] - u[i])
 
-        if i > 1 && i < length(s) - 1
-            term = (u[i-1] / (s[i] - s[i-1]) -
-                    u[i] * (s[i+1] - s[i-1]) / ((s[i+1] - s[i]) * (s[i] - s[i-1])) +
-                    u[i+1] / (s[i+1] - s[i]) +
-                    (s[i+1] - s[i-1]) * u[end] / 2)^2
-
-            circle_results.chi2 += term / VarBeta[i]
+        if i > 1 && i < n
+            circle_results.chi2 += sqr(u[i-1] / (s[i] - s[i-1]) -
+                                       u[i] * (s[i+1] - s[i-1]) / ((s[i+1] - s[i]) * (s[i] - s[i-1])) +
+                                       u[i+1] / (s[i+1] - s[i]) + (s[i+1] - s[i-1]) * u[n+1] / 2) / VarBeta[i]
         end
     end
-
+    return circle_results.cov
 end
 # /*!
 # \brief Performs the Broken Line fit in the straight track case (that is, the fit parameters are only the interceptions u).
@@ -363,7 +411,7 @@ end
 # The step 2 is the least square fit, done by imposing the minimum constraint on the cost function and solving the consequent linear system. It determines the fitted parameters u and their covariance matrix.
 # The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
 # */
-@inline function BL_Line_fit(hits_ge::Matrix{Float64}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, line_results::Main.RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h.line_fit)
+@inline function BL_Line_fit(hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, line_results::Main.RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h.line_fit)
     n = size(hits_ge, 2)
     radii = data.radii
     S = data.S
@@ -371,51 +419,62 @@ end
     VarBeta = data.VarBeta
 
     slope = -data.q / fast_fit[4]
+
     R = rotation_matrix(slope)
-    V = zeros(3, 3)
-    JacobXYZtosZ = zeros(2, 3)
-    w = zeros(n)
+    println("R BL_Line_Fit: ", R)
+
+    V = zeros(Float64, 3, 3)
+    JacobXYZtosZ = zeros(Float64, 2, 3)
+    w = zeros(Float64, n, 1)
 
     for i in 1:n
         V[1, 1] = hits_ge[1, i]
         V[1, 2] = V[2, 1] = hits_ge[2, i]
-        V[1, 3] = v[3, 1] = hits_ge[4, i]
-        V[2, 2] = hits_ge[2, i]
+        V[1, 3] = V[3, 1] = hits_ge[4, i]
+        V[2, 2] = hits_ge[3, i]
         V[3, 2] = V[2, 3] = hits_ge[4, i]
         V[3, 3] = hits_ge[6, i]
         tmp = 1 / norm(radii[1:2, i])
         JacobXYZtosZ[1, 1] = radii[2, i] * tmp
         JacobXYZtosZ[1, 2] = -radii[1, i] * tmp
-        JacobXYZtosZ[2, 3] = 1
+        JacobXYZtosZ[2, 3] = 1.0
         w[i] = 1 / ((R*JacobXYZtosZ*V*JacobXYZtosZ'*R')[2, 2])
     end
+    println("JacobXYZtosZ: ", JacobXYZtosZ)
+    println("V:", V)
+    println("w:", w)
 
     r_u = zeros(n)
-    for i in 0:n
+    for i in 1:n
         r_u[i] = w[i] * Z[i]
     end
 
-    I = zeros(n, n)
-    invert(matrixc_u(w, S, VarBeta), I)
-    u = I * r_u
+    println("matrixc_u(w, S, VarBeta): ", matrixc_u(w, S, VarBeta))
 
-    line_results.par = [(u(1) - u(0)) / (S(1) - S(0)), u(0)]
-    idiff = 1.0 / (S(1) - S(0))
+    I = zeros(Float64, n, n)
+    Main.DataFormat_Math_choleskyInversion_h.invert(matrixc_u(w, S, VarBeta), I)
+    println("I: ", I)
+    u = I * r_u
+    println("u: ", u)
+    line_results.par = [(u[2] - u[1]) / (S[2] - S[1]), u[1]]
+    println("line_results.par: ", line_results.par)
+    idiff = 1.0 / (S[2] - S[1])
+
 
     line_results.cov = [
-        (I(1, 1) - 2 * I(1, 2) + I(2, 2)) * idiff^2 + mult_scatt(S(1) - S(0), B, fast_fit(2), 2, slope),
-        (I(1, 2) - I(1, 1)) * idiff,
-        (I(1, 2) - I(1, 1)) * idiff,
-        I(1, 1)
+        (I[1, 1]-2*I[1, 2]+I[2, 2])*idiff^2+mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope) (I[1, 2]-I[1, 1])*idiff;
+        (I[1, 2]-I[1, 1])*idiff I[1, 1]
     ]
+
 
     jacobian = zeros(2, 2)
     jacobian[1, 1] = 1
     jacobian[1, 2] = 0
-    jacobian[2, 1] = -S[0]
+    jacobian[2, 1] = -S[1]
     jacobian[2, 2] = 1
 
     line_results.par[2] = line_results.par[2] - line_results.par[1] * S[1]
+
     line_results.cov = jacobian * line_results.cov * jacobian'
 
     tmp = R[1, 1] - line_results.par[1] * R[1, 2]
@@ -424,20 +483,21 @@ end
     jacobian[1, 2] = 0
     jacobian[2, 1] = line_results.par[2] * R[1, 2] * jacobian[1, 1]
     line_results.par[2] = line_results.par[2] * jacobian[2, 2]
-    line_results.par[1] = (R[1, 2] + line_results.par[1] * R[1, 1] * jacobian[2, 2])
+    line_results.par[1] = (R[1, 2] + line_results.par[1] * R[1, 1]) * jacobian[2, 2]
     line_results.cov = jacobian * line_results.cov * jacobian'
 
     line_results.chi2 = 0
-    for i in 0:n
-        line_results.chi2 = line_results.chi2 + w[i] * sqr(Z[i] - u[i])
-        if i > 0 && i < n - 1
-            line_results.chi2 = line_results.chi2 + sqr(sqr(u(i - 1) / (S(i) - S(i - 1)) -
-                                                            u(i) * (S(i + 1) - S(i - 1)) / ((S(i + 1) - S(i)) * (S(i) - S(i - 1))) +
-                                                            u(i + 1) / (S(i + 1) - S(i))) /
-                                                        VarBeta(i))
+    for i in 1:n
+        line_results.chi2 += w[i] * (Z[i] - u[i])^2
+        if i > 1 && i < n
+            line_results.chi2 += ((u[i-1] / (S[i] - S[i-1]) -
+                                   u[i] * (S[i+1] - S[i-1]) / ((S[i+1] - S[i]) * (S[i] - S[i-1])) +
+                                   u[i+1] / (S[i+1] - S[i]))^2 /
+                                  VarBeta[i])^2
         end
     end
 
+    return line_results
 end
 
 # \brief Helix fit by three step:
