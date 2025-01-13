@@ -33,17 +33,25 @@ end
 
 
 function run_processor(ev::EventProcessor)
-    # for i in 1:ev.numberOfStreams
-    #     Dagger.@spawn run_stream(ev.schedules[i])
+    # tasks = [Dagger.@spawn run_stream(schedule) for schedule in ev.schedules]
+    # # print(length(tasks))
+    # # @info "Number of tasks created: $(length(tasks))"
+    # # @info "Expected number of streams: $(ev.numberOfStreams)"
+    # fetch.(tasks)
+    # @threads for i in 1:ev.numberOfStreams
+    #     run_stream(ev.schedules[i])
     # end
-    tasks = [Dagger.@spawn run_stream(schedule) for schedule in ev.schedules]
-    # print(length(tasks))
-    for i in 1:ev.numberOfStreams
-        # Dagger.@spawn run_stream(ev.schedules[i])
-        fetch(tasks[i])
+    @threads for i in 1:ev.numberOfStreams
+        run_stream(ev.schedules[i])
     end
-    # Dagger.collect(tasks);  # This will execute all tasks and wait for them to finish
-    print(tasks)
-    # @info "All stream schedules have completed."
 
+    # print(tasks)
+    @info "All stream schedules have completed."
+end
+
+function warm_up(ev::EventProcessor)
+    @threads for i in 1:ev.numberOfStreams
+        run_stream(ev.schedules[i])
+    end
+    ev.source.numEvents[] = 1
 end

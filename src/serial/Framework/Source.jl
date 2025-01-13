@@ -1,6 +1,6 @@
 using .dataFormats
 
-struct Source
+mutable struct Source
 
     raw_events::Vector{FedRawDataCollection}
     numEvents::Atomic{Int}
@@ -24,6 +24,7 @@ function produce(src::Source, streamId::Int, reg::ProductRegistry)
     end
 
     iev = atomic_add!(src.numEvents, 1)
+    # println("Taking an Event ", iev)
     # print(src.raw_events)
 
     

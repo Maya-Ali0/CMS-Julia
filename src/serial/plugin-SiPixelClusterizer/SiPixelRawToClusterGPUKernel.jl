@@ -661,7 +661,7 @@ module pixelGPUDetails
     function make_clusters(gpu_algo::SiPixelRawToClusterGPUKernel,is_run_2::Bool , cabling_map::SiPixelFedCablingMapGPU , mod_to_unp::Vector{UInt8} , gains::SiPixelGainForHLTonGPU ,
                   word_fed::WordFedAppender , errors::PixelFormatterErrors , word_counter::Integer , fed_counter::Integer , use_quality_info::Bool,
                   include_errors::Bool , debug::Bool )
-        @printf("decoding %s digis. Max is %i '\n'",word_counter,MAX_FED_WORDS)
+        # @printf("decoding %s digis. Max is %i '\n'",word_counter,MAX_FED_WORDS)
         digis_d = gpu_algo.digis_d
         if include_errors
             digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors) # m

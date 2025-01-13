@@ -31,24 +31,51 @@ mutable struct StreamSchedule
 end
 
 
+# function run_stream(ss::StreamSchedule)
+#     Dagger.spawn_streaming() do
+#         eventTask = Dagger.@spawn produce(ss.source, ss.stream_id, ss.registry)
+#         # TaskClusterizer = Dagger.@spawn(eventTask) do
+#         #     if event === nothing
+#         #         @info "No more events to process. Stream $(ss.stream_id) exiting."
+#         #         return Dagger.finish_streaming("Finished!")
+#         #     end
+#         #     produce(ss.path[1], event, ss.event_setup)
+#         # end
+#         eventTask_1 = Dagger.@spawn eventTask[1]
+#         eventTask_2 = Dagger.@spawn eventTask[2]
+
+#         TaskClusterizer = Dagger.@spawn produce(ss.path[1], eventTask_1, eventTask_2)
+#         # TaskBeamspot = Dagger.@spawn produce(ss.path[2], event, ss.event_setup)
+#         # TaskRecHit =  Dagger.@spawn begin
+#         #     fetch(TaskClusterizer)  # Wait for Task A
+#         #     fetch(TaskBeamspot)  # Wait for Task B
+#         #     produce(ss.path[3], event, ss.event_setup)
+#         # end
+#         # #......
+#     end
+# end
+
 function run_stream(ss::StreamSchedule)
     # print(ss.source.raw_events[1])
+    # sleep(2)
     while true
         # print("in run_stream")
+
         event = produce(ss.source, ss.stream_id, ss.registry)
         if event === nothing
             @info "No more events to process. Stream $(ss.stream_id) exiting."
             break
         end
-        # println("Event ID::",event.eventId,"Stream ID:: ",event.streamId)
+        # println("Event ID::", event.eventId, "Stream ID:: ", event.streamId)
 
-        # # TaskClusterizer
+        ## TaskClusterizer
         produce(ss.path[1], event, ss.event_setup)
+        
 
-        # # TaskBeamspot
-        # produce(ss.path[2], event, ss.event_setup)
+        ## TaskBeamspot
+        produce(ss.path[2], event, ss.event_setup)
 
-        # # TaskRecHit depends on TaskClusterizer and TaskBeamspot
+        ## TaskRecHit depends on TaskClusterizer and TaskBeamspot
         # TaskRecHit = Dagger.@task begin
         #     # Establish dependencies
         #     fetch(TaskClusterizer)
@@ -56,13 +83,18 @@ function run_stream(ss::StreamSchedule)
         #     # Process the third module
         #     produce(ss.path[3], event, ss.event_setup)
         # end
-        # produce(ss.path[3], event, ss.event_setup)
+        produce(ss.path[3], event, ss.event_setup)
 
-        # # Wait for TaskRecHit to finish
+        ## Wait for TaskRecHit to finish
         # fetch(TaskClusterizer)
-
     end
 end
 
+
+
+
 # tell dagger how many threads to use 
 # fetch
+
+
+

@@ -4,7 +4,6 @@ using Printf
 using StaticArrays:MArray
 using Base
 using Base.Threads
-using Dagger
 export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT,
 FED_EVSZ_EXTRACT, FED_CRCS_EXTRACT, FED_STAT_EXTRACT, FED_TTSI_EXTRACT,
 FED_MORE_TRAILERS_EXTRACT, FED_CRC_MODIFIED_EXTRACT, FED_SLINK_ERROR_EXTRACT,
@@ -110,6 +109,8 @@ export TrackCount
 export VertexCount
 export CountValidator
 export HistoValidator
+export warm_up
+
 include("serial/Framework/ESPluginFactory.jl")
 include("serial/DataFormats/track_count.jl")
 include("serial/DataFormats/vertex_count.jl")

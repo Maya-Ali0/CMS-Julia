@@ -1,5 +1,6 @@
 # using Revise
-using Patatrack
+include("src/Patatrack.jl")
+using .Patatrack
 using Profile, BenchmarkTools, ProfileView
 num_of_threads::Int = 1
 num_of_streams::Int = 0
@@ -10,96 +11,38 @@ validation::Bool = false #  Run (rudimentary) validation at the end.
 histogram::Bool = false # prduce a histogram at the end
 empty::Bool = false # Ignore all producers (used for testing only)
 
+function run(num_of_streams::Int)
+
 ed_modules::Vector{String} = String[]
 es_modules::Vector{String} = String[]
 
 if(!empty)
-    ed_modules = ["SiPixelRawToClusterCUDA"]#,"BeamSpotToCUDA", "SiPixelRecHitCUDA", "CAHitNtupletCUDA", "PixelVertexProducerCUDA"]
-    es_modules = ["SiPixelFedCablingMapGPUWrapperESProducer","SiPixelGainCalibrationForHLTGPUESProducer"]#,"PixelCPEFastESProducer","BeamSpotESProducer"]
+    ed_modules = ["SiPixelRawToClusterCUDA","BeamSpotToPOD", "SiPixelRecHitCUDA"]#, "CAHitNtupletCUDA", "PixelVertexProducerCUDA"]
+    es_modules = ["SiPixelFedCablingMapGPUWrapperESProducer","SiPixelGainCalibrationForHLTGPUESProducer","PixelCPEFastESProducer","BeamSpotESProducer"]
 end
                                                                                                                                            #Not Currently Used
 ##############################################################################################################################################################
-raw_events = readall(open((@__DIR__) * "/data/raw.bin")) # Reads 1000 event 
-digi_cluster_count_v = Vector{DigiClusterCount}()
-track_count_v = Vector{TrackCount}()
-vertex_count_v = Vector{VertexCount}()
-
-
-open((@__DIR__) * "/data/digicluster.bin", "r") do io
-    while(!eof(io))
-    nm::UInt32 = read(io,UInt32)
-    nd::UInt32 = read(io,UInt32)
-    nc::UInt32 = read(io,UInt32)
-    push!(digi_cluster_count_v,DigiClusterCount(nm,nd,nc))
-    end
-end
-
-open((@__DIR__) * "/data/tracks.bin", "r") do io
-    while(!eof(io))
-        nt::UInt32 = read(io,UInt32)
-        push!(track_count_v,TrackCount(nt))
-        end
-end
-
-open((@__DIR__) * "/data/vertices.bin", "r") do io
-    while(!eof(io))
-        nv::UInt32 = read(io,UInt32)
-        push!(vertex_count_v,VertexCount(nv))
-        end
-end
 es::EventSetup = EventSetup()
 dataDir::String = (@__DIR__) * "/data/"
 
+# EP = EventProcessor(ed_modules,es_modules,dataDir)
 
-cabling_map_producer::SiPixelFedCablingMapGPUWrapperESProducer = SiPixelFedCablingMapGPUWrapperESProducer(dataDir)
-gain_Calibration_producer::SiPixelGainCalibrationForHLTGPUESProducer = SiPixelGainCalibrationForHLTGPUESProducer(dataDir)
-CPE_Producer = PixelCPEFastESProducer(dataDir)
-beam_Producer = BeamSpotESProducer(dataDir)
+ev = EventProcessor(num_of_streams,ed_modules,es_modules,dataDir);
+println("Warming up")
+@time warm_up(ev)
+println("Warmup done")
+println("running")
+@time run_processor(ev)
 
-produce(cabling_map_producer,es)
-produce(gain_Calibration_producer,es);
-produce(CPE_Producer,es);
-produce(beam_Producer,es)
-function run()
-    e = 0
-    # open("doubletsTesting.txt", "a") do file
-
-    for (collection,digi_cluster_count,track_count) ∈ zip(raw_events,digi_cluster_count_v,track_count_v)
-        if e == 1
-            break
-        end
-    #     # write(file,"EVENTT",string(e))
-        reg = ProductRegistry()
-        raw_token = produces(reg,FedRawDataCollection)
-        digi_cluster_count_token = produces(reg,DigiClusterCount)
-        track_count_token = produces(reg,TrackCount)
-        raw_to_cluster = SiPixelRawToClusterCUDA(reg)
-        event::Event = Event(reg)
-        emplace(event,raw_token,collection)
-        emplace(event,digi_cluster_count_token,digi_cluster_count)
-        emplace(event,track_count_token,track_count)
-        produce(raw_to_cluster,event,es) 
-        bs =  BeamSpotToPOD(reg)
-        produce(bs,event,es)
-        rec_hit = SiPixelRecHitCUDA(reg)
-        produce(rec_hit,event,es)   
-        n_tuplets = CAHitNtuplet(reg)
-        produce(n_tuplets,event,es,0)
-        # break
-        count_validator  = CountValidator(reg)
-        produce(count_validator,event,es)
-        his_to_validator = HistoValidator(reg)
-        produce(his_to_validator,event,es)
-        e+=1
-    end
-# endAa
 end
-#run()
-# @profview run()
 
 
 
+# number_of_streams = parse(Int, ARGS[1]) # First argument as number of events
+# print(number_of_streams)
+
+number_of_streams = 8
+run(number_of_streams)
+println("Number of threads: ", Threads.nthreads())
 
 
-
-@time run()

@@ -10,7 +10,7 @@ struct Event
     products::Vector{WrapperBase}  # Union type to allow for null elements
 
     function Event(streamIDD::Integer,eventIDD::Integer, reg::ProductRegistry)
-        return new(streamIDD,eventIDD,Vector{WrapperBase}(undef,20)) # length(reg)
+        return new(streamIDD,eventIDD,Vector{WrapperBase}(undef,length(reg))) # length(reg)
     end
 end
 
@@ -21,7 +21,7 @@ streamID(event::Event) = event.streamId
 eventID(event::Event) = event.eventId
 
 # Function to retrieve a product of type T from Event
-function get(event::Event, token::EDGetTokenT{T})::T where T
+function Base.get(event::Event, token::EDGetTokenT{T})::T where T
     wrapper = event.products[token.value]
     return wrapper.obj
 end
@@ -48,11 +48,11 @@ mutable struct EventSetup
     end
 end
 
-function put!(es::EventSetup, prod::T) where T
+function Base.put!(es::EventSetup, prod::T) where T
     es.typeToProduct[T] = ESWrapper(prod)
 end
 
-function get(es::EventSetup, ::Type{T}) where T
+function Base.get(es::EventSetup, ::Type{T}) where T
     if haskey(es.typeToProduct, T)
         return es.typeToProduct[T].obj
     else
