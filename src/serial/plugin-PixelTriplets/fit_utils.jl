@@ -1,4 +1,5 @@
 module RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
+
 using StaticArrays
 using ..RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h
 export cross2D, printIt, sqr

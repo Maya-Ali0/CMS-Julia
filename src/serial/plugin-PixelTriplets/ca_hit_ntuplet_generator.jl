@@ -1,6 +1,7 @@
 using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
-using .cAHitNtupletGenerator:Counters, Params, CAHitNTupletGeneratorKernels, build_doublets, launch_kernels, resetCAHitNTupletGeneratorKernels,fill_hit_det_indices
-using .Tracks:TrackSOA
+using .cAHitNtupletGenerator: Counters, Params, CAHitNTupletGeneratorKernels, build_doublets, launch_kernels, resetCAHitNTupletGeneratorKernels, fill_hit_det_indices
+using .Tracks: TrackSOA
+using .RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h
 using TaskLocalValues
 const CACHED_KERNELS = TaskLocalValue(() -> CAHitNTupletGeneratorKernels(Params(
     false,             # onGPU
@@ -26,39 +27,38 @@ const CACHED_KERNELS = TaskLocalValue(() -> CAHitNTupletGeneratorKernels(Params(
 )))
 
 struct CAHitNtupletGeneratorOnGPU
-    m_params::Params 
+    m_params::Params
     m_counters::Counters
     function CAHitNtupletGeneratorOnGPU()
         new(
             Params(
                 false,             # onGPU
-               3,                 # minHitsPerNtuplet,
-               458752,            # maxNumberOfDoublets
-               false,             # useRiemannFit
-               true,              # fit5as4,
-               true,              #includeJumpingForwardDoublets
-               true,              # earlyFishbone
-               false,             # lateFishbone
-               true,              # idealConditions
-               false,             # fillStatistics
-               true,              # doClusterCut
-               true,              # doZ0Cut
-               true,              # doPtCut
-               0.899999976158,    # ptmin
-               0.00200000009499,  # CAThetaCutBarrel
-               0.00300000002608,  # CAThetaCutForward
-               0.0328407224959,   # hardCurvCut
-               0.15000000596,     # dcaCutInnerTriplet
-               0.25,              # dcaCutOuterTriplet
-               cAHitNtupletGenerator.cuts
-            )
-            ,
+                3,                 # minHitsPerNtuplet,
+                458752,            # maxNumberOfDoublets
+                false,             # useRiemannFit
+                true,              # fit5as4,
+                true,              #includeJumpingForwardDoublets
+                true,              # earlyFishbone
+                false,             # lateFishbone
+                true,              # idealConditions
+                false,             # fillStatistics
+                true,              # doClusterCut
+                true,              # doZ0Cut
+                true,              # doPtCut
+                0.899999976158,    # ptmin
+                0.00200000009499,  # CAThetaCutBarrel
+                0.00300000002608,  # CAThetaCutForward
+                0.0328407224959,   # hardCurvCut
+                0.15000000596,     # dcaCutInnerTriplet
+                0.25,              # dcaCutOuterTriplet
+                cAHitNtupletGenerator.cuts
+            ),
             Counters()
         )
     end
 end
 
-function make_tuples(self::CAHitNtupletGeneratorOnGPU,hits_d::TrackingRecHit2DHeterogeneous,b_field::AbstractFloat,file)
+function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DHeterogeneous, b_field::AbstractFloat, file)
     # Create PixelTrackHeterogeneous
     tracks = TrackSOA()
     # soa = tracks.get()
@@ -66,8 +66,10 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU,hits_d::TrackingRecHit2DHe
     kernels = CACHED_KERNELS[]
     resetCAHitNTupletGeneratorKernels(kernels)
     kernels.counters = self.m_counters
-    build_doublets(kernels,hits_d,file)
-    launch_kernels(kernels,hits_d,tracks)
-    fill_hit_det_indices(hist_view(hits_d),tracks)
+    build_doublets(kernels, hits_d, file)
+    launch_kernels(kernels, hits_d, tracks)
+    fill_hit_det_indices(hist_view(hits_d), tracks)
+    # if(! const bool useRiemannFit_;)
+    launchBrokenLineKernelsOnCPU(hist_view(hits_d), n_hits(hits_d), 24 * 1024)
     return tracks
 end

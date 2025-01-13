@@ -1,12 +1,11 @@
 module RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h
 
-using ..RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
+using ..RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h: circle_fit, line_fit
 using LinearAlgebra
 using Statistics
 using Test
 using StaticArrays
 using ..DataFormat_Math_choleskyInversion_h
-using ..RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h
 
 #  Karimäki's parameters: (phi, d, k=1/R)
 # /*!< covariance matrix: \n
@@ -73,7 +72,7 @@ end
 #     \param x0 x coordinate of the translation vector.
 #     \param y0 y coordinate of the translation vector.
 #     \param jacobian passed by reference in order to save stack.
-@inline function translate_karimaki(circle::Main.RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h.circle_fit, x0::Float64, y0::Float64, jacobian::Matrix{Float64})
+@inline function translate_karimaki(circle::circle_fit, x0::Float64, y0::Float64, jacobian::Matrix{Float64})
     DP = x0 * cos(circle.par[1]) + y0 * sin(circle.par[1])
     DO = x0 * sin(circle.par[1]) - y0 * cos(circle.par[1]) + circle.par[2]
     uu = 1 + circle.par[3] * circle.par[2]
@@ -260,7 +259,7 @@ end
 #     \details The function implements the steps 2 and 3 of the Broken Line fit with the curvature correction.\n
 #     The step 2 is the least square fit, done by imposing the minimum constraint on the cost function and solving the consequent linear system. It determines the fitted parameters u and \Delta\kappa and their covariance matrix.
 #     The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
-@inline function BL_Circle_fit(hits::Matrix{Float64}, hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, circle_results::Main.RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h.circle_fit)
+@inline function BL_Circle_fit(hits::Matrix{Float64}, hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, circle_results::circle_fit)
     n = size(hits, 2)
     circle_results.q = data.q
     radii = data.radii
@@ -411,7 +410,7 @@ end
 # The step 2 is the least square fit, done by imposing the minimum constraint on the cost function and solving the consequent linear system. It determines the fitted parameters u and their covariance matrix.
 # The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
 # */
-@inline function BL_Line_fit(hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, line_results::Main.RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h.line_fit)
+@inline function BL_Line_fit(hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, line_results::line_fit)
     n = size(hits_ge, 2)
     radii = data.radii
     S = data.S
