@@ -135,7 +135,7 @@ function fill_hit_det_indices(hv, tracks_d)
     kernel_fill_hit_indices(tracks_d.hit_indices, hv, tracks_d.det_indices)
 end
 
-function build_doublets(self::CAHitNTupletGeneratorKernels, hh::HitsOnCPU, file)
+function build_doublets(self::CAHitNTupletGeneratorKernels, hh::HitsOnCPU)
     current_n_hits = n_hits(hh)
     println("Building Doublets out of ", current_n_hits, " Hits")
     # cell_storage
@@ -158,7 +158,7 @@ function build_doublets(self::CAHitNTupletGeneratorKernels, hh::HitsOnCPU, file)
     @assert(n_actual_pairs <= n_pairs)
     get_doublets_from_histo(self.device_the_cells, self.device_n_cells, self.device_the_cell_neighbors, self.device_the_cell_tracks, hh,
         self.device_is_outer_hit_of_cell, n_actual_pairs, self.m_params.ideal_conditions, self.m_params.do_cluster_cut,
-        self.m_params.do_z0_cut, self.m_params.do_pt_cut, self.m_params.max_num_of_doublets, file)
+        self.m_params.do_z0_cut, self.m_params.do_pt_cut, self.m_params.max_num_of_doublets)
 end
 
 function launch_kernels(self::CAHitNTupletGeneratorKernels, hh, tracks_d)

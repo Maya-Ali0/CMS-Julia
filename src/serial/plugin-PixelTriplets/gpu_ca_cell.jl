@@ -35,7 +35,7 @@ module gpuCACELL
         the_inner_hit_id::hindex_type
         the_outer_hit_id::hindex_type
         function GPUCACell(cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,hh::Hits,layer_pair_id::Integer,doublet_id::Integer,
-            inner_hit_id::Integer,outer_hit_id::Integer,file)
+            inner_hit_id::Integer,outer_hit_id::Integer)
             z_global_inner = z_global(hh,inner_hit_id)
             r_global_inner = r_global(hh,inner_hit_id)
             # z_global_inner_str = @sprintf("%.7g", z_global_inner)

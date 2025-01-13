@@ -85,6 +85,8 @@ function run_stream(ss::StreamSchedule)
         # end
         produce(ss.path[3], event, ss.event_setup)
 
+        @time produce(ss.path[4], event, ss.event_setup)
+
         ## Wait for TaskRecHit to finish
         # fetch(TaskClusterizer)
     end

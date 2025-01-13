@@ -58,7 +58,7 @@ struct CAHitNtupletGeneratorOnGPU
     end
 end
 
-function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DHeterogeneous, b_field::AbstractFloat, file)
+function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DHeterogeneous, b_field::AbstractFloat)
     # Create PixelTrackHeterogeneous
     tracks = TrackSOA()
     # soa = tracks.get()
@@ -66,7 +66,7 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DH
     kernels = CACHED_KERNELS[]
     resetCAHitNTupletGeneratorKernels(kernels)
     kernels.counters = self.m_counters
-    build_doublets(kernels, hits_d, file)
+    build_doublets(kernels, hits_d)
     launch_kernels(kernels, hits_d, tracks)
     fill_hit_det_indices(hist_view(hits_d), tracks)
     # if(! const bool useRiemannFit_;)
