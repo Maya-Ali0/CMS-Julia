@@ -1,10 +1,10 @@
 using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h: n_hits
 using .cAHitNtupletGenerator: Counters, Params, CAHitNTupletGeneratorKernels, build_doublets, launch_kernels, resetCAHitNTupletGeneratorKernels, fill_hit_det_indices
-using .Tracks: TrackSOA
+using .Tracks: TrackSOA, hit_indices
 using .RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h
 using TaskLocalValues
 using .BrokenLineFitOnGPU: launchBrokenLineKernelsOnCPU
-using .RecoPixelVertexing_PixelTrackFitting_plugins_HelixFitOnGPU_h: HelixFitOnGPU
+using .RecoPixelVertexing_PixelTrackFitting_plugins_HelixFitOnGPU_h: HelixFitOnGPU, allocate_on_gpu!
 
 const CACHED_KERNELS = TaskLocalValue(() -> CAHitNTupletGeneratorKernels(Params(
     false,             # onGPU
@@ -64,12 +64,14 @@ end
 function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DHeterogeneous, b_field::AbstractFloat)
     # Create PixelTrackHeterogeneous
     tracks = TrackSOA()
-    # soa = tracks.get()
+    soa = tracks
+    @assert !isnothing(soa)
     # kernels = CAHitNTupletGeneratorKernels(self.m_params) # m 
     kernels = CACHED_KERNELS[]
     resetCAHitNTupletGeneratorKernels(kernels)
     kernels.counters = self.m_counters
-    build_doublets(kernels, hits_d)
+
+    build_doublets(kernels, hits_d) # doesnt modify n_hits
     launch_kernels(kernels, hits_d, tracks)
     fill_hit_det_indices(hist_view(hits_d), tracks)
     # if(! const bool useRiemannFit_;)
@@ -78,6 +80,10 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DH
     # fitter.allocateOnGPU(&(soa->hitIndices), kernels.tupleMultiplicity(), soa);
 
     fitter = HelixFitOnGPU(b_field, self.m_params.fit_5_as_4)
+    allocate_on_gpu!(fitter, hit_indices(soa), kernels.device_tuple_multiplicity, soa)
+    println("tuple_multiplicity_d.off: ", fitter.tuple_multiplicity_d.off)
+    println(size(fitter.tuple_multiplicity_d.off))
+    println("n_hits(hits_d): ", n_hits(hits_d))
     launchBrokenLineKernelsOnCPU(fitter, hist_view(hits_d), n_hits(hits_d), UInt32(24 * 1024))
     return tracks
 end

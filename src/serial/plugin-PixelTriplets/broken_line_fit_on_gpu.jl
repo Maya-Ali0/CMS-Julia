@@ -7,7 +7,8 @@ using ..RecoPixelVertexing_PixelTrackFitting_plugins_HelixFitOnGPU_h: HelixFitOn
 
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView
 using ..Tracks: TrackSOA
-using ..histogram: OneToManyAssoc
+using ..histogram: OneToManyAssoc, size, begin_h, n_bins
+using ..caConstants: TupleMultiplicity
 
 #Type aliases
 const hindex_type = UInt16
@@ -16,15 +17,14 @@ const HitsOnGPU = TrackingRecHit2DSOAView
 const Tuples = OneToManyAssoc{hindex_type,32 * 1024,32 * 1024 * 5}
 const OutputSoA = TrackSOA
 const maxTuples = 24 * 1024
-const TupleMultiplicity = OneToManyAssoc{tindex_type,8,maxTuples}
 
 
 function kernelBLFastFit(N::Int,
     foundNtuplets::Tuples,
-    tupleMultiplicity::Vector{Int},
+    tupleMultiplicity::TupleMultiplicity,
     hhp::HitsOnGPU,
-    phits::Matrix{Float64},
-    phits_ge::Matrix{Float32},
+    phits::Vector{Float64},
+    phits_ge::Vector{Float32},
     pfast_fit::Vector{Float64},
     nHits::UInt32,
     offset::UInt32)
@@ -33,19 +33,21 @@ function kernelBLFastFit(N::Int,
     @assert(hitsInFit <= nHits)
     @assert hhp !== nothing
     @assert !isempty(pfast_fit)
-    @assert !isempty(foundNtuplets)
-    @assert !isempty(tupleMultiplicity)
+    @assert !isnothing(foundNtuplets)
+    @assert !isnothing(tupleMultiplicity)
 
     local_start = 1
-
-    for local_idx in local_start:min(maxTuples, length(tupleMultiplicity) - offset)
+    maxNumberOfConcurrentFits = 24 * 1024
+    for local_idx in local_start:maxNumberOfConcurrentFits
         tuple_idx = local_idx + offset
-        if tuple_idx >= length(tupleMultiplicity)
+        println(nHits)
+        if tuple_idx >= size(tupleMultiplicity, nHits)
             break
         end
-        tkid = tupleMultiplicity[tuple_idx]
-        @assert tkid < length(foundNtuplets)
-        @assert length(foundNtuplets[tkid]) == nHits
+
+        tkid = begin_h(tupleMultiplicity, nHits) + tuple_idx
+        @assert tkid < n_bins(foundNtuplets)
+        @assert size(foundNtuplets, tkid) == nHits
 
         # Directly slice and reshape for hits
         hits = reshape(phits[:, local_idx:local_idx+3*N-1], 3, N)
@@ -78,11 +80,11 @@ function kernelBLFastFit(N::Int,
 end
 
 function kernelBLFit(N::Int,
-    tupleMultiplicity::Vector{Int},
+    tupleMultiplicity::TupleMultiplicity,
     B::Float64,
     results::OutputSoA,
-    phits::Matrix{Float64},
-    phits_ge::Matrix{Float32},
+    phits::Vector{Float64},
+    phits_ge::Vector{Float32},
     pfast_fit::Vector{Float64},
     nHits::UInt32,
     offset::UInt32)
@@ -92,8 +94,8 @@ function kernelBLFit(N::Int,
     @assert !isempty(pfast_fit)
 
     local_start = 1
-
-    for local_idx in local_start:min(maxTuples, length(tupleMultiplicity) - offset)
+    maxNumberOfConcurrentFits = 24 * 1024
+    for local_idx in local_start:maxNumberOfConcurrentFits
         tuple_idx = local_idx + offset
         if tuple_idx >= length(tupleMultiplicity)
             break
@@ -144,26 +146,25 @@ end
 
 function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hitsInFit::UInt32, maxNumberOfTuples::UInt32)
     tuples_d = get_tuples_d(fitter)
-    println(tuples_d)
     @assert !isnothing(tuples_d)
-
+    maxNumberOfConcurrentFits = 24 * 1024
     hitsGPU = Vector{Float64}(undef, maxNumberOfConcurrentFits * 3 * 4)
-    hits_geGPU = Vector{Float64}(undef, maxNumberOfConcurrentFits * 6 * 4)
+    hits_geGPU = Vector{Float32}(undef, maxNumberOfConcurrentFits * 6 * 4)
     fast_fit_resultsGPU = Vector{Float64}(undef, maxNumberOfConcurrentFits * 4)
 
     for offset in 0:maxNumberOfConcurrentFits:maxNumberOfTuples
-        kernelBLFastFit(3, tuples_d, tupleMultiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit_resultsGPU, hitsInFit, offset)
-        kernelBLFit(3, tupleMultiplicity_d, bField_, outputSoa_d, hitsGPU, hits_geGPU, fast_fit_resultsGPU, hitsInFit, offset)
+        kernelBLFastFit(3, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(3), UInt32(offset))
+        kernelBLFit(3, fitter.tuple_multiplicity_d, bField_, outputSoa_d, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(3), UInt32(offset))
 
-        kernelBLFastFit(4, tuples_d, tupleMultiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit_resultsGPU, 4, offset)
-        kernelBLFit(4, tupleMultiplicity_d, bField_, outputSoa_d, hitsGPU, hits_geGPU, fast_fit_resultsGPU, 4, offset)
+        kernelBLFastFit(4, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(4), UInt32(offset))
+        kernelBLFit(4, fitter.tuple_multiplicity_d, bField_, outputSoa_d, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(4), UInt32(offset))
 
         if fit5as4
-            kernelBLFastFit(4, tuples_d, tupleMultiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit_resultsGPU, 5, offset)
-            kernelBLFit(4, tupleMultiplicity_d, bField_, outputSoa_d, hitsGPU, hits_geGPU, fast_fit_resultsGPU, 5, offset)
+            kernelBLFastFit(4, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(5), UInt32(offset))
+            kernelBLFit(4, fitter.tuple_multiplicity_d, bField_, outputSoa_d, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(5), UInt32(offset))
         else
-            kernelBLFastFit(5, tuples_d, tupleMultiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit_resultsGPU, 5, offset)
-            kernelBLFit(5, tupleMultiplicity_d, bField_, outputSoa_d, hitsGPU, hits_geGPU, fast_fit_resultsGPU, 5, offset)
+            kernelBLFastFit(5, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(5), UInt32(offset))
+            kernelBLFit(5, fitter.tuple_multiplicity_d, bField_, outputSoa_d, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(5), UInt32(offset))
         end
     end
 end

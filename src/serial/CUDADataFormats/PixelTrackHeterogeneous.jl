@@ -32,6 +32,10 @@ struct TrackSOAT{S,many}
     end
 end
 
+function hit_indices(tracks::TrackSOAT)
+    return tracks.hit_indices
+end
+
 function charge(track::TrackSOAT, i::Int)::Float32
     return copysign(1.0f0, track.stateAtBS.state[i][3])
 end

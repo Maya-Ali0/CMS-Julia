@@ -99,14 +99,15 @@ function launchBrokenLineKernelsOnCPU(self::HelixFitOnGPU, hv::HitsView, nhits::
     println("Launching Broken Line Kernels with b_field: ", self.b_field)
 end
 
-function allocate_on_gpu!(self::HelixFitOnGPU, tuples::Tuples, tuple_multiplicity::Tuple_Multiplicity, output_soa::OutputSoA)
-    @assert !isnothing(tuples)
-    @assert !isnothing(tuple_multiplicity)
-    @assert !isnothing(output_soa)
-
+function allocate_on_gpu!(self::HelixFitOnGPU, tuples::Tuples, tuple_multiplicity::Tuple_Multiplicity, helix_fit_results::OutputSoA)
     self.tuples_d = tuples
     self.tuple_multiplicity_d = tuple_multiplicity
-    self.output_soa_d = output_soa
+    self.output_soa_d = helix_fit_results
+
+    @assert !isnothing(tuples)
+    @assert !isnothing(tuple_multiplicity)
+    @assert !isnothing(helix_fit_results)
+
 end
 
 function deallocate_on_gpu!(self::HelixFitOnGPU)
