@@ -52,7 +52,8 @@ const MAX_NUMBER = 32 * 1024
 
 
 
-const TrackSOA = TrackSOAT{MAX_NUMBER,5*MAX_NUMBER}
+const TrackSOA = TrackSOAT{MAX_NUMBER,5 * MAX_NUMBER}
+const HitContainer = OneToManyAssoc{hindex_type,MAX_NUMBER,5 * MAX_NUMBER}
 
 n_hits_track(self::TrackSOAT{MAX_NUMBER,5 * MAX_NUMBER}, i::Integer) = size(self.det_indices, i)
 stride_track(::TrackSOAT{S,many}) where {S,many} = S

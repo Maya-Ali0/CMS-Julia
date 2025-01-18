@@ -1,8 +1,11 @@
-using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
+using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h: n_hits
 using .cAHitNtupletGenerator: Counters, Params, CAHitNTupletGeneratorKernels, build_doublets, launch_kernels, resetCAHitNTupletGeneratorKernels, fill_hit_det_indices
 using .Tracks: TrackSOA
 using .RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h
 using TaskLocalValues
+using .BrokenLineFitOnGPU: launchBrokenLineKernelsOnCPU
+using .RecoPixelVertexing_PixelTrackFitting_plugins_HelixFitOnGPU_h: HelixFitOnGPU
+
 const CACHED_KERNELS = TaskLocalValue(() -> CAHitNTupletGeneratorKernels(Params(
     false,             # onGPU
     3,                 # minHitsPerNtuplet,
@@ -70,6 +73,11 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DH
     launch_kernels(kernels, hits_d, tracks)
     fill_hit_det_indices(hist_view(hits_d), tracks)
     # if(! const bool useRiemannFit_;)
-    launchBrokenLineKernelsOnCPU(hist_view(hits_d), n_hits(hits_d), 24 * 1024)
+
+    # HelixFitOnGPU fitter(bfield, m_params.fit5as4_);
+    # fitter.allocateOnGPU(&(soa->hitIndices), kernels.tupleMultiplicity(), soa);
+
+    fitter = HelixFitOnGPU(b_field, self.m_params.fit_5_as_4)
+    launchBrokenLineKernelsOnCPU(fitter, hist_view(hits_d), n_hits(hits_d), UInt32(24 * 1024))
     return tracks
 end

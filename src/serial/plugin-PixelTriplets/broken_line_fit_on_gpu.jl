@@ -1,10 +1,12 @@
-using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
-using .PixelGPU_h: ParamsOnGPU, detParams
-using .RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h
-using .RecoPixelVertexing_PixelTrackFitting_plugins_HelixFitOnGPU_h
+module BrokenLineFitOnGPU
 
-using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView
-using .Tracks: TrackSOA
+using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
+using ..PixelGPU_h: ParamsOnGPU, detParams
+using ..RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h
+using ..RecoPixelVertexing_PixelTrackFitting_plugins_HelixFitOnGPU_h: HelixFitOnGPU, get_tuples_d
+
+using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView
+using ..Tracks: TrackSOA
 using ..histogram: OneToManyAssoc
 
 #Type aliases
@@ -45,14 +47,14 @@ function kernelBLFastFit(N::Int,
         @assert tkid < length(foundNtuplets)
         @assert length(foundNtuplets[tkid]) == nHits
 
-        # Define a view for a 3xN matrix of hit positions
-        hits = @view reshape(phits[local_idx:end], 3, N)
+        # Directly slice and reshape for hits
+        hits = reshape(phits[:, local_idx:local_idx+3*N-1], 3, N)
 
-        # Define a view for the 4-element fast fit vector
-        fast_fit = @view pfast_fit[local_idx:local_idx+3]
+        # Directly slice for the fast fit vector
+        fast_fit = phits[local_idx:local_idx+3]
 
-        # Define a view for the 6xN matrix of geometry errors
-        hits_ge = @view reshape(phits_ge[local_idx:end], 6, N)
+        # Directly slice and reshape for hits_ge
+        hits_ge = reshape(phits_ge[:, local_idx:local_idx+6*N-1], 6, N)
 
         for i in 1:hitsInFit
             hit = foundNtuplets[tkid][i]
@@ -97,12 +99,12 @@ function kernelBLFit(N::Int,
             break
         end
 
-
         tkid = tupleMultiplicity[tuple_idx]
 
-        hits = @view reshape(phits[local_idx:end], 3, N)
-        fast_fit = @view pfast_fit[local_idx:local_idx+3]
-        hits_ge = @view reshape(phits_ge[local_idx:end], 6, N)
+        # Explicit slicing instead of @view
+        hits = reshape(phits[local_idx:local_idx+3*N-1], 3, N)
+        fast_fit = pfast_fit[local_idx:local_idx+3]
+        hits_ge = reshape(phits_ge[local_idx:local_idx+6*N-1], 6, N)
 
         data = Main.RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.PreparedBrokenLineData(
             1,                          # q
@@ -119,7 +121,6 @@ function kernelBLFit(N::Int,
 
         Main.RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.prepare_broken_line_data(hits, fast_fit_results, B, data)
         Main.RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.BL_Line_fit(hits_ge, fast_fit_results, B, data, line)
-
         Main.RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.BL_Circle_fit(hits, hits_ge, fast_fit_results, B, data, circle)
 
         copyFromCircle!(
@@ -135,14 +136,15 @@ function kernelBLFit(N::Int,
         results.pt[tkid] = B / abs(circle.par[3])
         results.eta[tkid] = asinh(line.par[1])
         results.chi2[tkid] = (circle.chi2 + line.chi2) / (2 * N - 5)
-
-
     end
 end
 
+
 # BrokenLineFitonGPU.cc
 
-function launchBrokenLineKernelsOnCPU(hv::HitsOnGPU, hitsInFit::UInt32, maxNumberOfTuples::UInt32)
+function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hitsInFit::UInt32, maxNumberOfTuples::UInt32)
+    tuples_d = get_tuples_d(fitter)
+    println(tuples_d)
     @assert !isnothing(tuples_d)
 
     hitsGPU = Vector{Float64}(undef, maxNumberOfConcurrentFits * 3 * 4)
@@ -164,4 +166,6 @@ function launchBrokenLineKernelsOnCPU(hv::HitsOnGPU, hitsInFit::UInt32, maxNumbe
             kernelBLFit(5, tupleMultiplicity_d, bField_, outputSoa_d, hitsGPU, hits_geGPU, fast_fit_resultsGPU, 5, offset)
         end
     end
+end
+
 end

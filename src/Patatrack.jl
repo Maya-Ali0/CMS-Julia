@@ -110,6 +110,7 @@ export VertexCount
 export CountValidator
 export HistoValidator
 export warm_up
+export n_hits
 
 include("serial/Framework/ESPluginFactory.jl")
 include("serial/DataFormats/track_count.jl")
@@ -192,12 +193,13 @@ include("serial/plugin-PixelTriplets/gpu_pixel_doublets.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator_kernels_impl.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator_kernels.jl")
 
+include("serial/plugin-PixelTriplets/helix_fit_on_gpu.jl")
+include("serial/plugin-PixelTriplets/broken_line_fit_on_gpu.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet.jl")
 include("serial/plugin-Validation/count_to_validator.jl")
 include("serial/plugin-Validation/simple_atomic_histo.jl")
 include("serial/plugin-Validation/his_to_validator.jl")
-# include("serial/plugin-PixelTriplets/helix_fit_on_gpu.jl")
 
 include("serial/Framework/Source.jl")
 include("serial/Framework/StreamSchedule.jl")
