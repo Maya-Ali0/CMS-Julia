@@ -5,9 +5,9 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUM_CL
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 using ..SOA_h
 using ..PixelGPU_h
-const Hist = HisToContainer{Int16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10}
-export max_hits, TrackingRecHit2DSOAView, average_geometry, ParamsOnGPU, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global, charge, detector_index, x_local, y_local, cluster_size_x, cluster_size_y, xerr_local, yerr_local, hits_layer_start, r_global, i_phi
-export Hist , phi_binner
+const Hist = HisToContainer{Int16,128,MAX_NUM_CLUSTERS,8 * sizeof(UInt16),UInt16,10}
+export max_hits, TrackingRecHit2DSOAView, average_geometry, cpe_params, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global, charge, detector_index, x_local, y_local, cluster_size_x, cluster_size_y, xerr_local, yerr_local, hits_layer_start, r_global, i_phi
+export Hist, phi_binner
 """
     Struct representing the 2D Structure of Arrays view of tracking hits.
 
@@ -58,8 +58,8 @@ mutable struct TrackingRecHit2DSOAView
         empty__float_vector = Vector{Float64}()
         empty_int_vector = Vector{Integer}()
 
-       return  new(empty__float_vector,
-            empty__float_vector, 
+        return new(empty__float_vector,
+            empty__float_vector,
             empty__float_vector,
             empty__float_vector,
             empty__float_vector,
@@ -80,51 +80,51 @@ mutable struct TrackingRecHit2DSOAView
     end
 
 
-    
-    function TrackingRecHit2DSOAView(
-            m_xl::Vector{Float64},
-            m_yl::Vector{Float64},
-            m_xerr::Vector{Float64},
-            m_yerr::Vector{Float64},
-            m_xg::Vector{Float64},
-            m_yg::Vector{Float64},
-            m_zg::Vector{Float64},
-            m_rg::Vector{Float64},
-            m_iphi::Vector{Int16},
-            m_charge::Vector{UInt32},
-            m_xsize::Vector{Int16},
-            m_ysize::Vector{Int16},
-            m_det_ind::Vector{Int16},
-            m_average_geometry::AverageGeometry,
-            m_cpe_params::ParamsOnGPU,
-            m_hits_module_start::Vector{UInt32},
-            m_hits_layer_start::Vector{Integer},
-            m_hist::HisToContainer,
-            m_nHits::UInt32
-        )
 
-    return new(
-        m_xl,
-        m_yl,
-        m_xerr,
-        m_yerr,
-        m_xg,
-        m_yg,
-        m_zg,
-        m_rg,
-        m_iphi,
-        m_charge,
-        m_xsize,
-        m_ysize,
-        m_det_ind,
-        m_average_geometry,
-        m_cpe_params,
-        m_hits_module_start,
-        m_hits_layer_start,
-        m_hist,
-        m_nHits
+    function TrackingRecHit2DSOAView(
+        m_xl::Vector{Float64},
+        m_yl::Vector{Float64},
+        m_xerr::Vector{Float64},
+        m_yerr::Vector{Float64},
+        m_xg::Vector{Float64},
+        m_yg::Vector{Float64},
+        m_zg::Vector{Float64},
+        m_rg::Vector{Float64},
+        m_iphi::Vector{Int16},
+        m_charge::Vector{UInt32},
+        m_xsize::Vector{Int16},
+        m_ysize::Vector{Int16},
+        m_det_ind::Vector{Int16},
+        m_average_geometry::AverageGeometry,
+        m_cpe_params::ParamsOnGPU,
+        m_hits_module_start::Vector{UInt32},
+        m_hits_layer_start::Vector{Integer},
+        m_hist::HisToContainer,
+        m_nHits::UInt32
+    )
+
+        return new(
+            m_xl,
+            m_yl,
+            m_xerr,
+            m_yerr,
+            m_xg,
+            m_yg,
+            m_zg,
+            m_rg,
+            m_iphi,
+            m_charge,
+            m_xsize,
+            m_ysize,
+            m_det_ind,
+            m_average_geometry,
+            m_cpe_params,
+            m_hits_module_start,
+            m_hits_layer_start,
+            m_hist,
+            m_nHits
         )
-end
+    end
 
 end
 """

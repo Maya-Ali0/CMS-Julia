@@ -5,10 +5,11 @@ using ..PixelGPU_h: ParamsOnGPU, detParams
 using ..RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h
 using ..RecoPixelVertexing_PixelTrackFitting_plugins_HelixFitOnGPU_h: HelixFitOnGPU, get_tuples_d
 
-using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView
+using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: TrackingRecHit2DSOAView, detector_index, cpe_params, xerr_local, yerr_local, x_global, y_global, z_global
 using ..Tracks: TrackSOA
 using ..histogram: OneToManyAssoc, size, begin_h, n_bins
 using ..caConstants: TupleMultiplicity
+using ..SOA_h: toGlobal, SOAFrame
 
 #Type aliases
 const hindex_type = UInt16
@@ -40,34 +41,59 @@ function kernelBLFastFit(N::Int,
     maxNumberOfConcurrentFits = 24 * 1024
     for local_idx in local_start:maxNumberOfConcurrentFits
         tuple_idx = local_idx + offset
-        println(nHits)
+
         if tuple_idx >= size(tupleMultiplicity, nHits)
             break
         end
 
-        tkid = begin_h(tupleMultiplicity, nHits) + tuple_idx
+        # tkid = begin_h(tupleMultiplicity, (nHits + tuple_idx - 1))
+        tkid = tupleMultiplicity.bins[tupleMultiplicity.off[nHits]+tuple_idx]
+
         @assert tkid < n_bins(foundNtuplets)
+
+        println("nHits: ", nHits)
+        println("nt: ", maxNumberOfConcurrentFits)
+        println("tkid:", tkid)
+        println("n_bins(foundNtuplets):", n_bins(foundNtuplets))
+        println("size(foundNtuplets, tkid): ", size(foundNtuplets, tkid))
+
         @assert size(foundNtuplets, tkid) == nHits
 
-        # Directly slice and reshape for hits
-        hits = reshape(phits[:, local_idx:local_idx+3*N-1], 3, N)
 
-        # Directly slice for the fast fit vector
+        # hits = reshape(phits[:, local_idx:local_idx+3*N-1], 3, N)
+        start_idx = (local_idx - 1) * (3 * N) + 1
+        end_idx = start_idx + (3 * N) - 1
+
+        hits = reshape(phits[start_idx:end_idx], 3, N)
+
         fast_fit = phits[local_idx:local_idx+3]
 
-        # Directly slice and reshape for hits_ge
-        hits_ge = reshape(phits_ge[:, local_idx:local_idx+6*N-1], 6, N)
+        # hits_ge = reshape(phits_ge[:, local_idx:local_idx+6*N-1], 6, N)
+        start_idx_ge = (local_idx - 1) * (6 * N) + 1
+        end_idx_ge = start_idx_ge + (6 * N) - 1
+
+        hits_ge = reshape(phits_ge[start_idx_ge:end_idx_ge], 6, N)
+
+        # hitId = foundNtuplets.bins[foundNtuplets.off[nHits]]
+        start_idx = foundNtuplets.off[tkid] # +1 for 1-based indexing in Julia
+        end_idx = foundNtuplets.off[tkid+1]    # Assuming `off` includes an end marker for the last track
+        hitId = foundNtuplets.bins[start_idx:end_idx]  # Slice to get all hit IDs for the track
 
         for i in 1:hitsInFit
-            hit = foundNtuplets[tkid][i]
+            hit = hitId[i] - 1
+            println("hitId: ", hit)
             ge = zeros(Float32, 6)
 
-            det_index = hhp.detectorIndex(hit)
-            det_params = detParams(hhp.cpeParams(), det_index)
-            det_params.frame.toGlobal(hhp.xerrLocal(hit), 0.0f0, hhp.yerrLocal(hit), ge)
+            det_index = detector_index(hhp, hit)
+            det_params = detParams(cpe_params(hhp), UInt32(det_index))
+            frame = det_params.frame
+            toGlobal(frame, Float32(xerr_local(hhp, UInt32(hit))), 0.0f0, yerr_local(hhp, UInt32(hit)), ge)
 
-            hits[:, i] .= [xGlobal(hhp, hit), yGlobal(hhp, hit), zGlobal(hhp, hit)]
+            hits[:, i] .= [x_global(hhp, UInt32(hit)), y_global(hhp, UInt32(hit)), z_global(hhp, UInt32(hit))]
             hits_ge[:, i] .= ge[1:6]
+
+            println(hits[:, i])
+            println(hits_ge[:, i])
         end
 
         RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.BL_Fast_fit(hits, fast_fit)
@@ -152,7 +178,7 @@ function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hits
     hits_geGPU = Vector{Float32}(undef, maxNumberOfConcurrentFits * 6 * 4)
     fast_fit_resultsGPU = Vector{Float64}(undef, maxNumberOfConcurrentFits * 4)
 
-    for offset in 0:maxNumberOfConcurrentFits:maxNumberOfTuples
+    for offset in 1:maxNumberOfConcurrentFits:maxNumberOfTuples
         kernelBLFastFit(3, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(3), UInt32(offset))
         kernelBLFit(3, fitter.tuple_multiplicity_d, bField_, outputSoa_d, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(3), UInt32(offset))
 
