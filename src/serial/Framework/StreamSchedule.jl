@@ -60,7 +60,7 @@ function run_stream(ss::StreamSchedule)
     # sleep(2)
     while true
         # print("in run_stream")
-
+        
         event = produce(ss.source, ss.stream_id, ss.registry)
         if event === nothing
             @info "No more events to process. Stream $(ss.stream_id) exiting."
@@ -68,27 +68,10 @@ function run_stream(ss::StreamSchedule)
         end
         # println("Event ID::", event.eventId, "Stream ID:: ", event.streamId)
 
-        ## TaskClusterizer
-        produce(ss.path[1], event, ss.event_setup)
-        
+        for i in 1:length(ss.path)
+            produce(ss.path[i], event, ss.event_setup)
+        end
 
-        ## TaskBeamspot
-        produce(ss.path[2], event, ss.event_setup)
-
-        ## TaskRecHit depends on TaskClusterizer and TaskBeamspot
-        # TaskRecHit = Dagger.@task begin
-        #     # Establish dependencies
-        #     fetch(TaskClusterizer)
-        #     fetch(TaskBeamspot)
-        #     # Process the third module
-        #     produce(ss.path[3], event, ss.event_setup)
-        # end
-        produce(ss.path[3], event, ss.event_setup)
-
-        @time produce(ss.path[4], event, ss.event_setup)
-
-        ## Wait for TaskRecHit to finish
-        # fetch(TaskClusterizer)
     end
 end
 

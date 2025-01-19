@@ -20,6 +20,13 @@ if(!empty)
     ed_modules = ["SiPixelRawToClusterCUDA","BeamSpotToPOD", "SiPixelRecHitCUDA", "CAHitNtupletCUDA"]#, "PixelVertexProducerCUDA"]
     es_modules = ["SiPixelFedCablingMapGPUWrapperESProducer","SiPixelGainCalibrationForHLTGPUESProducer","PixelCPEFastESProducer","BeamSpotESProducer"]
 end
+if(validation)
+    push!(ed_modules,"CountValidator")
+end
+
+if(histogram)
+    push!(ed_modules,"HistoValidator")
+end
                                                                                                                                            #Not Currently Used
 ##############################################################################################################################################################
 es::EventSetup = EventSetup()
@@ -41,7 +48,7 @@ end
 # number_of_streams = parse(Int, ARGS[1]) # First argument as number of events
 # print(number_of_streams)
 
-number_of_streams = 8
+number_of_streams = 1
 run(number_of_streams)
 println("Number of threads: ", Threads.nthreads())
 
