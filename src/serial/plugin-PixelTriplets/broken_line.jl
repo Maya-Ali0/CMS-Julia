@@ -1,6 +1,6 @@
 module RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h
 
-using ..RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h: circle_fit, line_fit
+using ..RecoPixelVertexing_PixelTrackFitting_interface_FitUtils_h: circle_fit, line_fit, cross2D
 using LinearAlgebra
 using Statistics
 using Test
@@ -221,8 +221,8 @@ end
 #     \warning sign of theta is (intentionally, for now) mistaken for negative charges.
 @inline function BL_Fast_fit(hits::Matrix{Float64}, results::Vector{Float64})
     n = size(hits, 2)
-    a = hits[1:2, Int(n / 2)+1] - hits[1:2, 1]
-    b = hits[1:2, n] - hits[1:2, Int(n / 2)+1]
+    a = hits[1:2, Int(n ÷ 2)+1] - hits[1:2, 1]
+    b = hits[1:2, n] - hits[1:2, Int(n ÷ 2)+1]
     c = hits[1:2, 1] - hits[1:2, n]
 
     tmp = 0.5 / cross2D(c, a)
