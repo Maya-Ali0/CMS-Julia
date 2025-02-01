@@ -80,10 +80,14 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DH
     # fitter.allocateOnGPU(&(soa->hitIndices), kernels.tupleMultiplicity(), soa);
 
     fitter = HelixFitOnGPU(b_field, self.m_params.fit_5_as_4)
+    # fitter.tuple_multiplicity_d is nothing 
     allocate_on_gpu!(fitter, hit_indices(soa), kernels.device_tuple_multiplicity, soa)
-    println("tuple_multiplicity_d.off: ", fitter.tuple_multiplicity_d.off)
-    println(size(fitter.tuple_multiplicity_d.off))
-    println("n_hits(hits_d): ", n_hits(hits_d))
+
+    for i in 1:15
+        println("i: ", i)
+        println(fitter.tuple_multiplicity_d.bins[fitter.tuple_multiplicity_d.off[3]+i])
+    end
+
     launchBrokenLineKernelsOnCPU(fitter, hist_view(hits_d), n_hits(hits_d), UInt32(24 * 1024))
     return tracks
 end

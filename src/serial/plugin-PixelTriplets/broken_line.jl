@@ -234,9 +234,9 @@ end
     d = hits[1:2, 1] - results[1:2]
     e = hits[1:2, n] - results[1:2]
 
-    println("cross2D(d,e):", cross2D(d, e))
-    println(" dot(d,e):", dot(d, e))
-    println("atan2(cross2D(d,e), dot(d,e)): ", atan2(cross2D(d, e), dot(d, e)))
+    # println("cross2D(d,e):", cross2D(d, e))
+    # println(" dot(d,e):", dot(d, e))
+    # println("atan2(cross2D(d,e), dot(d,e)): ", atan2(cross2D(d, e), dot(d, e)))
     # println("hits[3, n-1]: ", hits[3, n])
     # println(" hits[3, 1]: ", hits[3, 1])
     # println("(hits[3, n-1] - hits[3, 1]): ", (hits[3, n] - hits[3, 1]))
@@ -319,9 +319,9 @@ end
     I = zeros(Float64, n + 1, n + 1)
     Main.DataFormat_Math_choleskyInversion_h.invert(C_U, I)
     u = I * r_u
-    println("u: ", u)
-    println("I: ", I)
-    println("r_u: ", r_u)
+    # println("u: ", u)
+    # println("I: ", I)
+    # println("r_u: ", r_u)
 
     radii[1:2, 1] /= norm(radii[1:2, 1])
     radii[1:2, 2] /= norm(radii[1:2, 2])
@@ -329,23 +329,23 @@ end
     d = hits[1:2, 1] .+ (-Z[1] + u[1]) .* radii[1:2, 1]
     e = hits[1:2, 2] .+ (-Z[2] + u[2]) .* radii[1:2, 2]
 
-    println("d: ", d)
-    println("e: ", e)
+    # println("d: ", d)
+    # println("e: ", e)
 
-    println("e-d: ", (e - d))
-    println("atan2((e-d)[2], (e-d)[1]): ", atan2((e-d)[2], (e-d)[1]))
+    # println("e-d: ", (e - d))
+    # println("atan2((e-d)[2], (e-d)[1]): ", atan2((e-d)[2], (e-d)[1]))
     circle_results.par[1] = atan2((e-d)[2], (e-d)[1])
     circle_results.par[2] = -circle_results.q * (fast_fit[3] - sqrt(sqr(fast_fit[3]) - 0.25 * norm(e - d)^2))
     circle_results.par[3] = circle_results.q * (1.0 / fast_fit[3] + u[n+1])
 
-    println("Initial circle_results.par:", circle_results.par)
+    # println("Initial circle_results.par:", circle_results.par)
     @assert circle_results.q * circle_results.par[2] <= 0
 
     eMinusd = e - d
     tmp1 = sqr(norm(eMinusd))
-    println("tmp1: ", tmp1)
-    println("radii: ", radii)
-    println("fast_fit: ", fast_fit)
+    # println("tmp1: ", tmp1)
+    # println("radii: ", radii)
+    # println("fast_fit: ", fast_fit)
     jacobian = zeros(Float64, 3, 3)
 
 
@@ -366,21 +366,21 @@ end
         I[2, 1] I[2, 2] I[2, n+1];
         I[n+1, 1] I[n+1, 2] I[n+1, n+1]
     ]
-    println("circle_cov 1: ", circle_results.cov)
-    println("jacobian: ", jacobian)
+    # println("circle_cov 1: ", circle_results.cov)
+    # println("jacobian: ", jacobian)
 
     circle_results.cov = jacobian * circle_results.cov * jacobian'
-    println("circle_cov 2: ", circle_results.cov)
+    # println("circle_cov 2: ", circle_results.cov)
 
     translate_karimaki(circle_results, 0.5 * (e-d)[1], 0.5 * (e-d)[2], jacobian)
-    println("circle_cov 3: ", circle_results.cov)
+    # println("circle_cov 3: ", circle_results.cov)
 
     circle_results.cov[1, 1] += (1 + sqr(slope)) * mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope)
-    println("mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope): ", mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope))
+    # println("mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope): ", mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope))
 
     translate_karimaki(circle_results, d[1], d[2], jacobian)
 
-    println("circle_cov 4: ", circle_results.cov)
+    # println("circle_cov 4: ", circle_results.cov)
     circle_results.chi2 = 0
     for i in 1:n
         circle_results.chi2 += w[i] * sqr(Z[i] - u[i])
@@ -420,7 +420,7 @@ end
     slope = -data.q / fast_fit[4]
 
     R = rotation_matrix(slope)
-    println("R BL_Line_Fit: ", R)
+    # println("R BL_Line_Fit: ", R)
 
     V = zeros(Float64, 3, 3)
     JacobXYZtosZ = zeros(Float64, 2, 3)
@@ -439,24 +439,24 @@ end
         JacobXYZtosZ[2, 3] = 1.0
         w[i] = 1 / ((R*JacobXYZtosZ*V*JacobXYZtosZ'*R')[2, 2])
     end
-    println("JacobXYZtosZ: ", JacobXYZtosZ)
-    println("V:", V)
-    println("w:", w)
+    # println("JacobXYZtosZ: ", JacobXYZtosZ)
+    # println("V:", V)
+    # println("w:", w)
 
     r_u = zeros(n)
     for i in 1:n
         r_u[i] = w[i] * Z[i]
     end
 
-    println("matrixc_u(w, S, VarBeta): ", matrixc_u(w, S, VarBeta))
+    # println("matrixc_u(w, S, VarBeta): ", matrixc_u(w, S, VarBeta))
 
     I = zeros(Float64, n, n)
     Main.DataFormat_Math_choleskyInversion_h.invert(matrixc_u(w, S, VarBeta), I)
-    println("I: ", I)
+    # println("I: ", I)
     u = I * r_u
-    println("u: ", u)
+    # println("u: ", u)
     line_results.par = [(u[2] - u[1]) / (S[2] - S[1]), u[1]]
-    println("line_results.par: ", line_results.par)
+    # println("line_results.par: ", line_results.par)
     idiff = 1.0 / (S[2] - S[1])
 
 

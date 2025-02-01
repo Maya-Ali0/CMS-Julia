@@ -46,8 +46,17 @@ function kernelBLFastFit(N::Int,
         if tuple_idx >= size(tupleMultiplicity, nHits)
             break
         end
+        # bins + off[b]
 
-        tkid = tupleMultiplicity.bins[tupleMultiplicity.off[nHits]+tuple_idx]
+        tkid = tupleMultiplicity.bins[tupleMultiplicity.off[nHits]+tuple_idx+1]
+        println(log_file, "begin_h(tupleMultiplicity, nHits): ", begin_h(tupleMultiplicity, nHits))
+
+        for i in 1:15
+            println(log_file, "i: ", i)
+            println(log_file, tupleMultiplicity.bins[tupleMultiplicity.off[nHits]+tuple_idx+i])
+        end
+        # println("tkid: ", tkid)
+        println(log_file, "new file generated")
         @assert tkid < n_bins(foundNtuplets)
 
         println(log_file, "nHits: ", nHits)
@@ -55,7 +64,7 @@ function kernelBLFastFit(N::Int,
         println(log_file, "tkid: ", tkid)
         println(log_file, "n_bins(foundNtuplets): ", n_bins(foundNtuplets))
         println(log_file, "size(foundNtuplets, tkid): ", size(foundNtuplets, tkid))
-        flush(log_file)  # Flush after logging critical information
+        flush(log_file)
 
         @assert size(foundNtuplets, tkid) == nHits
 
@@ -69,8 +78,8 @@ function kernelBLFastFit(N::Int,
         end_idx_ge = start_idx_ge + (6 * N) - 1
         hits_ge = reshape(phits_ge[start_idx_ge:end_idx_ge], 6, N)
 
-        tkid = tkid + 1
-        start_idx = foundNtuplets.off[tkid]
+
+        start_idx = foundNtuplets.off[tkid] + 1
         end_idx = foundNtuplets.off[tkid+1]
         hitId = foundNtuplets.bins[start_idx:end_idx]
 
@@ -120,7 +129,7 @@ function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hits
     fast_fit_resultsGPU = Vector{Float64}(undef, maxNumberOfConcurrentFits * 4)
 
     open("log.txt", "w") do log_file
-        for offset in 1:maxNumberOfConcurrentFits:maxNumberOfTuples
+        for offset in 0:maxNumberOfConcurrentFits:maxNumberOfTuples
             # First kernel for 3 hits in fit
             println(log_file, "Running kernelBLFastFit for N=3")
             kernelBLFastFit(3, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(3), UInt32(offset), log_file)

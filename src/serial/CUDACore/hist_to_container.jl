@@ -207,7 +207,7 @@ size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N
 size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b) where {T,N_BINS,SIZE,S,I,N_HISTS} = hist.off[b+1] - hist.off[b]
 begin_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = 1
 end_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = size(hist)
-begin_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b::H) where {T,N_BINS,SIZE,S,I,N_HISTS,H<:Integer} = hist.off[b] + 1 #CHANGE HERE
+begin_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b::H) where {T,N_BINS,SIZE,S,I,N_HISTS,H<:Integer} = hist.off[b] + 1 #CHANGE HERE hist.bins[hist.off[b]+1 ]
 end_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b::H) where {T,N_BINS,SIZE,S,I,N_HISTS,H<:Integer} = hist.off[b+1] + 1 # returns first index of next bin
 val(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b::Integer) where {T,N_BINS,SIZE,S,I,N_HISTS} = hist.bins[b]
 """
