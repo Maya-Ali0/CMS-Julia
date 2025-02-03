@@ -51,6 +51,7 @@ export PreparedBrokenLineData
     fact = geometry_factor * sqr(13.6 / 1000)
     return fact / (pt2 * (1 + sqr(slope))) * (abs(length) * XXI_0) * sqr(1 + 0.038 * log(abs(length) * XXI_0))
 end
+sqr(x) = x * x
 
 # \brief Computes the 2D rotation matrix that transforms the line y=slope*x into the line y=0.
 
@@ -317,7 +318,7 @@ end
         end
     end
     I = zeros(Float64, n + 1, n + 1)
-    Main.DataFormat_Math_choleskyInversion_h.invert(C_U, I)
+    DataFormat_Math_choleskyInversion_h.invert(C_U, I)
     u = I * r_u
     # println("u: ", u)
     # println("I: ", I)
@@ -451,7 +452,7 @@ end
     # println("matrixc_u(w, S, VarBeta): ", matrixc_u(w, S, VarBeta))
 
     I = zeros(Float64, n, n)
-    Main.DataFormat_Math_choleskyInversion_h.invert(matrixc_u(w, S, VarBeta), I)
+    DataFormat_Math_choleskyInversion_h.invert(matrixc_u(w, S, VarBeta), I)
     # println("I: ", I)
     u = I * r_u
     # println("u: ", u)

@@ -183,7 +183,13 @@ function launch_kernels(self::CAHitNTupletGeneratorKernels, hh, tracks_d)
 
     kernel_countMultiplicity(tuples_d, quality_d, self.device_tuple_multiplicity)
     finalize!(self.device_tuple_multiplicity)
+
+    # self.device_tuple_multiplicity.bins[self.device_tuple_multiplicity.off[3]+i] changes here!
     kernel_fillMultiplicity(tuples_d, quality_d, self.device_tuple_multiplicity)
+    for i in 1:15
+        println("i: ", i)
+        println(self.device_tuple_multiplicity.bins[self.device_tuple_multiplicity.off[3]+i])
+    end
 
     if num_hits > 1 && self.m_params.late_fish_bone
         fish_bone(hist_view(hh), self.device_the_cells, self.device_n_cells[1], self.device_is_outer_hit_of_cell, num_hits, true)

@@ -83,10 +83,10 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DH
     # fitter.tuple_multiplicity_d is nothing 
     allocate_on_gpu!(fitter, hit_indices(soa), kernels.device_tuple_multiplicity, soa)
 
-    for i in 1:15
-        println("i: ", i)
-        println(fitter.tuple_multiplicity_d.bins[fitter.tuple_multiplicity_d.off[3]+i])
-    end
+    # for i in 1:15
+    #     println("i: ", i)
+    #     println(fitter.tuple_multiplicity_d.bins[fitter.tuple_multiplicity_d.off[3]+i])
+    # end
 
     launchBrokenLineKernelsOnCPU(fitter, hist_view(hits_d), n_hits(hits_d), UInt32(24 * 1024))
     return tracks
