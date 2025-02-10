@@ -242,7 +242,6 @@ end
     # println(" hits[3, 1]: ", hits[3, 1])
     # println("(hits[3, n-1] - hits[3, 1]): ", (hits[3, n] - hits[3, 1]))
     results[4] = results[3] * atan2(cross2D(d, e), dot(d, e)) / (hits[3, n] - hits[3, 1])
-
 end
 
 # \brief Performs the Broken Line fit in the curved track case (that is, the fit parameters are the interceptions u and the curvature correction \Delta\kappa).
