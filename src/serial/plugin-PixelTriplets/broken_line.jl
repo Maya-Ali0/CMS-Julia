@@ -337,8 +337,15 @@ end
     circle_results.par[1] = atan2((e-d)[2], (e-d)[1])
     circle_results.par[2] = -circle_results.q * (fast_fit[3] - sqrt(sqr(fast_fit[3]) - 0.25 * norm(e - d)^2))
     circle_results.par[3] = circle_results.q * (1.0 / fast_fit[3] + u[n+1])
+    println("fast_fit[3]: ", fast_fit[3])
+    println("circle_results.q:", circle_results.q)
+    println("hits:  ", hits[1:2, 2])
+    println("norm(e - d)^2: ", norm(e - d)^2) #issue here
 
+    println("circle_results.par[2]: ", circle_results.par[2])
+    # println("circle_results.q * circle_results.par[2]:", circle_results.q * circle_results.par[2])
     # println("Initial circle_results.par:", circle_results.par)
+
     @assert circle_results.q * circle_results.par[2] <= 0
 
     eMinusd = e - d

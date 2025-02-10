@@ -11,6 +11,7 @@ using ..Tracks: TrackSOA
 using ..histogram: OneToManyAssoc, size, begin_h, n_bins
 using ..caConstants: TupleMultiplicity
 using ..SOA_h: toGlobal, SOAFrame
+using ..CUDADataFormatsTrackTrajectoryStateSOA_H: copyFromCircle!
 
 # Type aliases
 const hindex_type = UInt16
@@ -42,7 +43,8 @@ function kernelBLFastFit(N::Int,
 
     # Create storage for all fast_fit results
     fast_fit_results = zeros(Float64, 0) # Each fit has 4 elements
-
+    hits_results = zeros(Float64, 0)
+    hits_ge_results = zeros(Float32, 0)
     for local_idx in local_start:maxNumberOfConcurrentFits
         tuple_idx = local_idx + offset
 
@@ -81,6 +83,8 @@ function kernelBLFastFit(N::Int,
         # Compute fast fit and store results in the shared array
         RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.BL_Fast_fit(hits, fast_fit)
         append!(fast_fit_results, fast_fit)
+        append!(hits_results, hits)
+        append!(hits_ge_results, hits_ge)
         println(log_file, "kernelBLFastFit OUTPUT (N=", N, ", tkid= ", tkid, ") - fast_fit:", fast_fit)
         @assert !isnan(fast_fit[1])
         @assert !isnan(fast_fit[2])
@@ -89,7 +93,7 @@ function kernelBLFastFit(N::Int,
     end
     # println("type of fast fit input: ", typeof(fast_fit_results))
 
-    return fast_fit_results  # Return the full array of fast fits
+    return fast_fit_results, hits_results, hits_ge_results   # Return the full array of fast fits
 end
 
 function kernelBLFit(N::Int,
@@ -157,19 +161,20 @@ function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hits
     maxNumberOfConcurrentFits = 24 * 1024
     hitsGPU = Vector{Float64}(undef, maxNumberOfConcurrentFits * 3 * 4)
     hits_geGPU = Vector{Float32}(undef, maxNumberOfConcurrentFits * 6 * 4)
-
+    fast_fit = Vector{Float64}(undef, maxNumberOfConcurrentFits * 4)
+    offset = 0
     open("log.txt", "w") do log_file
-        for offset in 0:maxNumberOfConcurrentFits:maxNumberOfTuples
-            println(log_file, "Running kernelBLFastFit for N=3")
-            fast_fit_resultsGPU = kernelBLFastFit(3, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, Vector{Float64}(undef, maxNumberOfConcurrentFits * 4), UInt32(3), UInt32(offset), log_file)
-            println("fast_fit_resultsGPU: ", fast_fit_resultsGPU[(1-1)*4+1:(1-1)*4+4])
-            flush(log_file)
 
-            println(log_file, "Running kernelBLFit for N=3")
-            println("B= ", fitter.b_field)
-            kernelBLFit(3, fitter.tuple_multiplicity_d, fitter.b_field, fitter.output_soa_d, hitsGPU, hits_geGPU, fast_fit_resultsGPU, UInt32(3), UInt32(offset), log_file)
-            flush(log_file)
-        end
+        println(log_file, "Running kernelBLFastFit for N=3")
+        fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(3, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(3), UInt32(offset), log_file)
+        # println("fast_fit_resultsGPU: ", fast_fit_resultsGPU[(1-1)*4+1:(1-1)*4+4])
+        flush(log_file)
+
+        println(log_file, "Running kernelBLFit for N=3")
+        println("B= ", fitter.b_field)
+        kernelBLFit(3, fitter.tuple_multiplicity_d, fitter.b_field, fitter.output_soa_d, hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(3), UInt32(offset), log_file)
+        flush(log_file)
+
     end
 end
 
