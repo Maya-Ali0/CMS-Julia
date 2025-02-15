@@ -99,6 +99,7 @@ function SiPixelFedCablingMapGPU{V,W}() where {V<:AbstractVector{UInt32}, W<:Abs
         UInt32(0)
     )
 end
+using Adapt
 Adapt.@adapt_structure SiPixelFedCablingMapGPU
 
 end # module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU

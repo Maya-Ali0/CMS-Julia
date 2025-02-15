@@ -38,7 +38,7 @@ function readCablingMap(io::IOStream,es::EventSetup)
     size = UInt32(0)
 
     cablingMap = SiPixelFedCablingMapGPU(fed, link, roc, raw_id, roc_in_det, module_id, bad_rocs, size)
-
+    cablingMap = cu(cablingMap)
     mod_to_unp_def_size = read(io,UInt32)
     mod_to_unp_default = readData(io, UInt8, mod_to_unp_def_size)
 
