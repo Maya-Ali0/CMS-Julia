@@ -7,11 +7,11 @@ mutable struct Source
     rawToken::EDPutTokenT{FedRawDataCollection}
 
     function Source(reg::ProductRegistry, dataDir::String)
-        rawToken = produces(reg,FedRawDataCollection)
+        rawToken = produces(reg, FedRawDataCollection)
         rawFilePath = joinpath(dataDir, "raw.bin")
         raw_events = readall(open(rawFilePath)) # Reads 1000 event 
-        
-        return new(raw_events,Atomic{Int}(1),rawToken)
+
+        return new(raw_events, Atomic{Int}(1), rawToken)
     end
 
 
@@ -19,7 +19,7 @@ mutable struct Source
 end
 
 function produce(src::Source, streamId::Int, reg::ProductRegistry)
-    if src.numEvents.value > 1000
+    if src.numEvents.value > 1
         return nothing
     end
 
@@ -27,7 +27,7 @@ function produce(src::Source, streamId::Int, reg::ProductRegistry)
     # println("Taking an Event ", iev)
     # print(src.raw_events)
 
-    
+
     # if old >= src.maxEvents
     #     src.shouldStop = true
     #     atomic_sub!(src.numEvents, 1)
@@ -35,7 +35,7 @@ function produce(src::Source, streamId::Int, reg::ProductRegistry)
     # end
     ev = Event(streamId, iev, reg)
 
-    emplace(ev,src.rawToken,src.raw_events[iev])
+    emplace(ev, src.rawToken, src.raw_events[iev])
 
 
     # if src.validation

@@ -91,8 +91,6 @@ function kernelBLFastFit(N::Int,
         @assert !isnan(fast_fit[3])
         @assert !isnan(fast_fit[4])
     end
-    # println("type of fast fit input: ", typeof(fast_fit_results))
-
     return fast_fit_results, hits_results, hits_ge_results   # Return the full array of fast fits
 end
 
@@ -126,7 +124,7 @@ function kernelBLFit(N::Int,
         end_idx = start_idx + (3 * N) - 1
         hits = reshape(phits[start_idx:end_idx], 3, N)
 
-        fast_fit = fast_fit_results[(local_idx-1)*4+1:(local_idx-1)*4+4]  # Access fast_fit sequentially
+        fast_fit = fast_fit_results[(local_idx-1)*4+1:(local_idx-1)*4+4]
 
         start_idx_ge = (local_idx - 1) * (6 * N) + 1
         end_idx_ge = start_idx_ge + (6 * N) - 1
@@ -167,13 +165,43 @@ function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hits
 
         println(log_file, "Running kernelBLFastFit for N=3")
         fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(3, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(3), UInt32(offset), log_file)
-        # println("fast_fit_resultsGPU: ", fast_fit_resultsGPU[(1-1)*4+1:(1-1)*4+4])
         flush(log_file)
 
         println(log_file, "Running kernelBLFit for N=3")
         println("B= ", fitter.b_field)
         kernelBLFit(3, fitter.tuple_multiplicity_d, fitter.b_field, fitter.output_soa_d, hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(3), UInt32(offset), log_file)
         flush(log_file)
+
+        println(log_file, "Running kernelBLFastFit for N=4")
+        fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(4, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(4), UInt32(offset), log_file)
+        flush(log_file)
+
+        println(log_file, "Running kernelBLFit for N=4")
+        println("B= ", fitter.b_field)
+        kernelBLFit(4, fitter.tuple_multiplicity_d, fitter.b_field, fitter.output_soa_d, hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(4), UInt32(offset), log_file)
+        flush(log_file)
+
+        if (fitter.fit5as4)
+            println(log_file, "Running Fit 5 as 4")
+            println(log_file, "Running kernelBLFastFit for N=4")
+            fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(4, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(5), UInt32(offset), log_file)
+            flush(log_file)
+
+            println(log_file, "Running kernelBLFit for N=4")
+            println("B= ", fitter.b_field)
+            kernelBLFit(4, fitter.tuple_multiplicity_d, fitter.b_field, fitter.output_soa_d, hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(5), UInt32(offset), log_file)
+            flush(log_file)
+        end
+
+        println(log_file, "Running kernelBLFastFit for N=5")
+        fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(5, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(5), UInt32(offset), log_file)
+        flush(log_file)
+
+        println(log_file, "Running kernelBLFit for N=5")
+        println("B= ", fitter.b_field)
+        kernelBLFit(5, fitter.tuple_multiplicity_d, fitter.b_field, fitter.output_soa_d, hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(5), UInt32(offset), log_file)
+        flush(log_file)
+
 
     end
 end
