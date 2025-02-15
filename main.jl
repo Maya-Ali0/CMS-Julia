@@ -17,7 +17,7 @@ ed_modules::Vector{String} = String[]
 es_modules::Vector{String} = String[]
 
 if(!empty)
-    ed_modules = ["SiPixelRawToClusterCUDA","BeamSpotToPOD", "SiPixelRecHitCUDA", "CAHitNtupletCUDA"]#, "PixelVertexProducerCUDA"]
+    ed_modules = ["SiPixelRawToClusterCUDA"#=,"BeamSpotToPOD", "SiPixelRecHitCUDA" =#]#, "PixelVertexProducerCUDA"]
     es_modules = ["SiPixelFedCablingMapGPUWrapperESProducer","SiPixelGainCalibrationForHLTGPUESProducer","PixelCPEFastESProducer","BeamSpotESProducer"]
 end
 if(validation)
@@ -45,10 +45,10 @@ end
 
 
 
-# number_of_streams = parse(Int, ARGS[1]) # First argument as number of events
+number_of_streams = parse(Int, ARGS[1]) # First argument as number of events
 # print(number_of_streams)
 
-number_of_streams = 1
+# number_of_streams = 1
 run(number_of_streams)
 println("Number of threads: ", Threads.nthreads())
 
