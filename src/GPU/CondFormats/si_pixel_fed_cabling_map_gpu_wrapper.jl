@@ -2,7 +2,7 @@ module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper
     export has_quality, SiPixelFedCablingMapGPUWrapper, get_cpu_product, get_mod_to_unp_all
 #    include("si_pixel_fed_cabling_map_gpu.jl")
     using ..recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPU
-
+    using CUDA
     """
     Module for wrapping the siPixelFedCablingMapGPU structure with additional metadata.
 
@@ -24,15 +24,15 @@ module recoLocalTrackerSiPixelClusterizerSiPixelFedCablingMapGPUWrapper
     - get_mod_to_unp_all(wrapper::siPixelFedCablingMapGPUWrapper)::Vector{UInt8}: Retrieves the default module-to-unpacker mapping from the wrapper.
 
     """
-    struct SiPixelFedCablingMapGPUWrapper{V <: AbstractVector{UInt8}}
+    struct SiPixelFedCablingMapGPUWrapper
         _cabling_map_host::SiPixelFedCablingMapGPU
-        _mod_to_unp_default::V
+        _mod_to_unp_default::CuArray{UInt8}
         _has_quality::Bool
-
-        function SiPixelFedCablingMapGPUWrapper(cabling_map::SiPixelFedCablingMapGPU, mod_to_unp::Vector{UInt8})
+        function SiPixelFedCablingMapGPUWrapper(cabling_map::SiPixelFedCablingMapGPU, mod_to_unp::CuArray{UInt8})
             new(cabling_map, mod_to_unp, false)
         end
     end
+    
 
     has_quality(wrapper::SiPixelFedCablingMapGPUWrapper) = wrapper._has_quality
 
