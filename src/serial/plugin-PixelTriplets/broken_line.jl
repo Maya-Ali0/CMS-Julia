@@ -122,12 +122,12 @@ end
     results.q = cross2D(d, e) > 0 ? -1 : 1
 
     slope = -results.q / fast_fit[4]
-    println("results.q: ", results.q)
-    println("fast_fit[4]: ", fast_fit[4])
-    println("slope: ", slope)
+    # println("results.q: ", results.q)
+    # println("fast_fit[4]: ", fast_fit[4])
+    # println("slope: ", slope)
 
     R = rotation_matrix(slope)
-    println("R: ", R)
+    # println("R: ", R)
     # Calculate radii and s
     results.radii = hits[1:2, :] .- fast_fit[1:2] * ones(1, n)
     e = -fast_fit[3] * fast_fit[1:2] / norm(fast_fit[1:2])
@@ -337,12 +337,12 @@ end
     circle_results.par[1] = atan2((e-d)[2], (e-d)[1])
     circle_results.par[2] = -circle_results.q * (fast_fit[3] - sqrt(sqr(fast_fit[3]) - 0.25 * norm(e - d)^2))
     circle_results.par[3] = circle_results.q * (1.0 / fast_fit[3] + u[n+1])
-    println("fast_fit[3]: ", fast_fit[3])
-    println("circle_results.q:", circle_results.q)
-    println("hits:  ", hits[1:2, 2])
-    println("norm(e - d)^2: ", norm(e - d)^2) #issue here
+    # println("fast_fit[3]: ", fast_fit[3])
+    # println("circle_results.q:", circle_results.q)
+    # println("hits:  ", hits[1:2, 2])
+    # println("norm(e - d)^2: ", norm(e - d)^2) #issue here
 
-    println("circle_results.par[2]: ", circle_results.par[2])
+    # println("circle_results.par[2]: ", circle_results.par[2])
     # println("circle_results.q * circle_results.par[2]:", circle_results.q * circle_results.par[2])
     # println("Initial circle_results.par:", circle_results.par)
 
@@ -391,11 +391,10 @@ end
     circle_results.chi2 = 0
     for i in 1:n
         circle_results.chi2 += w[i] * sqr(Z[i] - u[i])
-
         if i > 1 && i < n
-            circle_results.chi2 += sqr(u[i-1] / (s[i] - s[i-1]) -
-                                       u[i] * (s[i+1] - s[i-1]) / ((s[i+1] - s[i]) * (s[i] - s[i-1])) +
-                                       u[i+1] / (s[i+1] - s[i]) + (s[i+1] - s[i-1]) * u[n+1] / 2) / VarBeta[i]
+            circle_results.chi2 += (u[i-1] / (s[i] - s[i-1]) -
+                                    u[i] * (s[i+1] - s[i-1]) / ((s[i+1] - s[i]) * (s[i] - s[i-1])) +
+                                    u[i+1] / (s[i+1] - s[i]) + (s[i+1] - s[i-1]) * u[n] / 2)^2 / VarBeta[i]
         end
     end
     return circle_results.cov
@@ -418,88 +417,135 @@ end
 # The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
 # */
 @inline function BL_Line_fit(hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, line_results::line_fit)
-    n = size(hits_ge, 2)
-    radii = data.radii
-    S = data.S
-    Z = data.Z
-    VarBeta = data.VarBeta
+    open("debug_output.txt", "a") do f
+        n = size(hits_ge, 2)
+        radii = data.radii
+        S = data.S
+        Z = data.Z
+        VarBeta = data.VarBeta
 
-    slope = -data.q / fast_fit[4]
+        slope = -data.q / fast_fit[4]
 
-    R = rotation_matrix(slope)
-    # println("R BL_Line_Fit: ", R)
+        R = rotation_matrix(slope)
+        # println("R BL_Line_Fit: ", R)
 
-    V = zeros(Float64, 3, 3)
-    JacobXYZtosZ = zeros(Float64, 2, 3)
-    w = zeros(Float64, n, 1)
+        V = zeros(Float64, 3, 3)
+        JacobXYZtosZ = zeros(Float64, 2, 3)
+        w = zeros(Float64, n, 1)
+        tol = 1e-12
 
-    for i in 1:n
-        V[1, 1] = hits_ge[1, i]
-        V[1, 2] = V[2, 1] = hits_ge[2, i]
-        V[1, 3] = V[3, 1] = hits_ge[4, i]
-        V[2, 2] = hits_ge[3, i]
-        V[3, 2] = V[2, 3] = hits_ge[4, i]
-        V[3, 3] = hits_ge[6, i]
-        tmp = 1 / norm(radii[1:2, i])
-        JacobXYZtosZ[1, 1] = radii[2, i] * tmp
-        JacobXYZtosZ[1, 2] = -radii[1, i] * tmp
-        JacobXYZtosZ[2, 3] = 1.0
-        w[i] = 1 / ((R*JacobXYZtosZ*V*JacobXYZtosZ'*R')[2, 2])
-    end
-    # println("JacobXYZtosZ: ", JacobXYZtosZ)
-    # println("V:", V)
-    # println("w:", w)
+        for i in 1:n
+            V[1, 1] = hits_ge[1, i]
+            V[1, 2] = V[2, 1] = abs(hits_ge[2, i]) < tol ? 0.0 : hits_ge[2, i]
+            V[1, 3] = V[3, 1] = abs(hits_ge[4, i]) < tol ? 0.0 : hits_ge[4, i]
+            V[2, 2] = hits_ge[3, i]
+            V[3, 2] = V[2, 3] = abs(hits_ge[5, i]) < tol ? 0.0 : hits_ge[5, i]
+            V[3, 3] = hits_ge[6, i]
+            tmp = 1 / norm(radii[1:2, i])
+            JacobXYZtosZ[1, 1] = radii[2, i] * tmp
+            JacobXYZtosZ[1, 2] = -radii[1, i] * tmp
+            JacobXYZtosZ[2, 3] = 1.0
+            println(f, "tmp[$i]: ", tmp)
+            println(f, "JacobXYZtosZ[1, 1]: ", JacobXYZtosZ[1, 1])
+            println(f, "JacobXYZtosZ[1, 2]: ", JacobXYZtosZ[1, 2])
+            println(f, "JacobXYZtosZ[2, 3]: ", JacobXYZtosZ[2, 3])
+            println(f, "(R*JacobXYZtosZ*V*JacobXYZtosZ'*R')[2, 2]: ", (R*JacobXYZtosZ*V*JacobXYZtosZ'*R')[2, 2])
+            println(f, "V: ", V)
+            println(f, "R: ", R)
+            println(f, "R': ", R')
+            w[i] = 1.0 / ((R*JacobXYZtosZ*V*JacobXYZtosZ'*R')[2, 2])
+        end
+        # println("JacobXYZtosZ: ", JacobXYZtosZ)
+        # println("V:", V)
+        # println("w:", w)
 
-    r_u = zeros(n)
-    for i in 1:n
-        r_u[i] = w[i] * Z[i]
-    end
+        r_u = zeros(n)
+        for i in 1:n
+            r_u[i] = w[i] * Z[i]
+        end
 
-    # println("matrixc_u(w, S, VarBeta): ", matrixc_u(w, S, VarBeta))
+        # println("matrixc_u(w, S, VarBeta): ", matrixc_u(w, S, VarBeta))
 
-    I = zeros(Float64, n, n)
-    DataFormat_Math_choleskyInversion_h.invert(matrixc_u(w, S, VarBeta), I)
-    # println("I: ", I)
-    u = I * r_u
-    # println("u: ", u)
-    line_results.par = [(u[2] - u[1]) / (S[2] - S[1]), u[1]]
-    # println("line_results.par: ", line_results.par)
-    idiff = 1.0 / (S[2] - S[1])
-
-
-    line_results.cov = [
-        (I[1, 1]-2*I[1, 2]+I[2, 2])*idiff^2+mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope) (I[1, 2]-I[1, 1])*idiff;
-        (I[1, 2]-I[1, 1])*idiff I[1, 1]
-    ]
+        I = zeros(Float64, n, n)
+        DataFormat_Math_choleskyInversion_h.invert(matrixc_u(w, S, VarBeta), I)
+        # println("I: ", I)
+        u = I * r_u
+        # println("u: ", u)
+        line_results.par = [(u[2] - u[1]) / (S[2] - S[1]), u[1]]
+        # println("line_results.par: ", line_results.par)
+        idiff = 1.0 / (S[2] - S[1])
 
 
-    jacobian = zeros(2, 2)
-    jacobian[1, 1] = 1
-    jacobian[1, 2] = 0
-    jacobian[2, 1] = -S[1]
-    jacobian[2, 2] = 1
+        line_results.cov = [
+            (I[1, 1]-2*I[1, 2]+I[2, 2])*idiff^2+mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope) (I[1, 2]-I[1, 1])*idiff;
+            (I[1, 2]-I[1, 1])*idiff I[1, 1]
+        ]
 
-    line_results.par[2] = line_results.par[2] - line_results.par[1] * S[1]
 
-    line_results.cov = jacobian * line_results.cov * jacobian'
+        jacobian = zeros(2, 2)
+        jacobian[1, 1] = 1
+        jacobian[1, 2] = 0
+        jacobian[2, 1] = -S[1]
+        jacobian[2, 2] = 1
 
-    tmp = R[1, 1] - line_results.par[1] * R[1, 2]
-    jacobian[2, 2] = 1 / tmp
-    jacobian[1, 1] = jacobian[2, 2] * jacobian[2, 2]
-    jacobian[1, 2] = 0
-    jacobian[2, 1] = line_results.par[2] * R[1, 2] * jacobian[1, 1]
-    line_results.par[2] = line_results.par[2] * jacobian[2, 2]
-    line_results.par[1] = (R[1, 2] + line_results.par[1] * R[1, 1]) * jacobian[2, 2]
-    line_results.cov = jacobian * line_results.cov * jacobian'
+        line_results.par[2] = line_results.par[2] - line_results.par[1] * S[1]
 
-    line_results.chi2 = 0
-    for i in 1:n
-        line_results.chi2 += w[i] * (Z[i] - u[i])^2
-        if i > 1 && i < n
-            line_results.chi2 += ((u[i-1] / (S[i] - S[i-1]) -
-                                   u[i] * (S[i+1] - S[i-1]) / ((S[i+1] - S[i]) * (S[i] - S[i-1])) +
-                                   u[i+1] / (S[i+1] - S[i]))^2 /
-                                  VarBeta[i])^2
+        line_results.cov = jacobian * line_results.cov * jacobian'
+
+        tmp = R[1, 1] - line_results.par[1] * R[1, 2]
+        jacobian[2, 2] = 1 / tmp
+        jacobian[1, 1] = jacobian[2, 2] * jacobian[2, 2]
+        jacobian[1, 2] = 0
+        jacobian[2, 1] = line_results.par[2] * R[1, 2] * jacobian[1, 1]
+        line_results.par[2] = line_results.par[2] * jacobian[2, 2]
+        line_results.par[1] = (R[1, 2] + line_results.par[1] * R[1, 1]) * jacobian[2, 2]
+        line_results.cov = jacobian * line_results.cov * jacobian'
+
+
+        line_results.chi2 = 0
+        for i in 1:n
+            # Compute the primary term: w[i] * (Z[i] - u[i])^2
+            diff = Z[i] - u[i]
+            term1 = w[i] * diff^2
+            println(f, "Iteration $i:")
+            println(f, "  w[$i] = ", w[i])
+            println(f, "  Z[$i] = ", Z[i])
+            println(f, "  u[$i] = ", u[i])
+            println(f, "  diff (Z-u) = ", diff)
+            println(f, "  term1 = w[$i]*(Z[$i]-u[$i])^2 = ", term1)
+            flush(f)
+
+            line_results.chi2 += term1
+
+            if i > 1 && i < n
+                # Define denominators used in the extra term calculation
+                denom1 = S[i] - S[i-1]
+                denom2 = S[i+1] - S[i]
+                denom3 = S[i] - S[i-1]  # same as denom1 for clarity
+                denom4 = S[i+1] - S[i-1]
+
+                # Compute the additional term's inner value:
+                term2_inner = (u[i-1] / denom1) -
+                              (u[i] * (denom4 / (denom2 * denom3))) +
+                              (u[i+1] / (S[i+1] - S[i]))
+                term2 = (term2_inner^2) / VarBeta[i]
+
+                println(f, "  Additional term calculation:")
+                println(f, "    u[", i - 1, "] = ", u[i-1], " , S[$i] - S[", i - 1, "] = ", denom1)
+                println(f, "    u[$i] = ", u[i], " , (S[", i + 1, "] - S[", i - 1, "]) = ", denom4)
+                println(f, "    S[", i + 1, "] - S[$i] = ", denom2)
+                println(f, "    u[", i + 1, "] = ", u[i+1])
+                println(f, "    term2_inner = ", term2_inner)
+                println(f, "    VarBeta[$i] = ", VarBeta[i])
+                println(f, "    term2 = (term2_inner^2)/VarBeta[$i] = ", term2)
+                flush(f)
+
+                line_results.chi2 += term2
+            end
+
+            println(f, "  Chi2 after iteration $i: ", line_results.chi2)
+            println(f, "------------------------------------------------")
+            flush(f)
         end
     end
 
