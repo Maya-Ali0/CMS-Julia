@@ -1,50 +1,52 @@
 module condFormatsSiPixelObjectsSiPixelGainForHLTonGPU
 
-export RANGE_COUNT
+    export RANGE_COUNT
 
-# using ..gpuConfig
+    # using ..gpuConfig
 
-using StaticArrays
+    using StaticArrays
 
-export SiPixelGainForHLTonGPU, RangeAndCols, DecodingStructure
+    export SiPixelGainForHLTonGPU, RangeAndCols, DecodingStructure
 
-struct SiPixelGainForHLTonGPUDecodingStructure
-    gain::UInt8
-    ped::UInt8
-end
+    struct SiPixelGainForHLTonGPUDecodingStructure
+        gain::UInt8
+        ped::UInt8
+    end
 
-const DecodingStructure = SiPixelGainForHLTonGPUDecodingStructure
-struct RangeAndCols
-    first::UInt32
-    last::UInt32
-    cols::Int32
-end
+    const DecodingStructure = SiPixelGainForHLTonGPUDecodingStructure
+    struct RangeAndCols
+        first::UInt32
+        last::UInt32
+        cols::Int32
+    end
 
-const RANGE_COUNT = 2000
+    const RANGE_COUNT = 2000
 
 # copy of SiPixelGainCalibrationForHL
-struct SiPixelGainForHLTonGPU
-    v_pedestals::Vector{DecodingStructure}
-    
-    range_and_cols::Vector{RangeAndCols}
-    
+    struct SiPixelGainForHLTonGPU{V <: AbstractVector{DecodingStructure}, W <: AbstractVector{RangeAndCols}}
+        v_pedestals::V
+        
+        range_and_cols::W
+        
 
-    _min_ped::Float32
-    _max_ped::Float32
-    _min_gain::Float32
-    _max_gain::Float32
+        _min_ped::Float32
+        _max_ped::Float32
+        _min_gain::Float32
+        _max_gain::Float32
 
-    ped_precision::Float32
-    gain_precision::Float32
+        ped_precision::Float32
+        gain_precision::Float32
 
-    _number_of_rows_averaged_over::UInt32 # this is 80!!!!
-    _n_bins_to_use_for_encoding::UInt32
-    _dead_flag::UInt32
-    _noisy_flag::UInt32
-end
+        _number_of_rows_averaged_over::UInt32 # this is 80!!!!
+        _n_bins_to_use_for_encoding::UInt32
+        _dead_flag::UInt32
+        _noisy_flag::UInt32
+    end
+    using Adapt
+    Adapt.@adapt_structure SiPixelGainForHLTonGPU
     decode_gain(structure::SiPixelGainForHLTonGPU, gain)::Float32 = gain * structure.gain_precision + structure._min_gain
     decode_ped(structure::SiPixelGainForHLTonGPU, ped)::Float32 = ped * structure.ped_precision + structure._min_ped
-@inline function get_ped_and_gain(structure::SiPixelGainForHLTonGPU, module_ind, col, row, is_dead_column_is_noisy_column::MVector{2, Bool})
+    @inline function get_ped_and_gain(structure::SiPixelGainForHLTonGPU, module_ind, col, row, is_dead_column_is_noisy_column::MVector{2, Bool})
     range = Pair(structure.range_and_cols[module_ind+1].first,structure.range_and_cols[module_ind+1].last)
     n_cols = structure.range_and_cols[module_ind+1].cols
     # print("module id : ",module_ind," ",range[1]," ",range[2]," ",n_cols,'\n')
