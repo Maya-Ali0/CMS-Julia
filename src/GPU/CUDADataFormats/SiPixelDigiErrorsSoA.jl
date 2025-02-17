@@ -7,12 +7,14 @@ module cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
     format suitable for CUDA operations. It includes structures and functions 
     to manage and access the error data.
     """
-    struct SiPixelDigiErrorsSoA
-        error_d::Vector{PixelErrorCompact}    # Pointer to the error data
-        data_d::Vector{PixelErrorCompact}     # Pointer to the array of size maxFedWords    
+    struct SiPixelDigiErrorsSoA{V <: AbstractVector{PixelErrorCompact}}
+        error_d::V    # Pointer to the error data
+        data_d::V     # Pointer to the array of size maxFedWords    
         formatterErrors_h::PixelFormatterErrors         # Pixel formatter errors 
         
-        """
+        
+    end
+    """
         Constructor for SiPixelDigiErrorsSoA
         Inputs:
           - maxFedWords::size_t: Maximum number of FED words
@@ -32,9 +34,8 @@ module cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
             @assert length(data_d) == maxFedWords
 
             # Return a new instance of SiPixelDigiErrorsSoA
-            new(data_d, error_d, errors)
+            SiPixelDigiErrorsSoA(data_d, error_d, errors)
         end
-    end
 
     """
     Function to get the pixel formatter errors from a SiPixelDigiErrorsSoA instance.
@@ -57,5 +58,6 @@ module cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
     function error(self::SiPixelDigiErrorsSoA)::Vector{PixelErrorCompact}
         return self.error_d
     end
-
+    using Adapt
+    Adapt.@adapt_structure SiPixelDigiErrorsSoA
 end

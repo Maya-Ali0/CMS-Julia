@@ -1,126 +1,35 @@
 module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind, clus, xx, yy, adc
-  # Structure to hold a constant view of device data
-  potato = 123
-  struct DeviceConstView
-    xx::Vector{Int16}         # X-coordinates of pixels
-    yy::Vector{Int16}         # Y-coordinates of pixels
-    adc::Vector{Int32}        # ADC values of pixels
-    module_ind::Vector{Int16}  # Module indices of pixels
-    clus::Vector{Int32}       # Cluster indices of pixels
-  end
-
-  # Structure to hold SiPixel digis data
-  
-  mutable struct SiPixelDigisSoA
-      pdigi_d::Vector{UInt32}      # Digis data
-      raw_id_arr_d::Vector{UInt32}   # Raw ID array
-      xx_d::Vector{Int16}         # Local X-coordinates of each pixel
-      yy_d::Vector{Int16}         # Local Y-coordinates of each pixel
-      adc_d::Vector{Int32}        # ADC values of each pixel
-      module_ind_d::Vector{Int16}  # Module IDs of each pixel
-      clus_d::Vector{Int32}       # Cluster IDs of each pixel
-      view_d::DeviceConstView      # "Me" pointer, a constant view of the device data
+  # Structure to hold SiPixel digis data  
+  mutable struct SiPixelDigisSoA{U <: AbstractVector{Int32},V <: AbstractVector{UInt16},W <: AbstractVector{UInt32}}
+      pdigi_d::W      # Digis data
+      raw_id_arr_d::W   # Raw ID array
+      xx_d::V         # Local X-coordinates of each pixel
+      yy_d::V         # Local Y-coordinates of each pixel
+      adc_d::V        # ADC values of each pixel
+      module_ind_d::V  # Module IDs of each pixel
+      clus_d::U      # Cluster IDs of each pixel
       n_modules_h::UInt32           # Number of modules
       n_digis_h::UInt32             # Number of digis
-
-      """
-      Constructor for SiPixelDigisSoA
-      Inputs:
-        - maxFedWords::Int: Maximum number of FED words
-      Outputs:
-        - A new instance of SiPixelDigisSoA with allocated data arrays and initialized pointers
-      """
-      function SiPixelDigisSoA(maxFedWords::Int)
-          # Uninitialized arrays of the specified size
-          xx_d = Vector{Int16}(undef, maxFedWords)
-          yy_d = Vector{Int16}(undef, maxFedWords)
-          adc_d = Vector{Int32}(undef, maxFedWords)
-          module_ind_d = Vector{Int16}(undef, maxFedWords)
-          clus_d = Vector{Int32}(undef, maxFedWords)
-          pdigi_d = Vector{UInt32}(undef, maxFedWords)
-          raw_id_arr_d = Vector{UInt32}(undef, maxFedWords)
-
-          # Create a DeviceConstView with the above arrays
-          view_d = DeviceConstView(xx_d, yy_d, adc_d, module_ind_d, clus_d)
-          # Return a new instance of SiPixelDigisSoA with initialized values
-          new(pdigi_d, raw_id_arr_d, xx_d, yy_d, adc_d, module_ind_d, clus_d, view_d, 0, 0)
-      end
   end
-
-    
-
-  # Inline functions to access elements from DeviceConstView
-
   """
-  Access X-coordinate at index i from DeviceConstView
-  Inputs:
-    - view::DeviceConstView: The DeviceConstView instance
-    - i::Int: The index to access
+  Constructor for SiPixelDigisSoA
+  Inputs:and how to use Adapt.jl to pass custom structs to CUDA kernels (that might not even be right). I’ve tried reading the CUDA.jl documentation and implementing a trivial example (below) but it errors as the passed struct isn’t a bitstype.
+    - maxFedWords::Int: Maximum number of FED words
   Outputs:
-    - UInt16: The X-coordinate at the specified index
+    - A new instance of SiPixelDigisSoA with allocated data arrays and initialized pointers
   """
-  @inline function xx(view::DeviceConstView, i::UInt32)::UInt16
-      return view.xx[i]
-  end
-
-  """
-  Access Y-coordinate at index i from DeviceConstView
-  Inputs:
-    - view::DeviceConstView: The DeviceConstView instance
-    - i::Int: The index to access
-  Outputs:
-    - UInt16: The Y-coordinate at the specified index
-  """
-  @inline function yy(view::DeviceConstView, i::UInt32)::UInt16
-      return view.yy[i]
-  end
-
-  """
-  Access ADC value at index i from DeviceConstView
-  Inputs:
-    - view::DeviceConstView: The DeviceConstView instance
-    - i::Int: The index to access
-  Outputs:
-    - UInt16: The ADC value at the specified index
-  """
-  @inline function adc(view::DeviceConstView, i::UInt32)::UInt16
-      return view.adc[i]  
-  end
-
-  """
-  Access module ID at index i from DeviceConstView
-  Inputs:
-    - view::DeviceConstView: The DeviceConstView instance
-    - i::Int: The index to access
-  Outputs:
-    - UInt16: The module ID at the specified index
-  """
-  @inline function module_ind(view::DeviceConstView, i::UInt32)::UInt16
-      return view.module_ind[i]  
-  end
-
-  """
-  Access cluster ID at index i from DeviceConstView
-  Inputs:
-    - view::DeviceConstView: The DeviceConstView instance
-    - i::Int: The index to access
-  Outputs:
-    - UInt32: The cluster ID at the specified index
-  """
-  @inline function clus(view::DeviceConstView, i::UInt32)::UInt32
-      return view.clus[i]
-  end
-
-  """
-  Get the DeviceConstView from SiPixelDigisSoA
-  Inputs:
-    - self::SiPixelDigisSoA: The SiPixelDigisSoA instance
-  Outputs:
-    - DeviceConstView: The constant view of the device data
-  """
-  function digiView(self::SiPixelDigisSoA)::DeviceConstView
-      return self.view_d
+  function SiPixelDigisSoA(maxFedWords::Int)
+      # Uninitialized arrays of the specified size
+      xx_d = Vector{UInt16}(undef, maxFedWords)
+      yy_d = Vector{UInt16}(undef, maxFedWords)
+      adc_d = Vector{UInt16}(undef, maxFedWords)
+      module_ind_d = Vector{UInt16}(undef, maxFedWords)
+      clus_d = Vector{Int32}(undef, maxFedWords)
+      pdigi_d = Vector{UInt32}(undef, maxFedWords)
+      raw_id_arr_d = Vector{UInt32}(undef, maxFedWords)
+      # Return a new instance of SiPixelDigisSoA with initialized values
+      return SiPixelDigisSoA(pdigi_d, raw_id_arr_d, xx_d, yy_d, adc_d, module_ind_d, clus_d, UInt32(0), UInt32(0))
   end
 
   """
@@ -168,7 +77,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
   Outputs:
     - Vector{UInt16}: The vector of X-coordinates
   """
-  function xx(self::SiPixelDigisSoA)::Vector{UInt16}
+  function xx(self::SiPixelDigisSoA)
       return self.xx_d
   end
 
@@ -179,7 +88,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
   Outputs:
     - Vector{UInt16}: The vector of Y-coordinates
   """
-  function yy(self::SiPixelDigisSoA)::Vector{UInt16}
+  function yy(self::SiPixelDigisSoA)
       return self.yy_d
   end
 
@@ -190,7 +99,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
   Outputs:
     - Vector{UInt16}: The vector of ADC values
   """
-  function adc(self::SiPixelDigisSoA)::Vector{UInt16}
+  function adc(self::SiPixelDigisSoA)
       return self.adc_d
   end
 
@@ -201,7 +110,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
   Outputs:
     - Vector{UInt16}: The vector of module IDs
   """
-  function module_ind(self::SiPixelDigisSoA)::Vector{UInt16}
+  function module_ind(self::SiPixelDigisSoA)
       return self.module_ind_d
   end
 
@@ -212,7 +121,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
   Outputs:
     - Vector{UInt32}: The vector of cluster IDs
   """
-  function clus(self::SiPixelDigisSoA)::Vector{UInt32}
+  function clus(self::SiPixelDigisSoA)
       return self.clus_d
   end
 
@@ -223,7 +132,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
   Outputs:
     - Vector{UInt32}: The vector of digis data
   """
-  function pdigi(self::SiPixelDigisSoA)::Vector{UInt32}
+  function pdigi(self::SiPixelDigisSoA)
       return self.pdigi_d
   end
 
@@ -234,8 +143,9 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
   Outputs:
     - Vector{UInt32}: The vector of raw ID array
   """
-  function raw_id_arr(self::SiPixelDigisSoA)::Vector{UInt32}
+  function raw_id_arr(self::SiPixelDigisSoA)
       return self.raw_id_arr_d
   end
-  
+  using Adapt
+  Adapt.@adapt_structure SiPixelDigisSoA
 end

@@ -27,6 +27,7 @@ module pixelGPUDetails
     using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
     using ..prefix_scan:block_prefix_scan
     using Printf
+    using CUDA
     module pixelConstants
         export LAYER_START_BIT, LADDER_START_BIT, MODULE_START_BIT, PANEL_START_BIT, DISK_START_BIT, BLADE_START_BIT, 
             LAYER_MASK, LADDER_MASK, MODULE_MASK, PANEL_MASK, DISK_MASK, BLADE_MASK,
@@ -534,10 +535,10 @@ module pixelGPUDetails
     end
 
 
-    function raw_to_digi_kernal(cabling_map::SiPixelFedCablingMapGPU , mod_to_unp :: Vector{UInt8} , word_counter::Integer, 
-                                word::Vector{UInt32} , fed_ids::Vector{UInt8} , xx::Vector{Int16} , yy::Vector{Int16} ,
-                                adc::Vector{Int32} , p_digi::Vector{UInt32} , raw_id_arr::Vector{UInt32} , module_id::Vector{Int16},
-                                err::Vector{PixelErrorCompact} , use_quality_info::Bool , include_errors::Bool , debug::Bool)
+    function raw_to_digi_kernal(cabling_map::SiPixelFedCablingMapGPU , mod_to_unp :: W , word_counter::Integer, 
+                                word::U , fed_ids::W , xx::V , yy::V ,
+                                adc::V , p_digi::U , raw_id_arr::U , module_id::V,
+                                err::X , use_quality_info::Bool , include_errors::Bool , debug::Bool) where {U <: AbstractVector{UInt32},V <: AbstractVector{UInt16},W <: AbstractVector{UInt8}, X <: AbstractVector{PixelErrorCompact}}
                                 
         first::UInt32 = 1
         n_end = word_counter
@@ -658,17 +659,18 @@ module pixelGPUDetails
     end
 
 
-    function make_clusters(gpu_algo::SiPixelRawToClusterGPUKernel,is_run_2::Bool , cabling_map::SiPixelFedCablingMapGPU , mod_to_unp::Vector{UInt8} , gains::SiPixelGainForHLTonGPU ,
+    function make_clusters(gpu_algo::SiPixelRawToClusterGPUKernel,is_run_2::Bool , cabling_map::SiPixelFedCablingMapGPU , mod_to_unp::V , gains::SiPixelGainForHLTonGPU ,
                   word_fed::WordFedAppender , errors::PixelFormatterErrors , word_counter::Integer , fed_counter::Integer , use_quality_info::Bool,
-                  include_errors::Bool , debug::Bool )
+                  include_errors::Bool , debug::Bool ) where {V <: AbstractVector{UInt8}}
         # @printf("decoding %s digis. Max is %i '\n'",word_counter,MAX_FED_WORDS)
         digis_d = gpu_algo.digis_d
+        digis_d = cu(digis_d)
         if include_errors
-            digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors) # m
+            digi_errors_d = cu(SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors)) # m
         end
         
         clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES) # m
-        
+        clusters_d = cu(clusters_d)
         # if word_counter != 0 # incase of empty event
         #     open("outputDigis.txt","w") do file
         #         for i ∈ 0:48315
@@ -677,7 +679,7 @@ module pixelGPUDetails
         #     end
         
         @assert(0 == word_counter % 2)
-        raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
+        raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,cu(get_word(word_fed)),cu(get_fed_id(word_fed)),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
             digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, digi_errors_d.error_d,use_quality_info,include_errors,debug)
         #end # end for raw to digi
         

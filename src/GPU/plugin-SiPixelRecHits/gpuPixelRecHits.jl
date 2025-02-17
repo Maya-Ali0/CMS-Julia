@@ -28,7 +28,7 @@ export getHits
     - `phits` is updated with the calculated hit positions, charges, sizes, and errors.
 
 """
-function getHits(cpeParams::ParamsOnGPU, 
+#=function getHits(cpeParams::ParamsOnGPU, 
                  bs::BeamSpotPOD, 
                  pdigis::CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA.DeviceConstView,
                  numElements::Integer,
@@ -335,7 +335,7 @@ function getHits(cpeParams::ParamsOnGPU,
 
         end
      #    close(file)
-end 
+end =#
 
 
     
