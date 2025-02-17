@@ -48,7 +48,7 @@ function kernelBLFastFit(N::Int,
     for local_idx in local_start:maxNumberOfConcurrentFits
         tuple_idx = local_idx + offset
 
-        if tuple_idx >= size(tupleMultiplicity, nHits)
+        if tuple_idx >= size(tupleMultiplicity, nHits) + 1
             break
         end
 
@@ -118,7 +118,7 @@ function kernelBLFit(N::Int,
 
     for local_idx in local_start:maxNumberOfConcurrentFits
         tuple_idx = local_idx + offset
-        if tuple_idx >= size(tupleMultiplicity, nHits)
+        if tuple_idx >= size(tupleMultiplicity, nHits) + 1
             break
         end
 
@@ -154,7 +154,7 @@ function kernelBLFit(N::Int,
         copyFromCircle!(results.stateAtBS, circle.par, circle.cov, line.par, line.cov, 1.0f0 / B, tkid)
         results.pt[tkid] = B / abs(circle.par[3])
         results.eta[tkid] = asinh(line.par[1])
-        results.chi2[tkid] = (line.chi2 + line.chi2) / (2 * N - 5)
+        results.chi2[tkid] = (line.chi2 + circle.chi2) / (2 * N - 5)
 
         append!(circle_fit_results, circle.par)
         append!(line_fit_results, line.par)
