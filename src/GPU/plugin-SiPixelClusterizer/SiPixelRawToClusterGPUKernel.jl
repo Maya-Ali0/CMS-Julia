@@ -196,11 +196,12 @@ module pixelGPUDetails
     """
     struct used to store all 32 bit words and their corresponding fed_ids
     """
-    struct WordFedAppender
-        words::Vector{UInt32}
-        fed_ids::Vector{UInt8}
+    struct WordFedAppender{U <: AbstractVector{UInt32},V <: AbstractVector{UInt8}}
+        words::U
+        fed_ids::V
     end
-
+    using Adapt
+    Adapt.@adapt_structure WordFedAppender
     """
     Outer Default Constructor
     """
@@ -677,9 +678,9 @@ module pixelGPUDetails
         #             write(file,string(word_fed.words[i+1]),'\n')
         #         end
         #     end
-        
+        word_fed = cu(word_fed)
         @assert(0 == word_counter % 2)
-        raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,cu(get_word(word_fed)),cu(get_fed_id(word_fed)),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
+        raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
             digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, digi_errors_d.error_d,use_quality_info,include_errors,debug)
         #end # end for raw to digi
         
