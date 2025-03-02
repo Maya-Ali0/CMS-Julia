@@ -33,45 +33,39 @@ function calib_digis(is_run_2::Bool, id::T, x::T, y::T, adc::T, ped::SiPixelGain
         clus_module_start[1] = 0
         module_start[1] = 0
     end
-   
-    # for i ∈ 1:stride:MAX_NUM_MODULES
-    #     # n_clusters_in_module[i] = 0
-    # end
-    @cuprintln(MAX_NUM_MODULES)
-    @cuprintln(MAX_NUM_MODULES)
-    @cuprintln(MAX_NUM_MODULES)
-    # @cuprintln(first)
-    return
-    # for i in first:stride:num_elements
-    #     if inv_id == id[i]
-    #         continue
-    #     end
+    for i ∈ 1:stride:MAX_NUM_MODULES
+        n_clusters_in_module[i] = 0
+    end
+    for i in first:stride:num_elements
+        if inv_id == id[i]
+            continue
+        end
 
-    #     conversion_factor = (is_run_2) ? (id[i] < 96 ? v_calto_electron_gain_L1 : v_calto_electron_gain) : 1.0
-    #     offset = (is_run_2) ? (id[i] < 96 ? v_calto_electron_offset_L1 : v_calto_electron_offset) : 0.0
+        conversion_factor = (is_run_2) ? (id[i] < 96 ? v_calto_electron_gain_L1 : v_calto_electron_gain) : 1.0
+        offset = (is_run_2) ? (id[i] < 96 ? v_calto_electron_offset_L1 : v_calto_electron_offset) : 0.0
 
-    #     is_dead_column_is_noisy_column = MVector(false, false)
+        is_dead_column_is_noisy_column = MVector(false, false)
 
-    #     row = x[i]
-    #     col = y[i]
-    #     ret = get_ped_and_gain(ped, id[i], col, row, is_dead_column_is_noisy_column)
-    #     pedestal = ret[1]
-    #     gain = ret[2]
+        row = x[i]
+        col = y[i]
+        ret = get_ped_and_gain(ped, id[i], col, row, is_dead_column_is_noisy_column)
+        pedestal = ret[1]
+        gain = ret[2]
         
-    #     if is_dead_column_is_noisy_column[1] || is_dead_column_is_noisy_column[2]
-    #         id[i] = inv_id
-    #         adc[i] = 0
-    #         @cuprintln("bad pixel at $i in $(id[i])")
-    #     else
-    #         vcal = adc[i] * gain - pedestal * gain
-    #         adc[i] = max(100, Int32(trunc(vcal * conversion_factor + offset)))
+        if is_dead_column_is_noisy_column[1] || is_dead_column_is_noisy_column[2]
+            id[i] = inv_id
+            adc[i] = 0
+            @cuprintln("bad pixel at $i in $(id[i])")
+        else
+            vcal = adc[i] * gain - pedestal * gain
+            adc[i] = max(100, Int32(trunc(vcal * conversion_factor + offset)))
 
-    #         # open("testttt.txt","a") do file
-    #         #     write(file, "$(adc[i])\n")
-    #         # end
+            # open("testttt.txt","a") do file
+            #     write(file, "$(adc[i])\n")
+            # end
             
-    #     end
-    # end
+        end
+    end
 end
 
 end # module gpuCalibPixel

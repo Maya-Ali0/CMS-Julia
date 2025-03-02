@@ -47,7 +47,7 @@ INV_ID::UInt16 = 9999 # must be > MaxNumModules
 * Changes since julia is indexed at 1
 * Note: Each word in the main wordfedappender array is given a clusterid
 """
-function count_modules(id::Vector{T}, module_start::Vector{J}, cluster_id::Vector{K}, num_elements::Integer) where {T <: Integer, J <: Integer, K <: Signed}
+function count_modules(id::T, module_start::U, cluster_id::V, num_elements::Integer) where {T <: AbstractVector{UInt16}, U <: AbstractVector{UInt32}, V <: AbstractVector{Int32}}
     first = 1
     for i ∈ first:num_elements
         cluster_id[i] = i
