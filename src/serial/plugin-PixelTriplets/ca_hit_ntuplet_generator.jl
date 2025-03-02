@@ -79,7 +79,8 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DH
     # HelixFitOnGPU fitter(bfield, m_params.fit5as4_);
     # fitter.allocateOnGPU(&(soa->hitIndices), kernels.tupleMultiplicity(), soa);
 
-    fitter = HelixFitOnGPU(b_field, self.m_params.fit_5_as_4)
+    fitter = HelixFitOnGPU(Float32(b_field), self.m_params.fit_5_as_4)
+
     # fitter.tuple_multiplicity_d is nothing 
     allocate_on_gpu!(fitter, hit_indices(soa), kernels.device_tuple_multiplicity, soa)
 

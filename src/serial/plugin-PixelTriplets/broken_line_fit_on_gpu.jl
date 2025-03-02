@@ -193,7 +193,7 @@ function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hits
         println(log_file, "Running kernelBLFit for N=3")
         println("B= ", fitter.b_field)
         circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results = kernelBLFit(
-            3, fitter.tuple_multiplicity_d, fitter.b_field, fitter.output_soa_d,
+            3, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
             hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(3), UInt32(offset), log_file
         )
         flush(log_file)
@@ -205,7 +205,7 @@ function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hits
         println(log_file, "Running kernelBLFit for N=4")
         println("B= ", fitter.b_field)
         circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results = kernelBLFit(
-            4, fitter.tuple_multiplicity_d, fitter.b_field, fitter.output_soa_d,
+            4, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
             hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(4), UInt32(offset), log_file
         )
         flush(log_file)
@@ -220,7 +220,7 @@ function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hits
             println(log_file, "Running kernelBLFit for N=4")
             println("B= ", fitter.b_field)
             circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results = kernelBLFit(
-                4, fitter.tuple_multiplicity_d, fitter.b_field, fitter.output_soa_d,
+                4, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
                 hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(5), UInt32(offset), log_file
             )
             flush(log_file)
@@ -232,7 +232,7 @@ function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hits
             println(log_file, "Running kernelBLFit for N=5")
             println("B= ", fitter.b_field)
             circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results = kernelBLFit(
-                5, fitter.tuple_multiplicity_d, fitter.b_field, fitter.output_soa_d,
+                5, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
                 hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(5), UInt32(offset), log_file
             )
             flush(log_file)

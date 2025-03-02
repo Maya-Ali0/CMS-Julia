@@ -44,13 +44,41 @@ export PreparedBrokenLineData
 
 #     \return the variance of the planar angle ((theta_0)^2 /3).
 @inline function mult_scatt(length::Float64, B::Float64, R::Float64, Layer::Integer, slope::Float64)
-    pt2 = min(20, B * R)
-    pt2 = pt2 * pt2
-    XXI_0 = 0.06 / 16 # inverse of radiation length of the material in cm
-    geometry_factor = 0.7
-    fact = geometry_factor * sqr(13.6 / 1000)
-    return fact / (pt2 * (1 + sqr(slope))) * (abs(length) * XXI_0) * sqr(1 + 0.038 * log(abs(length) * XXI_0))
+    open("debug_output.txt", "a") do f
+        println(f, "B: ", B)
+        println(f, "R: ", R)
+        pt2 = min(20.0, B * R)
+        println(f, "pt2: ", pt2)
+        pt2 = pt2 * pt2
+        println(f, "pt2 squared: ", pt2)
+
+        XXI_0 = 0.06 / 16.0 # inverse of radiation length of the material in cm
+        println(f, "XXI_0: ", XXI_0)
+
+        geometry_factor = 0.7
+        fact = geometry_factor * (13.6 / 1000)^2
+        println(f, "fact: ", fact)
+
+        slope_term = (1 + slope^2)
+        println(f, "slope_term: ", slope_term)
+
+        abs_length_XXI_0 = abs(length) * XXI_0
+        println(f, "abs_length_XXI_0: ", abs_length_XXI_0)
+
+        log_term = log(abs_length_XXI_0)
+        println(f, "log_term: ", log_term)
+
+        sqrt_term = (1 + 0.038 * log_term)^2
+        println(f, "sqrt_term: ", sqrt_term)
+
+        result = fact / (pt2 * slope_term) * abs_length_XXI_0 * sqrt_term
+        println(f, "output of mult_scatt: ", result)
+
+        return result
+    end
 end
+
+
 sqr(x) = x * x
 
 # \brief Computes the 2D rotation matrix that transforms the line y=slope*x into the line y=0.
@@ -260,143 +288,169 @@ end
 #     The step 2 is the least square fit, done by imposing the minimum constraint on the cost function and solving the consequent linear system. It determines the fitted parameters u and \Delta\kappa and their covariance matrix.
 #     The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
 @inline function BL_Circle_fit(hits::Matrix{Float64}, hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, circle_results::circle_fit)
-    n = size(hits, 2)
-    circle_results.q = data.q
-    radii = data.radii
-    s = data.s
-    S = data.S
-    Z = data.Z
-    VarBeta = data.VarBeta
-    slope = -circle_results.q / fast_fit[4]
-    VarBeta = VarBeta * (1 + sqr(slope))
+    open("debug_output.txt", "a") do f
+        n = size(hits, 2)
+        circle_results.q = data.q
+        radii = data.radii
+        s = data.s
+        S = data.S
+        Z = data.Z
+        VarBeta = data.VarBeta
+        slope = -circle_results.q / fast_fit[4]
 
-    for i in 1:n
-        Z[i] = norm(radii[1:2, i]) - fast_fit[3]
-    end
+        println(f, "VarBeta before mult with slope: ", VarBeta)
+        VarBeta = VarBeta * (1.0 + (slope)^2)
+        println(f, "VarBeta after mult with slope: ", VarBeta)
 
-    V = zeros(Float64, 2, 2)
-    w = zeros(Float64, n, 1)
-    RR = zeros(Float64, 2, 2)
-
-    for i in 1:n
-        V[1, 1] = hits_ge[1, i]
-        V[1, 2] = V[2, 1] = hits_ge[2, i]
-        V[2, 2] = hits_ge[3, i]
-        RR = rotation_matrix(-radii[1, i] / radii[2, i])
-        w[i] = 1 / ((RR*V*RR')[2, 2])
-    end
-
-    r_u = zeros(Float64, n + 1)
-    r_u[n] = 0
-    for i in 1:n
-        r_u[i] = w[i] * Z[i]
-    end
-
-    C_U = zeros(Float64, n + 1, n + 1)
-    C_U[1:n, 1:n] = matrixc_u(w, s, VarBeta)
-    C_U[n+1, n+1] = 0.0
-    for i in 1:n
-        C_U[i, n+1] = 0.0
-
-        if i > 1 && i < n
-            C_U[i, n+1] += -(s[i+1] - s[i-1]) * (s[i+1] - s[i-1]) / (2.0 * VarBeta[i] * (s[i+1] - s[i]) * (s[i] - s[i-1]))
+        for i in 1:n
+            Z[i] = norm(radii[1:2, i]) - fast_fit[3]
         end
 
-        if i > 2
-            C_U[i, n+1] += (s[i] - s[i-2]) / (2.0 * VarBeta[i-1] * (s[i] - s[i-1]))
+        V = zeros(Float64, 2, 2)
+        w = zeros(Float64, n, 1)
+        RR = zeros(Float64, 2, 2)
+        tol = 1e-12
+
+        # abs(hits_ge[2, i]) < tol ? 0.0 : hits_ge[2, i]
+        for i in 1:n
+            V[1, 1] = abs(hits_ge[1, i]) < tol ? 0.0 : hits_ge[1, i]
+            V[1, 2] = V[2, 1] = abs(hits_ge[2, i]) < tol ? 0.0 : hits_ge[2, i]
+            V[2, 2] = abs(hits_ge[3, i]) < tol ? 0.0 : hits_ge[3, i]
+            RR = rotation_matrix(-radii[1, i] / radii[2, i])
+            w[i] = 1.0 / ((RR*V*RR')[2, 2])
+            println(f, "Iteration $i:")
+            println(f, "  V = ", V)
+            println(f, "  RR = ", RR)
+            println(f, "  w[$i] = ", w[i])
         end
 
-        if i < n - 1
-            C_U[i, n+1] += (s[i+2] - s[i]) / (2.0 * VarBeta[i+1] * (s[i+1] - s[i]))
+        r_u = zeros(Float64, n + 1)
+        r_u[n+1] = 0
+        for i in 1:n
+            r_u[i] = w[i] * Z[i]
         end
 
-        C_U[n+1, i] = C_U[i, n+1]
+        C_U = zeros(Float64, n + 1, n + 1)
+        C_U[1:n, 1:n] = matrixc_u(w, s, VarBeta)
+        C_U[n+1, n+1] = 0.0
+        for i in 1:n
+            C_U[i, n+1] = 0.0
 
-        if i > 1 && i < n
-            C_U[n+1, n+1] += (s[i+1] - s[i-1])^2 / (4.0 * VarBeta[i])
+            if i > 1 && i < n
+                C_U[i, n+1] += -(s[i+1] - s[i-1]) * (s[i+1] - s[i-1]) / (2.0 * VarBeta[i] * (s[i+1] - s[i]) * (s[i] - s[i-1]))
+            end
+
+            if i > 2
+                C_U[i, n+1] += (s[i] - s[i-2]) / (2.0 * VarBeta[i-1] * (s[i] - s[i-1]))
+            end
+
+            if i < n - 1
+                C_U[i, n+1] += (s[i+2] - s[i]) / (2.0 * VarBeta[i+1] * (s[i+1] - s[i]))
+            end
+
+            C_U[n+1, i] = C_U[i, n+1]
+
+            if i > 1 && i < n
+                C_U[n+1, n+1] += (s[i+1] - s[i-1])^2 / (4.0 * VarBeta[i])
+            end
         end
+        I = zeros(Float64, n + 1, n + 1)
+        DataFormat_Math_choleskyInversion_h.invert(C_U, I)
+        u = I * r_u
+        # println("u: ", u)
+        # println("I: ", I)
+        # println("r_u: ", r_u)
+
+        radii[1:2, 1] /= norm(radii[1:2, 1])
+        radii[1:2, 2] /= norm(radii[1:2, 2])
+
+        d = hits[1:2, 1] .+ (-Z[1] + u[1]) .* radii[1:2, 1]
+        e = hits[1:2, 2] .+ (-Z[2] + u[2]) .* radii[1:2, 2]
+
+        # println("d: ", d)
+        # println("e: ", e)
+
+        # println("e-d: ", (e - d))
+        # println("atan2((e-d)[2], (e-d)[1]): ", atan2((e-d)[2], (e-d)[1]))
+        circle_results.par[1] = atan2((e-d)[2], (e-d)[1])
+        circle_results.par[2] = -circle_results.q * (fast_fit[3] - sqrt(sqr(fast_fit[3]) - 0.25 * norm(e - d)^2))
+        circle_results.par[3] = circle_results.q * (1.0 / fast_fit[3] + u[n+1])
+        # println("fast_fit[3]: ", fast_fit[3])
+        # println("circle_results.q:", circle_results.q)
+        # println("hits:  ", hits[1:2, 2])
+        # println("norm(e - d)^2: ", norm(e - d)^2) #issue here
+
+        # println("circle_results.par[2]: ", circle_results.par[2])
+        # println("circle_results.q * circle_results.par[2]:", circle_results.q * circle_results.par[2])
+        # println("Initial circle_results.par:", circle_results.par)
+
+        @assert circle_results.q * circle_results.par[2] <= 0
+
+        eMinusd = e - d
+        tmp1 = sqr(norm(eMinusd))
+        # println("tmp1: ", tmp1)
+        # println("radii: ", radii)
+        # println("fast_fit: ", fast_fit)
+        jacobian = zeros(Float64, 3, 3)
+
+
+        jacobian[1, 1] = (radii[2, 1] * eMinusd[1] - eMinusd[2] * radii[1, 1]) / tmp1
+        jacobian[1, 2] = (radii[2, 2] * eMinusd[1] - eMinusd[2] * radii[1, 2]) / tmp1
+        jacobian[1, 3] = 0
+        jacobian[2, 1] = floor(circle_results.q / 2) * (eMinusd[1] * radii[1, 1] + eMinusd[2] * radii[2, 1]) /
+                         sqrt(sqr(2 * fast_fit[3]) - tmp1)
+        jacobian[2, 2] = floor(circle_results.q / 2) * (eMinusd[1] * radii[1, 2] + eMinusd[2] * radii[2, 2]) /
+                         sqrt(sqr(2 * fast_fit[3]) - tmp1)
+        jacobian[2, 3] = 0
+        jacobian[3, 1] = 0
+        jacobian[3, 2] = 0
+        jacobian[3, 3] = circle_results.q
+
+        circle_results.cov = [
+            I[1, 1] I[1, 2] I[1, n+1];
+            I[2, 1] I[2, 2] I[2, n+1];
+            I[n+1, 1] I[n+1, 2] I[n+1, n+1]
+        ]
+        # println("circle_cov 1: ", circle_results.cov)
+        # println("jacobian: ", jacobian)
+
+        circle_results.cov = jacobian * circle_results.cov * jacobian'
+        # println("circle_cov 2: ", circle_results.cov)
+
+        translate_karimaki(circle_results, 0.5 * (e-d)[1], 0.5 * (e-d)[2], jacobian)
+        # println("circle_cov 3: ", circle_results.cov)
+
+        circle_results.cov[1, 1] += (1 + sqr(slope)) * mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope)
+        # println("mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope): ", mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope))
+
+        translate_karimaki(circle_results, d[1], d[2], jacobian)
+        println(f, " VarBeta: ", VarBeta)
+        println(f, "  Z = ", Z)
+        println(f, "  s = ", s)
+        println(f, "  u = ", u)
+        # println("circle_cov 4: ", circle_results.cov)
+        circle_results.chi2 = 0.0
+        for i in 1:n
+            diff = Float64(Z[i] - u[i])
+            term1 = Float64(w[i] * (diff^2))
+            circle_results.chi2 += term1
+
+            if i > 1 && i < n
+                d1 = Float64(s[i] - s[i-1])     # denominator part 1
+                d2 = Float64(s[i+1] - s[i])     # denominator part 2
+                d3 = Float64(s[i+1] - s[i-1])   # combined span
+
+                term2_inner = (u[i-1] / d1) -
+                              ((u[i] * d3) / (d1 * d2)) +
+                              (u[i+1] / d2) +
+                              (d3 * u[n] / 2)
+                term2 = (term2_inner^2) / VarBeta[i]
+                circle_results.chi2 += term2
+            end
+        end
+        println(f, "circle.chi2 = ", circle_results.chi2)
     end
-    I = zeros(Float64, n + 1, n + 1)
-    DataFormat_Math_choleskyInversion_h.invert(C_U, I)
-    u = I * r_u
-    # println("u: ", u)
-    # println("I: ", I)
-    # println("r_u: ", r_u)
 
-    radii[1:2, 1] /= norm(radii[1:2, 1])
-    radii[1:2, 2] /= norm(radii[1:2, 2])
-
-    d = hits[1:2, 1] .+ (-Z[1] + u[1]) .* radii[1:2, 1]
-    e = hits[1:2, 2] .+ (-Z[2] + u[2]) .* radii[1:2, 2]
-
-    # println("d: ", d)
-    # println("e: ", e)
-
-    # println("e-d: ", (e - d))
-    # println("atan2((e-d)[2], (e-d)[1]): ", atan2((e-d)[2], (e-d)[1]))
-    circle_results.par[1] = atan2((e-d)[2], (e-d)[1])
-    circle_results.par[2] = -circle_results.q * (fast_fit[3] - sqrt(sqr(fast_fit[3]) - 0.25 * norm(e - d)^2))
-    circle_results.par[3] = circle_results.q * (1.0 / fast_fit[3] + u[n+1])
-    # println("fast_fit[3]: ", fast_fit[3])
-    # println("circle_results.q:", circle_results.q)
-    # println("hits:  ", hits[1:2, 2])
-    # println("norm(e - d)^2: ", norm(e - d)^2) #issue here
-
-    # println("circle_results.par[2]: ", circle_results.par[2])
-    # println("circle_results.q * circle_results.par[2]:", circle_results.q * circle_results.par[2])
-    # println("Initial circle_results.par:", circle_results.par)
-
-    @assert circle_results.q * circle_results.par[2] <= 0
-
-    eMinusd = e - d
-    tmp1 = sqr(norm(eMinusd))
-    # println("tmp1: ", tmp1)
-    # println("radii: ", radii)
-    # println("fast_fit: ", fast_fit)
-    jacobian = zeros(Float64, 3, 3)
-
-
-    jacobian[1, 1] = (radii[2, 1] * eMinusd[1] - eMinusd[2] * radii[1, 1]) / tmp1
-    jacobian[1, 2] = (radii[2, 2] * eMinusd[1] - eMinusd[2] * radii[1, 2]) / tmp1
-    jacobian[1, 3] = 0
-    jacobian[2, 1] = floor(circle_results.q / 2) * (eMinusd[1] * radii[1, 1] + eMinusd[2] * radii[2, 1]) /
-                     sqrt(sqr(2 * fast_fit[3]) - tmp1)
-    jacobian[2, 2] = floor(circle_results.q / 2) * (eMinusd[1] * radii[1, 2] + eMinusd[2] * radii[2, 2]) /
-                     sqrt(sqr(2 * fast_fit[3]) - tmp1)
-    jacobian[2, 3] = 0
-    jacobian[3, 1] = 0
-    jacobian[3, 2] = 0
-    jacobian[3, 3] = circle_results.q
-
-    circle_results.cov = [
-        I[1, 1] I[1, 2] I[1, n+1];
-        I[2, 1] I[2, 2] I[2, n+1];
-        I[n+1, 1] I[n+1, 2] I[n+1, n+1]
-    ]
-    # println("circle_cov 1: ", circle_results.cov)
-    # println("jacobian: ", jacobian)
-
-    circle_results.cov = jacobian * circle_results.cov * jacobian'
-    # println("circle_cov 2: ", circle_results.cov)
-
-    translate_karimaki(circle_results, 0.5 * (e-d)[1], 0.5 * (e-d)[2], jacobian)
-    # println("circle_cov 3: ", circle_results.cov)
-
-    circle_results.cov[1, 1] += (1 + sqr(slope)) * mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope)
-    # println("mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope): ", mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope))
-
-    translate_karimaki(circle_results, d[1], d[2], jacobian)
-
-    # println("circle_cov 4: ", circle_results.cov)
-    circle_results.chi2 = 0
-    for i in 1:n
-        circle_results.chi2 += w[i] * sqr(Z[i] - u[i])
-        if i > 1 && i < n
-            circle_results.chi2 += (u[i-1] / (s[i] - s[i-1]) -
-                                    u[i] * (s[i+1] - s[i-1]) / ((s[i+1] - s[i]) * (s[i] - s[i-1])) +
-                                    u[i+1] / (s[i+1] - s[i]) + (s[i+1] - s[i-1]) * u[n] / 2)^2 / VarBeta[i]
-        end
-    end
     return circle_results.cov
 end
 # /*!
@@ -445,14 +499,14 @@ end
             JacobXYZtosZ[1, 1] = radii[2, i] * tmp
             JacobXYZtosZ[1, 2] = -radii[1, i] * tmp
             JacobXYZtosZ[2, 3] = 1.0
-            println(f, "tmp[$i]: ", tmp)
-            println(f, "JacobXYZtosZ[1, 1]: ", JacobXYZtosZ[1, 1])
-            println(f, "JacobXYZtosZ[1, 2]: ", JacobXYZtosZ[1, 2])
-            println(f, "JacobXYZtosZ[2, 3]: ", JacobXYZtosZ[2, 3])
-            println(f, "(R*JacobXYZtosZ*V*JacobXYZtosZ'*R')[2, 2]: ", (R*JacobXYZtosZ*V*JacobXYZtosZ'*R')[2, 2])
-            println(f, "V: ", V)
-            println(f, "R: ", R)
-            println(f, "R': ", R')
+            # println(f, "tmp[$i]: ", tmp)
+            # println(f, "JacobXYZtosZ[1, 1]: ", JacobXYZtosZ[1, 1])
+            # println(f, "JacobXYZtosZ[1, 2]: ", JacobXYZtosZ[1, 2])
+            # println(f, "JacobXYZtosZ[2, 3]: ", JacobXYZtosZ[2, 3])
+            # println(f, "(R*JacobXYZtosZ*V*JacobXYZtosZ'*R')[2, 2]: ", (R*JacobXYZtosZ*V*JacobXYZtosZ'*R')[2, 2])
+            # println(f, "V: ", V)
+            # println(f, "R: ", R)
+            # println(f, "R': ", R')
             w[i] = 1.0 / ((R*JacobXYZtosZ*V*JacobXYZtosZ'*R')[2, 2])
         end
         # println("JacobXYZtosZ: ", JacobXYZtosZ)
@@ -507,13 +561,13 @@ end
             # Compute the primary term: w[i] * (Z[i] - u[i])^2
             diff = Z[i] - u[i]
             term1 = w[i] * diff^2
-            println(f, "Iteration $i:")
-            println(f, "  w[$i] = ", w[i])
-            println(f, "  Z[$i] = ", Z[i])
-            println(f, "  u[$i] = ", u[i])
-            println(f, "  diff (Z-u) = ", diff)
-            println(f, "  term1 = w[$i]*(Z[$i]-u[$i])^2 = ", term1)
-            flush(f)
+            # println(f, "Iteration $i:")
+            # println(f, "  w[$i] = ", w[i])
+            # println(f, "  Z[$i] = ", Z[i])
+            # println(f, "  u[$i] = ", u[i])
+            # println(f, "  diff (Z-u) = ", diff)
+            # println(f, "  term1 = w[$i]*(Z[$i]-u[$i])^2 = ", term1)
+            # flush(f)
 
             line_results.chi2 += term1
 
@@ -530,22 +584,22 @@ end
                               (u[i+1] / (S[i+1] - S[i]))
                 term2 = (term2_inner^2) / VarBeta[i]
 
-                println(f, "  Additional term calculation:")
-                println(f, "    u[", i - 1, "] = ", u[i-1], " , S[$i] - S[", i - 1, "] = ", denom1)
-                println(f, "    u[$i] = ", u[i], " , (S[", i + 1, "] - S[", i - 1, "]) = ", denom4)
-                println(f, "    S[", i + 1, "] - S[$i] = ", denom2)
-                println(f, "    u[", i + 1, "] = ", u[i+1])
-                println(f, "    term2_inner = ", term2_inner)
-                println(f, "    VarBeta[$i] = ", VarBeta[i])
-                println(f, "    term2 = (term2_inner^2)/VarBeta[$i] = ", term2)
-                flush(f)
+                # println(f, "  Additional term calculation:")
+                # println(f, "    u[", i - 1, "] = ", u[i-1], " , S[$i] - S[", i - 1, "] = ", denom1)
+                # println(f, "    u[$i] = ", u[i], " , (S[", i + 1, "] - S[", i - 1, "]) = ", denom4)
+                # println(f, "    S[", i + 1, "] - S[$i] = ", denom2)
+                # println(f, "    u[", i + 1, "] = ", u[i+1])
+                # println(f, "    term2_inner = ", term2_inner)
+                # println(f, "    VarBeta[$i] = ", VarBeta[i])
+                # println(f, "    term2 = (term2_inner^2)/VarBeta[$i] = ", term2)
+                # flush(f)
 
                 line_results.chi2 += term2
             end
 
-            println(f, "  Chi2 after iteration $i: ", line_results.chi2)
-            println(f, "------------------------------------------------")
-            flush(f)
+            # println(f, "  Chi2 after iteration $i: ", line_results.chi2)
+            # println(f, "------------------------------------------------")
+            # flush(f)
         end
     end
 

@@ -60,10 +60,10 @@ mutable struct HelixFitOnGPU
     tuples_d::Union{Nothing,Tuples}  # Nullable equivalent
     tuple_multiplicity_d::Union{Nothing,Tuple_Multiplicity}
     output_soa_d::Union{Nothing,OutputSoA}
-    b_field::Float64
+    b_field::Float32
     fit5as4::Bool
 
-    function HelixFitOnGPU(b_field::Float64, fit5as4::Bool)
+    function HelixFitOnGPU(b_field::Float32, fit5as4::Bool)
         return new(
             Rfit.max_number_of_concurrent_fits(),
             nothing,
