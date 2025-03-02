@@ -1,7 +1,7 @@
 module gpuClustering
 
 export MAX_NUM_MODULES, count_modules, find_clus
-
+using CUDA
 using Printf
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 
@@ -29,7 +29,7 @@ MAX_NUM_MODULES::UInt32 = 2000
 MAX_NUM_CLUSTERS_PER_MODULES::Int32 = 1024
 MAX_HITS_IN_MODULE::UInt32 = 1024 # as above
 MAX_NUM_CLUSTERS::UInt32 = pixelGPUConstants.MAX_NUMBER_OF_HITS
-INV_ID::UInt16 = 9999 # must be > MaxNumModules
+const INV_ID::UInt16 = 9999 # must be > MaxNumModules
 ###
 
 """
@@ -48,8 +48,9 @@ INV_ID::UInt16 = 9999 # must be > MaxNumModules
 * Note: Each word in the main wordfedappender array is given a clusterid
 """
 function count_modules(id::T, module_start::U, cluster_id::V, num_elements::Integer) where {T <: AbstractVector{UInt16}, U <: AbstractVector{UInt32}, V <: AbstractVector{Int32}}
-    first = 1
-    for i ∈ first:num_elements
+    first = blockDim().x*(blockIdx().x-1) + threadIdx().x
+    stride = gridDim().x*blockDim().x
+    for i ∈ first:stride:num_elements
         cluster_id[i] = i
         if id[i] == INV_ID 
             continue
@@ -59,14 +60,17 @@ function count_modules(id::T, module_start::U, cluster_id::V, num_elements::Inte
             j -= 1
         end
         if j < 1 || id[j] != id[i]
-            module_start[1] = min(module_start[1] + 1, MAX_NUM_MODULES)
-            loc = module_start[1] + 1
-            if loc <= length(module_start)
-                module_start[loc] = i
-            else
-                println("Warning: Exceeded the bounds of module_start array. loc = ",loc)
-                break
-            end
+            module_start_first = pointer(module_start)
+            loc = CUDA.atomic_add!(module_start_first,UInt32(1)) + 1
+            # module_start[1] = min(module_start[1] + 1, MAX_NUM_MODULES)
+            # loc = module_start[1] + 1
+            module_start[loc+1] = i
+            # if loc <= length(module_start)
+                
+            # else
+            #     println("Warning: Exceeded the bounds of module_start array. loc = ",loc)
+            #     break
+            # end
         end
     end
 end
