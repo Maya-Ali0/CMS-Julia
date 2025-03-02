@@ -656,7 +656,6 @@ module pixelGPUDetails
                 p_digi[g_index] = pack(global_pix.row,global_pix.col,UInt32(adc[g_index]))
                 module_id[g_index] = det_id.module_id
                 raw_id_arr[g_index] = raw_id
-                @cuprintln(first)
         end
        # end
     end
