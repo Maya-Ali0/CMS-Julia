@@ -266,7 +266,7 @@ module pixelGPUDetails
     given as inputs the fed, link, and roc
     """
     function get_raw_id(cabling_map::SiPixelFedCablingMapGPU , fed::UInt8 , link::UInt32 , roc::UInt32)::DetIdGPU
-        index::UInt32 = fed*MAX_LINK*MAX_ROC + (link-1) * MAX_ROC + roc + 1 
+        index::UInt32 = Int(fed*MAX_LINK*MAX_ROC + (link-1) * MAX_ROC + roc + 1) 
         det_id = DetIdGPU(cabling_map.raw_id[index],cabling_map.roc_in_det[index],cabling_map.module_id[index])
     end
 
@@ -361,27 +361,27 @@ module pixelGPUDetails
         # Switch statement equivalent using multiple if-else
         if status == 1
             if debug
-                @printf("Error in Fed: %i, invalid channel Id (error_type = 35)\n", fedId)
+                @cuprintf("Error in Fed: %i, invalid channel Id (error_type = 35)\n", fed_id)
             end
             error_type = 35
         elseif status == 2
             if debug
-                @printf("Error in Fed: %i, invalid ROC Id (error_type = 36)\n", fedId)
+                @cuprintf("Error in Fed: %i, invalid ROC Id (error_type = 36)\n", fed_id)
             end
             error_type = 36
         elseif status == 3
             if debug
-                @printf("Error in Fed: %i, invalid dcol/pixel value (error_type = 37)\n", fedId)
+                @cuprintf("Error in Fed: %i, invalid dcol/pixel value (error_type = 37)\n", fed_id)
             end
             error_type = 37
         elseif status == 4
             if debug
-                @printf("Error in Fed: %i, dcol/pixel read out of order (error_type = 38)\n", fedId)
+                @cuprintf("Error in Fed: %i, dcol/pixel read out of order (error_type = 38)\n", fed_id)
             end
             error_type = 38
         else
             if debug
-                @printf("Cabling check returned unexpected result, status = %i\n", status)
+                @cuprintf("Cabling check returned unexpected result, status = %i\n", status)
             end
         end
     
@@ -413,36 +413,36 @@ module pixelGPUDetails
                 end
             end
             if debug && error_found
-                printf("Invalid ROC = 25 found (error_type = 25) \n")
+                @cuprintf("Invalid ROC = 25 found (error_type = 25) \n")
             end
         elseif error_found == 26
             if debug
-                printf("Gap word found (error_type = 26) \n")
+                @cuprintf("Gap word found (error_type = 26) \n")
             end
             error_found = true 
         elseif error_found == 27
             if debug
-                printf("Dummy word found (error_type = 27) \n")
+                @cuprintf("Dummy word found (error_type = 27) \n")
             end
             error_found = true 
         elseif error_found == 28
             if debug
-                printf("Error fifo nearly full (error_type = 28) \n")
+                @cuprintf("Error fifo nearly full (error_type = 28) \n")
             end
             error_found = true 
         elseif error_found == 29
             if debug
-                printf("Timeout on a channel (error_type = 29) \n")
+                @cuprintf("Timeout on a channel (error_type = 29) \n")
             end
             if ((error_word >> OMIT_ERR_shift) & OMIT_ERR_MASK)
                 if debug 
-                    printf("...first error_type=29 error, this gets masked out \n")
+                    @cuprintf("...first error_type=29 error, this gets masked out \n")
                 end
                 error_found = true
             end
         elseif error_found == 30
             if debug
-                printf("TBM error trailer (error_type 30) \n")
+                @cuprintf("TBM error trailer (error_type 30) \n")
             end
             state_match_bits = 4  # Length is 4
             state_match_shift = 8 # Starts at the 9th bit of the 32 bit word
@@ -451,7 +451,7 @@ module pixelGPUDetails
             
             if state_match != 1 && state_match != 8
                 if debug
-                    printf("FED error 30 with unexpected state bits (error_type = 30) \n")
+                    @cuprintf("FED error 30 with unexpected state bits (error_type = 30) \n")
                 end
             end
             if state_match == 1
@@ -460,7 +460,7 @@ module pixelGPUDetails
             error_found = true ; 
         elseif error_found == 31
             if debug 
-                printf("Event number error (error_type = 31)\n")
+                @cuprintf("Event number error (error_type = 31)\n")
             end
             error_found = true
         else
@@ -471,80 +471,81 @@ module pixelGPUDetails
 
 
 
-    function get_err_raw_id(fed_id::UInt8 , err_word::UInt32 , error_type :: UInt32 , cabling_map :: SiPixelFedCablingMapGPU, debug::Bool = false)
+    function get_err_raw_id(fed_id::UInt8 , err_word::UInt32 , error_type :: UInt32 , cabling_map :: SiPixelFedCablingMapGPU, debug::Bool = false)::UInt32
         r_id :: UInt32 = 0xffffffff
-        roc::UInt32 = 1
-        link::UInt32 = 1
-        r_id_temp::UInt32
-        if(error_type == 40)
-            # set dummy values for cabling just to get det_id from link
-            # cabling.dcol = 0 
-            # cabling.px_id = 2
-            roc = 1
-            link = (err_word >> LINK_SHIFT) & LINK_MASK
-            r_id_temp = get_raw_id(cabling_map,fed_id,link,roc).raw_id
-            if(r_id_temp != 9999)
-                r_id = r_id_temp
-            end
-        elseif error_type == 29
-            chan_nmbr = 0 
-            db0_shift = 0 
-            db1_shift = db0_shift + 1
-            db2_shift = db1_shift + 1 
-            db3_shift = db2_shift + 1 
-            db4_shift = db3_shift + 1 
-            data_bit_mask::UInt32 = ~(~UInt32(0) << 1)
-            ch1 = (err_word >> db0_shift) & data_bit_mask
-            ch2 = (err_word >> db1_shift) & data_bit_mask
-            ch3 = (err_word >> db2_shift) & data_bit_mask
-            ch4 = (err_word >> db3_shift) & data_bit_mask
-            ch5 = (err_word >> db4_shift) & data_bit_mask
-            block_bits = 3 # length of block is 3 bits
-            block_shift = 8 # start bit is the 9th bit
-            block_mask::UInt32 = ~(~UInt32(0) << block_bits)
-            block = (err_word >> block_shift) & block_mask
-            local_ch = 1*ch1 + 2*ch2 + 3*ch3 + 4*ch4 + 5*ch5
-            if(block % 2 == 0 )
-                chan_nmbr = (block ÷ 2) * 9 + local_ch
-            else
-                chan_nmbr = ((block - 1) ÷ 2) * 9 + 4 + local_ch
-            end
+        # roc::UInt32 = 1
+        # link::UInt32 = 1
+        # r_id_temp::UInt32 = 0
+        # if(error_type == 40)
+        #     # set dummy values for cabling just to get det_id from link
+        #     # cabling.dcol = 0 
+        #     # cabling.px_id = 2
+        #     roc = 1
+        #     link = (err_word >> LINK_SHIFT) & LINK_MASK
+        #     r_id_temp = get_raw_id(cabling_map,fed_id,link,roc).raw_id
+        #     if(r_id_temp != 9999)
+        #         r_id = r_id_temp
+        #     end
+        # elseif error_type == 29
+        #     chan_nmbr = 0 
+        #     db0_shift = 0 
+        #     db1_shift = db0_shift + 1
+        #     db2_shift = db1_shift + 1 
+        #     db3_shift = db2_shift + 1 
+        #     db4_shift = db3_shift + 1 
+        #     data_bit_mask::UInt32 = ~(~UInt32(0) << 1)
+        #     ch1 = (err_word >> db0_shift) & data_bit_mask
+        #     ch2 = (err_word >> db1_shift) & data_bit_mask
+        #     ch3 = (err_word >> db2_shift) & data_bit_mask
+        #     ch4 = (err_word >> db3_shift) & data_bit_mask
+        #     ch5 = (err_word >> db4_shift) & data_bit_mask
+        #     block_bits = 3 # length of block is 3 bits
+        #     block_shift = 8 # start bit is the 9th bit
+        #     block_mask::UInt32 = ~(~UInt32(0) << block_bits)
+        #     block = (err_word >> block_shift) & block_mask
+        #     local_ch = 1*ch1 + 2*ch2 + 3*ch3 + 4*ch4 + 5*ch5
+        #     if(block % 2 == 0 )
+        #         chan_nmbr = (block ÷ 2) * 9 + local_ch
+        #     else
+        #         chan_nmbr = ((block - 1) ÷ 2) * 9 + 4 + local_ch
+        #     end
 
-            if !(chan_nmbr < 1 || chan_nmr > 36) # if it were to be the case it would signify an unexpected result
-                # set dummy values for cabling just to get det_id from link if in barrel
-                # cabling.dcol = 0
-                # cabling.px_id = 2
-                roc = 1
-                link = chan_nmbr
-                r_id_temp = get_raw_id(cabling_map,fed_id,link,roc).raw_id
+        #     if !(chan_nmbr < 1 || chan_nmbr > 36) # if it were to be the case it would signify an unexpected result
+        #         # set dummy values for cabling just to get det_id from link if in barrel
+        #         # cabling.dcol = 0
+        #         # cabling.px_id = 2
+        #         roc = 1
+        #         link = chan_nmbr
+        #         r_id_temp = get_raw_id(cabling_map,fed_id,link,roc).raw_id
                 
-                if(r_id_temp != 9999)
-                    r_id = r_id_temp
-                end
-            end
-        elseif error_type == 38
-            #cabling.dcol = 0
-            #cabling.px_id = 2
-            roc = (err_word >> ROC_SHIFT) & ROC_MASK
-            link = (err_word >> LINK_SHIFT) * LINK_MASK
-            r_id_temp = get_raw_id(cabling_map,fed_id,link,roc).raw_id
-            if(r_id_temp != 9999)
-                r_id = r_id_temp
-            end
-        end
-        return r_id
+        #         if(r_id_temp != 9999)
+        #             r_id = r_id_temp
+        #         end
+        #     end
+        # elseif error_type == 38
+        #     #cabling.dcol = 0
+        #     #cabling.px_id = 2
+        #     roc = (err_word >> ROC_SHIFT) & ROC_MASK
+        #     link = (err_word >> LINK_SHIFT) * LINK_MASK
+        #     r_id_temp = get_raw_id(cabling_map,fed_id,link,roc).raw_id
+        #     if(r_id_temp != 9999)
+        #         r_id = r_id_temp
+        #     end
+        # end
+        # return r_id
     end
 
 
     function raw_to_digi_kernal(cabling_map::SiPixelFedCablingMapGPU , mod_to_unp :: W , word_counter::Integer, 
                                 word::U , fed_ids::W , xx::V , yy::V ,
                                 adc::V , p_digi::U , raw_id_arr::U , module_id::V,
-                                err::X , use_quality_info::Bool , include_errors::Bool , debug::Bool) where {U <: AbstractVector{UInt32},V <: AbstractVector{UInt16},W <: AbstractVector{UInt8}, X <: AbstractVector{PixelErrorCompact}}
+                                err::X , use_quality_info::Bool , include_errors::Bool , debug::Bool) where {U <: AbstractVector{UInt32},V <: AbstractVector{UInt16},W <: AbstractVector{UInt8}, X}
                                 
-        first::UInt32 = 1
+        first::UInt32 = blockDim().x*(blockIdx().x-1) + threadIdx().x
+        stride::UInt32 = blockDim().x*gridDim().x
         n_end = word_counter
         #open("modtounp.txt","w") do filer
-        for i_loop ∈ first:n_end
+        for i_loop ∈ first:stride:n_end
             g_index = i_loop
             xx[g_index] = 0 
             yy[g_index] = 0 
@@ -573,8 +574,8 @@ module pixelGPUDetails
             skip_roc = (roc < MAX_ROC_INDEX) ? false : ( error_type != 0 )
             
             if include_errors && skip_roc
-                r_id::UInt32 = get_err_raw_id(fed_id,ww,error_type,cabling_map,debug)
-                push!(err,PixelErrorCompact(r_id,ww,error_type,fed_id))
+                # r_id::UInt32 = get_err_raw_id(fed_id,ww,error_type,cabling_map,debug)
+                # push!(err,PixelErrorCompact(r_id,ww,error_type,fed_id))
                 continue 
             end
             
@@ -617,7 +618,7 @@ module pixelGPUDetails
                         error = conversion_error(fed_id,3,debug) # use the device function and fill the arrays
                         push!(err,PixelErrorCompact(raw_id,ww,error,fed_id))
                         if debug
-                            printf("BPIX1 Error Status: %i\n", error)
+                            @cuprintf("BPIX1 Error Status: %i\n", error)
                         end
                         continue ; 
                     end
@@ -641,7 +642,7 @@ module pixelGPUDetails
                     error = conversion_error(fed_id,3,debug)
                     push!(err,PixelErrorCompact(raw_id,ww,error,fed_id))
                     if debug
-                        printf("Error status: %i %d %d %d %d\n", error, dcol, px_id, fed_id, roc)
+                        @cuprintf("Error status: %i %d %d %d %d\n", error, dcol, px_id, fed_id, roc)
                     end
                     continue 
                 end
@@ -655,6 +656,7 @@ module pixelGPUDetails
                 p_digi[g_index] = pack(global_pix.row,global_pix.col,UInt32(adc[g_index]))
                 module_id[g_index] = det_id.module_id
                 raw_id_arr[g_index] = raw_id
+                @cuprintln(first)
         end
        # end
     end
@@ -667,7 +669,7 @@ module pixelGPUDetails
         digis_d = gpu_algo.digis_d
         digis_d = cu(digis_d)
         if include_errors
-            digi_errors_d = cu(SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors)) # m
+            digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors) # m
         end
         
         clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES) # m
@@ -680,8 +682,8 @@ module pixelGPUDetails
         #     end
         word_fed = cu(word_fed)
         @assert(0 == word_counter % 2)
-        raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
-            digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, digi_errors_d.error_d,use_quality_info,include_errors,debug)
+        @cuda threads = 256 raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
+            digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, cu(digi_errors_d.error_d),use_quality_info,include_errors,debug)
         #end # end for raw to digi
         
         calib_digis(is_run_2,digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,gains,word_counter,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)

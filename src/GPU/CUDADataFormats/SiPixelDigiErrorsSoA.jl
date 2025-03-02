@@ -1,18 +1,17 @@
 
 
 module cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
+  using ..Patatrack:SimpleVector
   using ..DataFormatsSiPixelDigiInterfacePixelErrors
     """
     This module defines the data structure for storing SiPixel digi error data in a 
     format suitable for CUDA operations. It includes structures and functions 
     to manage and access the error data.
     """
-    struct SiPixelDigiErrorsSoA{V <: AbstractVector{PixelErrorCompact}}
-        error_d::V    # Pointer to the error data
-        data_d::V     # Pointer to the array of size maxFedWords    
+    struct SiPixelDigiErrorsSoA
+        error_d::SimpleVector{PixelErrorCompact,Vector{PixelErrorCompact},Vector{UInt32}}
+        data_d::SimpleVector{PixelErrorCompact,Vector{PixelErrorCompact},Vector{UInt32}}
         formatterErrors_h::PixelFormatterErrors         # Pixel formatter errors 
-        
-        
     end
     """
         Constructor for SiPixelDigiErrorsSoA
@@ -24,11 +23,11 @@ module cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
         """
         function SiPixelDigiErrorsSoA(maxFedWords, errors::PixelFormatterErrors)
             # Allocate memory for the data arrays.
-            data_d = Vector{PixelErrorCompact}(undef, maxFedWords)
-            fill!(data_d, PixelErrorCompact())  # Zero-initialize
+            data_d = SimpleVector{PixelErrorCompact,Vector{PixelErrorCompact},Vector{UInt32}}(maxFedWords)
+            # fill!(data_d, PixelErrorCompact())  # Zero-initialize
 
-            error_d = Vector{PixelErrorCompact}(undef, maxFedWords)
-            fill!(error_d, PixelErrorCompact())
+            error_d = SimpleVector{PixelErrorCompact,Vector{PixelErrorCompact},Vector{UInt32}}(maxFedWords)
+            # fill!(error_d, PixelErrorCompact())
 
             # @assert isempty(error_d)
             @assert length(data_d) == maxFedWords
