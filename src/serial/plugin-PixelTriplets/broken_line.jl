@@ -429,24 +429,39 @@ end
         println(f, "  s = ", s)
         println(f, "  u = ", u)
         # println("circle_cov 4: ", circle_results.cov)
-        circle_results.chi2 = 0.0
-        for i in 1:n
-            diff = Float64(Z[i] - u[i])
-            term1 = Float64(w[i] * (diff^2))
-            circle_results.chi2 += term1
+        open("chi_debug.txt", "a") do d
+            println(d, "New chi2 calculation")
+            circle_results.chi2 = 0.0
+            for i in 1:n
+                diff = Float64(Z[i] - u[i])
+                term1 = Float64(w[i] * (diff^2))
+                circle_results.chi2 += term1
+                print(d, "i = $i | term1 = $term1 | chi2 = $(circle_results.chi2)\n")
 
-            if i > 1 && i < n
-                d1 = Float64(s[i] - s[i-1])     # denominator part 1
-                d2 = Float64(s[i+1] - s[i])     # denominator part 2
-                d3 = Float64(s[i+1] - s[i-1])   # combined span
+                if i > 1 && i < n
+                    d1 = Float64(s[i] - s[i-1])     # denominator part 1
+                    d2 = Float64(s[i+1] - s[i])     # denominator part 2
+                    d3 = Float64(s[i+1] - s[i-1])   # combined span
 
-                term2_inner = (u[i-1] / d1) -
-                              ((u[i] * d3) / (d1 * d2)) +
-                              (u[i+1] / d2) +
-                              (d3 * u[n] / 2)
-                term2 = (term2_inner^2) / VarBeta[i]
-                circle_results.chi2 += term2
+                    term2_part1 = u[i-1] / d1
+                    term2_part2 = (u[i] * d3) / (d1 * d2)
+                    term2_part3 = u[i+1] / d2
+                    term2_part4 = (d3 * u[n+1]) / 2.0
+                    println(d, "u = ", u[n+1])
+                    print(d, "i = $i | term2_part1 = $term2_part1\n")
+                    print(d, "i = $i | term2_part2 = $term2_part2\n")
+                    print(d, "i = $i | term2_part3 = $term2_part3\n")
+                    print(d, "i = $i | term2_part4 = $term2_part4\n")
+
+                    term2_inner = term2_part1 - term2_part2 + term2_part3 + term2_part4
+                    term2 = (term2_inner^2) / VarBeta[i]
+                    circle_results.chi2 += term2
+
+                    print(d, "i = $i | d1 = $d1 | d2 = $d2 | d3 = $d3\n")
+                    print(d, "i = $i | term2_inner = $term2_inner | term2 = $term2 | chi2 = $(circle_results.chi2)\n")
+                end
             end
+            println(d, "circle.chi2 = ", circle_results.chi2)
         end
         println(f, "circle.chi2 = ", circle_results.chi2)
     end
