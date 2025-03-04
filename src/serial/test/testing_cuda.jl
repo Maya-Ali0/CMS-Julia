@@ -6,5 +6,8 @@
         @cuprintln(zz)
         return
     end
-    x= CuArray([1,2,3,4,5])
-    @cuda threads = 256 f(x)
+    x= CuArray([0,2,3,4,5])
+    @cuda f(x)
+
+    z = typeof(CUDA.@allowscalar x[1])
+    print(z)

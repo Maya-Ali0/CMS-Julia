@@ -60,8 +60,7 @@ function count_modules(id::T, module_start::U, cluster_id::V, num_elements::Inte
             j -= 1
         end
         if j < 1 || id[j] != id[i]
-            module_start_first = pointer(module_start)
-            loc = CUDA.atomic_add!(module_start_first,UInt32(1)) + 1
+            loc = CUDA.atomic_add!(pointer(module_start),UInt32(1)) + 1
             # module_start[1] = min(module_start[1] + 1, MAX_NUM_MODULES)
             # loc = module_start[1] + 1
             module_start[loc+1] = i
