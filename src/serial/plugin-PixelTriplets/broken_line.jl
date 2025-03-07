@@ -44,38 +44,38 @@ export PreparedBrokenLineData
 
 #     \return the variance of the planar angle ((theta_0)^2 /3).
 @inline function mult_scatt(length::Float64, B::Float64, R::Float64, Layer::Integer, slope::Float64)
-    open("debug_output.txt", "a") do f
-        println(f, "B: ", B)
-        println(f, "R: ", R)
+    # open("debug_output.txt", "a") do f
+        # println(f, "B: ", B)
+        # println(f, "R: ", R)
         pt2 = min(20.0, B * R)
-        println(f, "pt2: ", pt2)
+        # println(f, "pt2: ", pt2)
         pt2 = pt2 * pt2
-        println(f, "pt2 squared: ", pt2)
+        # println(f, "pt2 squared: ", pt2)
 
         XXI_0 = 0.06 / 16.0 # inverse of radiation length of the material in cm
-        println(f, "XXI_0: ", XXI_0)
+        # println(f, "XXI_0: ", XXI_0)
 
         geometry_factor = 0.7
         fact = geometry_factor * (13.6 / 1000)^2
-        println(f, "fact: ", fact)
+        # println(f, "fact: ", fact)
 
         slope_term = (1 + slope^2)
-        println(f, "slope_term: ", slope_term)
+        # println(f, "slope_term: ", slope_term)
 
         abs_length_XXI_0 = abs(length) * XXI_0
-        println(f, "abs_length_XXI_0: ", abs_length_XXI_0)
+        # println(f, "abs_length_XXI_0: ", abs_length_XXI_0)
 
         log_term = log(abs_length_XXI_0)
-        println(f, "log_term: ", log_term)
+        # println(f, "log_term: ", log_term)
 
         sqrt_term = (1 + 0.038 * log_term)^2
-        println(f, "sqrt_term: ", sqrt_term)
+        # println(f, "sqrt_term: ", sqrt_term)
 
         result = fact / (pt2 * slope_term) * abs_length_XXI_0 * sqrt_term
-        println(f, "output of mult_scatt: ", result)
+        # println(f, "output of mult_scatt: ", result)
 
         return result
-    end
+    # end
 end
 
 
@@ -288,7 +288,7 @@ end
 #     The step 2 is the least square fit, done by imposing the minimum constraint on the cost function and solving the consequent linear system. It determines the fitted parameters u and \Delta\kappa and their covariance matrix.
 #     The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
 @inline function BL_Circle_fit(hits::Matrix{Float64}, hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, circle_results::circle_fit)
-    open("debug_output.txt", "a") do f
+    # open("debug_output.txt", "a") do f
         n = size(hits, 2)
         circle_results.q = data.q
         radii = data.radii
@@ -298,9 +298,9 @@ end
         VarBeta = data.VarBeta
         slope = -circle_results.q / fast_fit[4]
 
-        println(f, "VarBeta before mult with slope: ", VarBeta)
+        # println(f, "VarBeta before mult with slope: ", VarBeta)
         VarBeta = VarBeta * (1.0 + (slope)^2)
-        println(f, "VarBeta after mult with slope: ", VarBeta)
+        # println(f, "VarBeta after mult with slope: ", VarBeta)
 
         for i in 1:n
             Z[i] = norm(radii[1:2, i]) - fast_fit[3]
@@ -318,10 +318,10 @@ end
             V[2, 2] = abs(hits_ge[3, i]) < tol ? 0.0 : hits_ge[3, i]
             RR = rotation_matrix(-radii[1, i] / radii[2, i])
             w[i] = 1.0 / ((RR*V*RR')[2, 2])
-            println(f, "Iteration $i:")
-            println(f, "  V = ", V)
-            println(f, "  RR = ", RR)
-            println(f, "  w[$i] = ", w[i])
+            # println(f, "Iteration $i:")
+            # println(f, "  V = ", V)
+            # println(f, "  RR = ", RR)
+            # println(f, "  w[$i] = ", w[i])
         end
 
         r_u = zeros(Float64, n + 1)
@@ -424,19 +424,19 @@ end
         # println("mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope): ", mult_scatt(S[2] - S[1], B, fast_fit[3], 2, slope))
 
         translate_karimaki(circle_results, d[1], d[2], jacobian)
-        println(f, " VarBeta: ", VarBeta)
-        println(f, "  Z = ", Z)
-        println(f, "  s = ", s)
-        println(f, "  u = ", u)
+        # println(f, " VarBeta: ", VarBeta)
+        # println(f, "  Z = ", Z)
+        # println(f, "  s = ", s)
+        # println(f, "  u = ", u)
         # println("circle_cov 4: ", circle_results.cov)
-        open("chi_debug.txt", "a") do d
-            println(d, "New chi2 calculation")
+        # open("chi_debug.txt", "a") do d
+            # println(d, "New chi2 calculation")
             circle_results.chi2 = 0.0
             for i in 1:n
                 diff = Float64(Z[i] - u[i])
                 term1 = Float64(w[i] * (diff^2))
                 circle_results.chi2 += term1
-                print(d, "i = $i | term1 = $term1 | chi2 = $(circle_results.chi2)\n")
+                # print(d, "i = $i | term1 = $term1 | chi2 = $(circle_results.chi2)\n")
 
                 if i > 1 && i < n
                     d1 = Float64(s[i] - s[i-1])     # denominator part 1
@@ -447,24 +447,24 @@ end
                     term2_part2 = (u[i] * d3) / (d1 * d2)
                     term2_part3 = u[i+1] / d2
                     term2_part4 = (d3 * u[n+1]) / 2.0
-                    println(d, "u = ", u[n+1])
-                    print(d, "i = $i | term2_part1 = $term2_part1\n")
-                    print(d, "i = $i | term2_part2 = $term2_part2\n")
-                    print(d, "i = $i | term2_part3 = $term2_part3\n")
-                    print(d, "i = $i | term2_part4 = $term2_part4\n")
+                    # println(d, "u = ", u[n+1])
+                    # print(d, "i = $i | term2_part1 = $term2_part1\n")
+                    # print(d, "i = $i | term2_part2 = $term2_part2\n")
+                    # print(d, "i = $i | term2_part3 = $term2_part3\n")
+                    # print(d, "i = $i | term2_part4 = $term2_part4\n")
 
                     term2_inner = term2_part1 - term2_part2 + term2_part3 + term2_part4
                     term2 = (term2_inner^2) / VarBeta[i]
                     circle_results.chi2 += term2
 
-                    print(d, "i = $i | d1 = $d1 | d2 = $d2 | d3 = $d3\n")
-                    print(d, "i = $i | term2_inner = $term2_inner | term2 = $term2 | chi2 = $(circle_results.chi2)\n")
+                    # print(d, "i = $i | d1 = $d1 | d2 = $d2 | d3 = $d3\n")
+                    # print(d, "i = $i | term2_inner = $term2_inner | term2 = $term2 | chi2 = $(circle_results.chi2)\n")
                 end
             end
-            println(d, "circle.chi2 = ", circle_results.chi2)
-        end
-        println(f, "circle.chi2 = ", circle_results.chi2)
-    end
+            # println(d, "circle.chi2 = ", circle_results.chi2)
+        # end
+        # println(f, "circle.chi2 = ", circle_results.chi2)
+    # end
 
     return circle_results.cov
 end
@@ -486,7 +486,7 @@ end
 # The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
 # */
 @inline function BL_Line_fit(hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, line_results::line_fit)
-    open("debug_output.txt", "a") do f
+    # open("debug_output.txt", "a") do f
         n = size(hits_ge, 2)
         radii = data.radii
         S = data.S
@@ -616,7 +616,7 @@ end
             # println(f, "------------------------------------------------")
             # flush(f)
         end
-    end
+    # end
 
     return line_results
 end

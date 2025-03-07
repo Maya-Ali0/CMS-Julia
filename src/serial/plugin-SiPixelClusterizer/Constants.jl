@@ -16,13 +16,13 @@ module constants
      OMIT_ERR
     Type: Int
     """
-    CRC_bits = 1
-    LINK_bits = 6
-    ROC_bits = 5
-    DCOL_bits = 5
-    PXID_bits = 8
-    ADC_bits = 8
-    OMIT_ERR_bits = 1
+    const CRC_bits = 1
+    const LINK_bits = 6
+    const ROC_bits = 5
+    const DCOL_bits = 5
+    const PXID_bits = 8
+    const ADC_bits = 8
+    const OMIT_ERR_bits = 1
 
     """
     Bit shift for:
@@ -35,19 +35,19 @@ module constants
      OMIT_ERR
     Type: Int
     """
-    CRC_shift = 2
-    ADC_shift = 0
-    PXID_shift = ADC_shift + ADC_bits
-    DCOL_shift = PXID_shift + PXID_bits
-    ROC_shift = DCOL_shift + DCOL_bits
-    LINK_shift = ROC_shift + ROC_bits
-    OMIT_ERR_shift = 20
+    const CRC_shift = 2
+    const ADC_shift = 0
+    const PXID_shift = ADC_shift + ADC_bits
+    const DCOL_shift = PXID_shift + PXID_bits
+    const ROC_shift = DCOL_shift + DCOL_bits
+    const LINK_shift = ROC_shift + ROC_bits
+    const OMIT_ERR_shift = 20
 
     """
     Dummy detector ID
     Type: UInt32
     """
-    dummyDetId = 0xffffffff
+    const dummyDetId = 0xffffffff
 
     """
     Bit mask for:
@@ -59,10 +59,10 @@ module constants
      
     Type: UInt32 or UInt64
     """
-    CRC_mask = ~(~UInt64(0) << CRC_bits)
-    ERROR_mask = ~(~UInt32(0) << ROC_bits)
-    LINK_mask = ~(~UInt32(0) << LINK_bits)
-    ROC_mask = ~(~UInt32(0) << ROC_bits)
-    OMIT_ERR_mask = ~(~UInt32(0) << OMIT_ERR_bits)
+    const CRC_mask = ~(~UInt64(0) << CRC_bits)
+    const ERROR_mask = ~(~UInt32(0) << ROC_bits)
+    const LINK_mask = ~(~UInt32(0) << LINK_bits)
+    const ROC_mask = ~(~UInt32(0) << ROC_bits)
+    const OMIT_ERR_mask = ~(~UInt32(0) << OMIT_ERR_bits)
 
 end
