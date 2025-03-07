@@ -205,5 +205,9 @@ include("serial/Framework/Source.jl")
 include("serial/Framework/StreamSchedule.jl")
 include("serial/Framework/EventProcessor.jl")
 
+include("serial/CUDADataFormats/z_vertex_soa.jl")
+include("serial/plugin-PixelVertexFinding/gpu_vertex_finder.jl")
+include("serial/plugin-PixelVertexFinding/pixel_vertex_producer_cuda.jl")
+
 
 end

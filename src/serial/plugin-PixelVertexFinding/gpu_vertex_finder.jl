@@ -3,6 +3,8 @@ using ..VertexSOA: MAX_TRACKS, MAX_VTX, ZVertexSoA
 using ..Tracks:n_hits_track, stride_track
 using ..Patatrack:Quality,loose
 using ..histogram:HisToContainer, capacity, count, finalize, fill, for_each_in_bins
+using StaticArrays
+using ..Patatrack:TrackSOA
 # A seed is a track that serves as the starting point for forming a cluster.
 struct WorkSpace
     # Fields
@@ -106,7 +108,7 @@ function cluster_tracks_by_density(vertices,ws,min_T,eps,err_max,chi2_max)
     end
 
     finalize(hist)
-    @asset size(hist) == n_tracks
+    @assert size(hist) == n_tracks
 
     for i ∈ 1:n_tracks
         fill(hist,izt[i],UInt16(i))
@@ -195,7 +197,7 @@ function cluster_tracks_by_density(vertices,ws,min_T,eps,err_max,chi2_max)
     nv_intermediate = nv_final = found_clusters
 end
 
-function make(self::Producer,tk_soa::ZVertexSoA,pt_min::AbstractFloat)::ZVertexSoA
+function make(self::Producer,tk_soa::TrackSOA,pt_min::AbstractFloat)::ZVertexSoA
     vertices = ZVertexSoA()
     ws = WorkSpace()
     load_tracks(tk_soa,ws,pt_min)
@@ -359,7 +361,7 @@ function split_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
     end # loop on vertices
 end
 
-function sort_by_p2(vertices::ZVertexSoA,ws::Workspace)
+function sort_by_p2(vertices::ZVertexSoA,ws::WorkSpace)
     n_tracks = ws.n_tracks
     ptt2 = ws.ptt2
     nv_final = vertices.nv_final
