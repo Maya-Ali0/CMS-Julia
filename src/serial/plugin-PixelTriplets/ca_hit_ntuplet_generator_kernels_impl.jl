@@ -10,7 +10,7 @@ using ..Patatrack: data
 using DataStructures
 using Printf
 using ..Patatrack: CircleEq, compute, dca0, curvature
-using ..Patatrack: Quality, dup, bad
+using ..Patatrack: Quality, dup, bad, loose
 using ..histogram: n_bins, size, count_direct, fill_direct, tot_bins
 function maxNumber()
     return 32 * 1024
@@ -199,4 +199,39 @@ function kernel_fillMultiplicity(found_ntuplets, quality, tuple_multiplicity)
     end
 end
 
+function kernel_classify_tracks(tuples,tracks,cuts,quality)
+    first = 1
+    nt = n_bins(tuples)
+    for it ∈ first:nt
+        n_hits = size(tuples,it)
+        if(n_hits == 0)
+            break
+        end
+        if(quality[it] == dup)
+            continue
+        end
+        @assert(quality[it] == bad)
+        if(n_hits < 3)
+            continue
+        end
+        is_NAN = false
+        for i ∈ 1:5
+            isNaN |= isnan(tracks.stateAtBS.state[it,i])
+        end
+        if(is_NAN) # leave it bad
+            continue
+        end
+        pt = min(tracks.pt[it],cuts.chi2_max_pt)
+        chi2_cut = cuts.chi2_scale * (cuts.chi2_coeff[1] + pt * (cuts.chi2_coeff[2] + pt * (cuts.chi2_coeff[3] + pt * cuts.chi2_coeff[4])))
+
+        if(3f0 * tracks.chi2[it] >= chi2_cut)
+            continue
+        end
+        region = (n_hits > 3) ? cuts.quadruplet : cuts.triplet
+        is_ok = (abs(tip(tracks,it)) < region.max_tip)  && (tracks.pt[it] > region.min_pt) && (abs(zip(tracks,it)) < region.max_zip)
+        if is_ok
+            quality[it] = loose
+        end
+    end
+end
 end
