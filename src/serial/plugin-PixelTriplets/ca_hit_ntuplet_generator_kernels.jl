@@ -6,7 +6,7 @@ using StaticArrays: MArray, MVector
 using ..caConstants
 using ..gpuCACELL
 using ..gpuPixelDoublets: init_doublets, n_pairs, get_doublets_from_histo, fish_bone
-using ..kernelsImplementation: kernel_connect, kernel_find_ntuplets, kernel_marked_used, kernel_early_duplicate_remover, kernel_countMultiplicity, kernel_fillMultiplicity, kernel_fill_hit_indices, kernel_classify_tracks
+using ..kernelsImplementation: kernel_connect, kernel_find_ntuplets, kernel_marked_used, kernel_early_duplicate_remover, kernel_countMultiplicity, kernel_fillMultiplicity, kernel_fill_hit_indices, kernel_classify_tracks, kernel_count_hit_in_tracks
 using ..histogram: zero, bulk_finalize_fill, n_bins, finalize!
 using ..Patatrack: reset!
 export Params, Counters
@@ -221,7 +221,7 @@ function classify_tuples(self::CAHitNTupletGeneratorKernels,hh::HitsOnCPU,tracks
     kernel_classify_tracks(tuples_d,tracks_d,self.m_params.cuts,quality_d)
     kernel_fast_duplicate_remover(self.device_the_cells,self.device_n_cells,tuples_d,tracks_d)
     kernel_count_hit_in_tracks(tuples_d,quality_d,self.device_hit_to_tuple)
-    launch_finalize(self.device_hit_to_tuple)
+    finalize!(self.device_hit_to_tuple)
     kernel_fill_hit_in_tracks(tuples_d,quality_d,self.device_hit_to_tuple)
     kernel_triplet_cleaner(hist_view(hh),tuples_d,tracks_d,quality_d,self.device_hit_to_tuple)
 end
