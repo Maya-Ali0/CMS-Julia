@@ -6,7 +6,7 @@ using StaticArrays: MArray, MVector
 using ..caConstants
 using ..gpuCACELL
 using ..gpuPixelDoublets: init_doublets, n_pairs, get_doublets_from_histo, fish_bone
-using ..kernelsImplementation: kernel_connect, kernel_find_ntuplets, kernel_marked_used, kernel_early_duplicate_remover, kernel_countMultiplicity, kernel_fillMultiplicity, kernel_fill_hit_indices
+using ..kernelsImplementation: kernel_connect, kernel_find_ntuplets, kernel_marked_used, kernel_early_duplicate_remover, kernel_countMultiplicity, kernel_fillMultiplicity, kernel_fill_hit_indices, kernel_classify_tracks
 using ..histogram: zero, bulk_finalize_fill, n_bins, finalize!
 using ..Patatrack: reset!
 export Params, Counters
