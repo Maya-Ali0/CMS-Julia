@@ -215,4 +215,15 @@ function launch_kernels(self::CAHitNTupletGeneratorKernels, hh, tracks_d)
     # end
 end
 
+function classify_tuples(self::CAHitNTupletGeneratorKernels,hh::HitsOnCPU,tracks_d)
+    tuples_d = tracks_d.hit_indices
+    quality_d = tracks_d.m_quality
+    kernel_classify_tracks(tuples_d,tracks_d,self.m_params.cuts,quality_d)
+    kernel_fast_duplicate_remover(self.device_the_cells,self.device_n_cells,tuples_d,tracks_d)
+    kernel_count_hit_in_tracks(tuples_d,quality_d,self.device_hit_to_tuple)
+    launch_finalize(self.device_hit_to_tuple)
+    kernel_fill_hit_in_tracks(tuples_d,quality_d,self.device_hit_to_tuple)
+    kernel_triplet_cleaner(hist_view(hh),tuples_d,tracks_d,quality_d,self.device_hit_to_tuple)
+end
+
 end

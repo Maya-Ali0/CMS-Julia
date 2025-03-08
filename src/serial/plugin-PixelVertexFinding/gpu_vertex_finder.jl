@@ -49,8 +49,7 @@ struct Producer
 end
 function load_tracks(tracks,ws,pt_min)
     quality = tracks.m_quality
-    fit = tracks.state_at_bs
-
+    fit = tracks.stateAtBS
     for idx ∈ 1:stride_track(tracks)
         n_hits = n_hits_track(tracks,idx)
 
@@ -60,6 +59,7 @@ function load_tracks(tracks,ws,pt_min)
         if n_hits < 4 # no triplets 
             continue 
         end
+        
         if quality[idx] != loose
             continue
         end
