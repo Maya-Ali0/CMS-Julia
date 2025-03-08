@@ -291,9 +291,61 @@ function kernel_fill_hit_in_tracks(tuples,quality,hit_to_tuple)
             continue
         end
         for h ∈ tuples.begin_h(idx):tuples.end_h(indx)-1
-            fill_direct(hit_to_tuple,tuples.bins[h])
+            fill_direct(hit_to_tuple,tuples.bins[h],idx)
         end
     end
+end
+
+function kernel_triplet_cleaner(hhp,p_tuples,p_tracks,quality,phi_to_tuple)
+    hit_to_tuple = phi_to_tuple
+    found_Ntuplets = p_tuples
+    tracks = p_tracks
+    n_tot = n_bins(hit_to_tuple)
+    first = 1
+    for idx ∈ first:n_tot
+        if size(hit_to_tuple,idx) < 2
+            continue 
+        end
+        mc = 10000f0
+        im = 60000
+        maxNh = 0
+
+        # find maxNh track with max num hits
+        for it ∈ begin_h(hit_to_tuple,idx):end_h(hit_to_tuple,idx)-1
+            it = hit_to_tuple.bins[it]
+            nh = size(found_Ntuplets,it)
+            maxNh = max(maxNh,nh)
+        end
+        # kill all tracks shorter than maxNh
+        for it ∈ begin_h(hit_to_tuple,idx):end_h(hit_to_tuple,idx)-1
+            it = hit_to_tuple.bins[it]
+            nh = size(found_Ntuplets,it)
+            if maxNh != nh
+                quality[it] = dup
+            end
+        end
+
+        if maxNh > 3
+            continue
+        end
+        # For triples, choose best tip !
+        for it ∈ begin_h(hit_to_tuple,idx):end_h(hit_to_tuple,idx)-1
+            it = hit_to_tuple.bins[it]
+            if quality[it] != bad && abs(tip(tracks,it)) < mc
+                mc = abs(tip(tracks,it))
+                im = it
+            end
+        end
+        # mark duplicates
+        for it ∈ begin_h(hit_to_tuple,idx):end_h(hit_to_tuple,idx)-1
+            it = hit_to_tuple.bins[it]
+            if quality[it] != bad && it != im
+                quality[it] = dup
+            end
+        end
+
+
+    end 
 end
 
 end
