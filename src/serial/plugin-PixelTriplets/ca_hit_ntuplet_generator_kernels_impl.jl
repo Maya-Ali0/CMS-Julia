@@ -263,4 +263,20 @@ function kernel_fast_duplicate_remover(cells,n_cells,found_Ntuplets,tracks)
 
     end
 end
+
+function kernel_count_hit_in_tracks(tuples,quality,hit_to_tuple)
+    first = 1
+    n_tot = n_bins(tuples)
+    for idx ∈ first:n_tot
+        if size(tuples,idx) == 0
+            break
+        end
+        if quality[idx] != loose
+            continue
+        end
+        for h ∈ tuples.begin_h(idx):tuples.end_h(indx)-1
+            count_direct(hit_to_tuple,tuples.bins[h])
+        end
+    end
+end
 end
