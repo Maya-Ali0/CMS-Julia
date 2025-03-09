@@ -1,5 +1,5 @@
 using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h: n_hits
-using .cAHitNtupletGenerator: Counters, Params, CAHitNTupletGeneratorKernels, build_doublets, launch_kernels, resetCAHitNTupletGeneratorKernels, fill_hit_det_indices
+using .cAHitNtupletGenerator: Counters, Params, CAHitNTupletGeneratorKernels, build_doublets, launch_kernels, resetCAHitNTupletGeneratorKernels, fill_hit_det_indices, classify_tuples
 using .Tracks: TrackSOA, hit_indices
 using .RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h
 using TaskLocalValues
@@ -61,6 +61,7 @@ struct CAHitNtupletGeneratorOnGPU
     end
 end
 
+
 function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DHeterogeneous, b_field::AbstractFloat)
     # Create PixelTrackHeterogeneous
     tracks = TrackSOA()
@@ -90,5 +91,7 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DH
     # end
 
     launchBrokenLineKernelsOnCPU(fitter, hist_view(hits_d), n_hits(hits_d), UInt32(24 * 1024))
+    
+    classify_tuples(kernels,hits_d,tracks)
     return tracks
 end

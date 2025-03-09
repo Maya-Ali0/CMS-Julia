@@ -44,12 +44,12 @@ function phi(track::TrackSOAT, i::Int)::Float32
     return track.stateAtBS.state[i][1]
 end
 
-function tip(track::TrackSOAT, i::Int)::Float32
-    return track.stateAtBS.state[i][2]
+function tip(track::TrackSOAT, i::Integer)::Float32
+    return track.stateAtBS.state[i,2]
 end
 
-function zip(track::TrackSOAT, i::Int)::Float32
-    return track.stateAtBS.state[i][5]
+function zip(track::TrackSOAT, i::Integer)::Float32
+    return track.stateAtBS.state[i,5]
 end
 
 const MAX_NUMBER = 32 * 1024

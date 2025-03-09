@@ -11,7 +11,8 @@ using DataStructures
 using Printf
 using ..Patatrack: CircleEq, compute, dca0, curvature
 using ..Patatrack: Quality, dup, bad, loose
-using ..histogram: n_bins, size, count_direct, fill_direct, tot_bins
+using ..histogram: n_bins, size, count_direct, fill_direct, tot_bins, begin_h, end_h
+using ..Tracks: tip, zip
 function maxNumber()
     return 32 * 1024
 end
@@ -216,7 +217,7 @@ function kernel_classify_tracks(tuples,tracks,cuts,quality)
         end
         is_NAN = false
         for i ∈ 1:5
-            isNaN |= isnan(tracks.stateAtBS.state[it,i])
+            is_NAN |= isnan(tracks.stateAtBS.state[it,i])
         end
         if(is_NAN) # leave it bad
             continue
@@ -228,7 +229,7 @@ function kernel_classify_tracks(tuples,tracks,cuts,quality)
             continue
         end
         region = (n_hits > 3) ? cuts.quadruplet : cuts.triplet
-        is_ok = (abs(tip(tracks,it)) < region.max_tip)  && (tracks.pt[it] > region.min_pt) && (abs(zip(tracks,it)) < region.max_zip)
+        is_ok = (abs(tip(tracks,it)) < region.max_tip) && (tracks.pt[it] > region.min_pt) && (abs(zip(tracks,it)) < region.max_zip)
         if is_ok
             quality[it] = loose
         end
@@ -239,23 +240,23 @@ end
 function kernel_fast_duplicate_remover(cells,n_cells,found_Ntuplets,tracks)
     @assert(n_cells != 0)
     first = 1
-    nt = n_cells
+    nt = n_cells[1]
     for idx ∈ first:nt
         this_cell = cells[idx]
-        if size(this_cell.the_tracks) < 2
+        if this_cell.the_tracks.m_size < 2
             continue
         end
         mc = 10000f0
         im = 60000
         score = it -> abs(tip(tracks,it))
-        for it ∈ 1:this_cell.tracks.m_size
+        for it ∈ 1:this_cell.the_tracks.m_size
             if tracks.m_quality[it]  == loose && score(it) < mc
                 mc = score(it)
                 im = it
             end
         end
 
-        for it ∈ 1:this_cell.tracks.m_size
+        for it ∈ 1:this_cell.the_tracks.m_size
             if tracks.m_quality[it] != bad && it != im
                 tracks.m_quality[it] = dup
             end
@@ -274,8 +275,8 @@ function kernel_count_hit_in_tracks(tuples,quality,hit_to_tuple)
         if quality[idx] != loose
             continue
         end
-        for h ∈ tuples.begin_h(idx):tuples.end_h(indx)-1
-            count_direct(hit_to_tuple,tuples.bins[h])
+        for h ∈ begin_h(tuples,idx)-1:end_h(tuples,idx)-2
+            count_direct(hit_to_tuple,UInt32(tuples.bins[h]))
         end
     end
 end
@@ -290,8 +291,8 @@ function kernel_fill_hit_in_tracks(tuples,quality,hit_to_tuple)
         if quality[idx] != loose
             continue
         end
-        for h ∈ tuples.begin_h(idx):tuples.end_h(indx)-1
-            fill_direct(hit_to_tuple,tuples.bins[h],idx)
+        for h ∈ begin_h(tuples,idx)-1:end_h(tuples,idx)-2
+            fill_direct(hit_to_tuple,UInt32(tuples.bins[h]),UInt16(idx))
         end
     end
 end
@@ -309,7 +310,6 @@ function kernel_triplet_cleaner(hhp,p_tuples,p_tracks,quality,phi_to_tuple)
         mc = 10000f0
         im = 60000
         maxNh = 0
-
         # find maxNh track with max num hits
         for it ∈ begin_h(hit_to_tuple,idx):end_h(hit_to_tuple,idx)-1
             it = hit_to_tuple.bins[it]

@@ -17,7 +17,7 @@ ed_modules::Vector{String} = String[]
 es_modules::Vector{String} = String[]
 
 if(!empty)
-    ed_modules = ["SiPixelRawToClusterCUDA","BeamSpotToPOD", "SiPixelRecHitCUDA", "CAHitNtupletCUDA", "PixelVertexProducerCUDA"]
+    ed_modules = ["SiPixelRawToClusterCUDA","BeamSpotToPOD", "SiPixelRecHitCUDA", "CAHitNtupletCUDA", #="PixelVertexProducerCUDA"=#]
     es_modules = ["SiPixelFedCablingMapGPUWrapperESProducer","SiPixelGainCalibrationForHLTGPUESProducer","PixelCPEFastESProducer","BeamSpotESProducer"]
 end
 if(validation)
