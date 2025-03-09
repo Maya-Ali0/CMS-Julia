@@ -110,20 +110,21 @@ end
     
 """
 
-struct LayerGeometry
-    layerStart::Vector{UInt32}
-    layer::Vector{UInt8}
+struct LayerGeometry{v <: AbstractVector{UInt32},w <: AbstractVector{UInt8}}
+    layerStart::v
+    layer::w
 
-    function LayerGeometry(a, b)
-        new(a, b)
+    function LayerGeometry(a::v, b::w) where {v <: AbstractVector{UInt32},w <: AbstractVector{UInt8}}
+        new{Vector{UInt32},Vector{UInt8}}(a, b)
     end
     function LayerGeometry()
-        new(
+        new{Vector{UInt32},Vector{UInt8}}(
             Vector{UInt32}(),  # Empty vector for layerStart
             Vector{UInt8}()    # Empty vector for layer
         )
     end
 end
+Adapt.@adapt_structure LayerGeometry
 """
  ### ParamsOnGPU
     Struct for storing parameters needed on GPU, including common parameters, detector parameters, 
