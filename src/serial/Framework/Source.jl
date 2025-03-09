@@ -19,7 +19,7 @@ mutable struct Source
 end
 
 function produce(src::Source, streamId::Int, reg::ProductRegistry)
-    if src.numEvents.value > 1
+    if src.numEvents.value > 1000
         return nothing
     end
 
@@ -34,7 +34,6 @@ function produce(src::Source, streamId::Int, reg::ProductRegistry)
     #     return nothing
     # end
     ev = Event(streamId, iev, reg)
-
     emplace(ev, src.rawToken, src.raw_events[iev])
 
 

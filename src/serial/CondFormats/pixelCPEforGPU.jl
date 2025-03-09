@@ -4,6 +4,9 @@ using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopolog
 using ..SOA_h
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 using ..Printf
+using ..CUDA
+using ..Adapt
+
 
 export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry, MaxHitsInIter, commonParams, detParams, position_corr, errorFromDB, layerGeometry
 """
@@ -133,9 +136,9 @@ end
     - `m_averageGeometry::AverageGeometry`: Average geometry data.
 
 """
-struct ParamsOnGPU
+struct ParamsOnGPU{v <: AbstractVector{DetParams}}
     m_commonParams::CommonParams
-    m_detParams::Vector{DetParams}
+    m_detParams::v
     m_layerGeometry::LayerGeometry
     m_averageGeometry::AverageGeometry
 
@@ -153,6 +156,7 @@ struct ParamsOnGPU
     end
 end
 
+Adapt.@adapt_structure ParamsOnGPU
 
 function commonParams(params::ParamsOnGPU)
     return params.m_commonParams
