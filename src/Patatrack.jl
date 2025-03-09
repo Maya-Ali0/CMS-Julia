@@ -197,7 +197,6 @@ include("serial/plugin-PixelTriplets/helix_fit_on_gpu.jl")
 include("serial/plugin-PixelTriplets/broken_line_fit_on_gpu.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet_generator.jl")
 include("serial/plugin-PixelTriplets/ca_hit_ntuplet.jl")
-include("serial/plugin-Validation/count_to_validator.jl")
 include("serial/plugin-Validation/simple_atomic_histo.jl")
 include("serial/plugin-Validation/his_to_validator.jl")
 
@@ -209,5 +208,5 @@ include("serial/CUDADataFormats/z_vertex_soa.jl")
 include("serial/plugin-PixelVertexFinding/gpu_vertex_finder.jl")
 include("serial/plugin-PixelVertexFinding/pixel_vertex_producer_cuda.jl")
 
-
+include("serial/plugin-Validation/count_to_validator.jl")
 end

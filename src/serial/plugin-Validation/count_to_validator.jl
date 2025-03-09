@@ -7,10 +7,11 @@ struct CountValidator <: EDProducer
     digi_token::EDGetTokenT{SiPixelDigisSoA}
     cluster_token::EDGetTokenT{SiPixelClustersSoA}
     track_token::EDGetTokenT{TrackSOA}
-
+    vertex_token::EDGetTokenT{ZVertexSoA}
+    vertex_count_token::EDGetTokenT{VertexCount}
     function CountValidator(reg::ProductRegistry)
         new(consumes(reg,DigiClusterCount),consumes(reg,TrackCount),consumes(reg,SiPixelDigisSoA),
-        consumes(reg,SiPixelClustersSoA),consumes(reg,TrackSOA))
+        consumes(reg,SiPixelClustersSoA),consumes(reg,TrackSOA),consumes(reg,ZVertexSoA),consumes(reg,VertexCount))
     end
 end
 
@@ -28,6 +29,8 @@ function produce(self::CountValidator,i_event::Event,i_setup::EventSetup)
     digis = get(i_event,self.digi_token)
     clusters = get(i_event,self.cluster_token)
     tracks = get(i_event,self.track_token)
+    vertices = get(i_event,self.vertex_token)
+    vertex_count = get(i_event,self.vertex_count_token)
     if(digis.n_modules_h != digi_cluster_count.n_modules)
         println(buffer,"Number of modules is: ",digis.n_modules," Expected ",digi_cluster_count.n_modules)
         good_event = false 
@@ -58,6 +61,15 @@ function produce(self::CountValidator,i_event::Event,i_setup::EventSetup)
     end
     if rel >= track_tolerance
         println(buffer,"N(track) is ",n_tracks," expected ", track_count.n_tracks, ", relative difference ",rel)
+        good_event = false
+    end
+    sum_vertex_difference = 0 
+    diff = abs(Int(vertices.nv_final) - Int(vertex_count.vertices))
+    if diff != 0
+        sum_vertex_difference += diff
+    end
+    if diff >= vertex_tolerance
+        println(buffer,"N(vertices) is ",vertices.nv_final," expected ", vertex_count.vertices, ", relative difference ",diff)
         good_event = false
     end
 

@@ -23,7 +23,8 @@ end
 
 function produce(self::PixelVertexProducerCUDA,i_event::Event,es::EventSetup)
     tracks = get(i_event,self.token_cpu_track)
-    make(self.m_gpu_algo,tracks,self.m_pt_min)
+    vertices = make(self.m_gpu_algo,tracks,self.m_pt_min)
+    emplace(i_event,self.token_cpu_vertex,vertices)
 end
 
 add_plugin_module("PixelVertexProducerCUDA",x -> PixelVertexProducerCUDA(x))
