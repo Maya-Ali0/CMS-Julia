@@ -241,6 +241,7 @@ function kernel_fast_duplicate_remover(cells,n_cells,found_Ntuplets,tracks)
     @assert(n_cells != 0)
     first = 1
     nt = n_cells[1]
+    
     for idx ∈ first:nt
         this_cell = cells[idx]
         if this_cell.the_tracks.m_size < 2
@@ -249,14 +250,15 @@ function kernel_fast_duplicate_remover(cells,n_cells,found_Ntuplets,tracks)
         mc = 10000f0
         im = 60000
         score = it -> abs(tip(tracks,it))
-        for it ∈ 1:this_cell.the_tracks.m_size
+        for it_index ∈ 1:this_cell.the_tracks.m_size
+            it = this_cell.the_tracks[it_index]
             if tracks.m_quality[it]  == loose && score(it) < mc
                 mc = score(it)
                 im = it
             end
         end
-
-        for it ∈ 1:this_cell.the_tracks.m_size
+        for it_index ∈ 1:this_cell.the_tracks.m_size
+            it = this_cell.the_tracks[it_index]
             if tracks.m_quality[it] != bad && it != im
                 tracks.m_quality[it] = dup
             end

@@ -68,6 +68,8 @@ function load_tracks(tracks,ws,pt_min)
         if pt < pt_min 
             continue
         end
+        # println(tracks.m_quality[1])
+        # sleep(100)
         ws.n_tracks += 1
         it = ws.n_tracks
         ws.index_track[it] = idx
