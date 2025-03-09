@@ -1,12 +1,12 @@
 module gpuVertexFinder
 using ..VertexSOA: MAX_TRACKS, MAX_VTX, ZVertexSoA
-using ..Tracks:n_hits_track, stride_track
+using ..Tracks:n_hits_track, stride_track, zip
 using ..Patatrack:Quality,loose
-using ..histogram:HisToContainer, capacity, count, finalize, fill, for_each_in_bins
+using ..histogram:HisToContainer, capacity, count!, finalize!, fill!, for_each_in_bins, size
 using StaticArrays
 using ..Patatrack:TrackSOA
 # A seed is a track that serves as the starting point for forming a cluster.
-struct WorkSpace
+mutable struct WorkSpace
     # Fields
     n_tracks::UInt32               # Number of "selected tracks"
     index_track::Vector{UInt16}        # Index of original track
@@ -71,8 +71,8 @@ function load_tracks(tracks,ws,pt_min)
         ws.n_tracks += 1
         it = ws.n_tracks
         ws.index_track[it] = idx
-        ws.zt[it] = tracks.zip(idx)
-        ws.ezt2[it] = fit.covariance(idx)(14)
+        ws.zt[it] = zip(tracks,idx)
+        ws.ezt2[it] = fit.covariance[idx,14]
         ws.ptt2[it] = pt*pt
     end
 
@@ -98,20 +98,20 @@ function cluster_tracks_by_density(vertices,ws,min_T,eps,err_max,chi2_max)
         @assert i <= MAX_TRACKS
         INT8_MIN = typemin(Int8)
         INT8_MAX = typemax(Int8)
-        iz::Int32 = zt[i] * 10.
+        iz::Int32 = trunc(zt[i] * 10.)
         iz = min(max(iz,INT8_MIN),INT8_MAX)
         izt[i] = iz - INT8_MIN
         @assert izt[i] >= 0 
         @assert izt[i] < 256
-        count(hist,izt[i])
+        count!(hist,izt[i])
         iv[i] = i # associate each track with a vertex index
     end
 
-    finalize(hist)
+    finalize!(hist)
     @assert size(hist) == n_tracks
 
     for i ∈ 1:n_tracks
-        fill(hist,izt[i],UInt16(i))
+        fill!(hist,izt[i],UInt16(i))
     end
     #count neighbors
     for i ∈ 1:n_tracks
@@ -147,7 +147,7 @@ function cluster_tracks_by_density(vertices,ws,min_T,eps,err_max,chi2_max)
             if dist > mdist
                 return
             end
-            if dist^2 > chi2max * (ezt2[i] + ezt2[j])
+            if dist^2 > chi2_max * (ezt2[i] + ezt2[j])
                 return  # break natural order
             end
             mdist = dist
@@ -249,7 +249,6 @@ function fit_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
         zv[iv[i]] += zt[i]*w
         wv[iv[i]] += w
     end
-
     for i ∈ 1:found_clusters
         @assert wv[i] > 0 
         zv[i] /= wv[i]
@@ -361,13 +360,13 @@ function split_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
     end # loop on vertices
 end
 
-function sort_by_p2(vertices::ZVertexSoA,ws::WorkSpace)
+function sort_by_pt2(vertices::ZVertexSoA,ws::WorkSpace)
     n_tracks = ws.n_tracks
     ptt2 = ws.ptt2
     nv_final = vertices.nv_final
     iv = ws.iv
     ptv2 = vertices.ptv2
-    sort_ind = vertices.sort_ind
+    sort_ind = vertices.sortInd
 
     if nv_final < 1 
         return
