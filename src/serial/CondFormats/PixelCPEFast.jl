@@ -1,8 +1,9 @@
 using .PixelGPU_h
 using .Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology
 
-struct PixelCPEFast
-    m_detParamsGPU::Vector{DetParams}
+
+struct PixelCPEFast{v <: AbstractVector{DetParams}}
+    m_detParamsGPU::v
     m_commonParamsGPU::CommonParams
     m_layerGeometry::LayerGeometry
     m_averageGeometry::AverageGeometry
