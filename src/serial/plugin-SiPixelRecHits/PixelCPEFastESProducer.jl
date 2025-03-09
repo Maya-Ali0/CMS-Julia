@@ -84,7 +84,7 @@ function readCpeFast(io::IOStream,es::EventSetup)
     ladderMinZ = readData(io,Float32,number_of_ladders_in_barrel)
     ladderMaxZ = readData(io,Float32,number_of_ladders_in_barrel)
 
-    endCapZ = zeros(Float64, 2)
+    endCapZ = zeros(Float32, 2)
     endCapZ[1] = read(io,Float32); endCapZ[2] = read(io,Float32);
 
     averageGeometry = AverageGeometry(UInt32(numberOfLaddersInBarrel),ladderZ,ladderX,ladderY,ladderR,ladderMinZ,ladderMaxZ,endCapZ)
