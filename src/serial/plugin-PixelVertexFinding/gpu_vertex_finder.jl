@@ -316,8 +316,8 @@ function split_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
             end
         end
         # the new vertices
-        z_new = @MArray [0,0]
-        w_new = @MArray [0,0]
+        z_new = @MArray [0f0,0f0]
+        w_new = @MArray [0f0,0f0]
         @assert (nq == (nn[kv] + 1) )
         
         max_iter = 20
@@ -348,7 +348,7 @@ function split_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
                 more = false 
             end
         end
-        if w_new[1] == 0 | w_new[2] == 0 
+        if w_new[1] == 0 || w_new[2] == 0 
             continue 
         end
         dist_2 = (z_new[1] - z_new[2]) ^ 2
