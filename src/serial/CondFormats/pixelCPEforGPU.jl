@@ -4,7 +4,6 @@ using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopolog
 using ..SOA_h
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 using ..Printf
-using ..CUDA
 using ..Adapt
 
 

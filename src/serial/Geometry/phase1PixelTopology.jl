@@ -1,6 +1,7 @@
 module Geometry_TrackerGeometryBuilder_phase1PixelTopology_h
 export number_of_module_in_barrel, AverageGeometry, find_max_module_stride, local_x, local_y, is_big_pix_y, is_big_pix_x, number_of_ladders_in_barrel
 module phase1PixelTopology
+using ...Adapt
 export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_index_size, find_max_module_stride, local_x, local_y, is_big_pix_y, is_big_pix_x, number_of_ladders_in_barrel, last_row_in_module, last_col_in_module, x_offset, y_offset
     # Constants defining the dimensions of ROCs and modules
     const num_rows_in_ROC = 80
@@ -309,15 +310,15 @@ export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_inde
     - `ladderMaxZ::SVector{number_of_ladders_in_barrel, Float32}`: Maximum Z-coordinates of the ladders.
     - `endCapZ::NTuple{2, Float32}`: Z-coordinates for the positive and negative endcap Layer1.
     """
-    struct AverageGeometry
+    struct AverageGeometry{v <: AbstractVector{Float32}}
         number_of_ladders_in_barrel::UInt32
-        ladderZ::Vector{Float32}
-        ladderX::Vector{Float32}
-        ladderY::Vector{Float32}
-        ladderR::Vector{Float32}
-        ladderMinZ::Vector{Float32}
-        ladderMaxZ::Vector{Float32}
-        endCapZ::Vector{Float32}  # just for pos and neg Layer1
+        ladderZ::v
+        ladderX::v
+        ladderY::v
+        ladderR::v
+        ladderMinZ::v
+        ladderMaxZ::v
+        endCapZ::v  # just for pos and neg Layer1
         
 
         function AverageGeometry(number_of_ladders_in_barrel,ladderZ,ladderX,ladderY,ladderR,ladderMinZ,ladderMaxZ,endCapZ)
@@ -336,6 +337,8 @@ export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_inde
             new(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
         end
     end
+    Adapt.@adapt_structure AverageGeometry
+
     
 
 end
