@@ -1,0 +1,16 @@
+JULIA = julia
+JULIA_FLAGS = --project=.
+
+SCRIPT = main.jl
+ARGS = 10
+
+all: run
+
+run:
+	$(JULIA) $(JULIA_FLAGS) $(SCRIPT) $(ARGS)
+
+setup:
+	$(JULIA) $(JULIA_FLAGS) -e 'using Pkg; Pkg.instantiate()'
+
+clean:
+	rm -f *.tmp
