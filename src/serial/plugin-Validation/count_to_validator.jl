@@ -70,3 +70,4 @@ function produce(self::CountValidator,i_event::Event,i_setup::EventSetup)
         print(summary)
     end
 end
+add_plugin_module("CountValidator",x -> CountValidator(x))

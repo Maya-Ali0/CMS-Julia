@@ -68,13 +68,11 @@ function load_tracks(tracks,ws,pt_min)
         if pt < pt_min 
             continue
         end
-        # println(tracks.m_quality[1])
-        # sleep(100)
         ws.n_tracks += 1
         it = ws.n_tracks
         ws.index_track[it] = idx
         ws.zt[it] = zip(tracks,idx)
-        ws.ezt2[it] = fit.covariance[idx,14]
+        ws.ezt2[it] = fit.covariance[idx,15]
         ws.ptt2[it] = pt*pt
     end
 
@@ -95,7 +93,6 @@ function cluster_tracks_by_density(vertices,ws,min_T,eps,err_max,chi2_max)
     hist = HisToContainer{UInt8, 256, 16000,8,UInt16}()
     fill!(hist.off,0)
     @assert n_tracks <= capacity(hist)
-
     for i ∈ 1:n_tracks
         @assert i <= MAX_TRACKS
         INT8_MIN = typemin(Int8)
@@ -115,16 +112,21 @@ function cluster_tracks_by_density(vertices,ws,min_T,eps,err_max,chi2_max)
     for i ∈ 1:n_tracks
         fill!(hist,izt[i],UInt16(i))
     end
+    # print(Int.(hist.off[1:256]))
     #count neighbors
     for i ∈ 1:n_tracks
         if ezt2[i] > err2_max # if the uncertainty in the z position of the vertex is too high ignore it
             continue
-        end
+        end 
         loop = (j) -> begin
             if i == j
                 return
             end
             dist = abs(zt[i] - zt[j])
+            # println("i: ",i," j: ",j)
+            # println(dist)
+            # println(izt[j])
+            # sleep(2)
             if dist > eps
                 return
             end
@@ -133,6 +135,7 @@ function cluster_tracks_by_density(vertices,ws,min_T,eps,err_max,chi2_max)
             end
             nn[i] += 1
         end
+        # println(izt[i])
         for_each_in_bins(hist,izt[i],1,loop)
     end
 
@@ -195,8 +198,8 @@ function cluster_tracks_by_density(vertices,ws,min_T,eps,err_max,chi2_max)
     for i ∈ 1:n_tracks
         iv[i] = -iv[i]
     end
-
-    nv_intermediate = nv_final = found_clusters
+    # println(found_clusters)
+    ws.nv_intermediate = vertices.nv_final = found_clusters
 end
 
 function make(self::Producer,tk_soa::TrackSOA,pt_min::AbstractFloat)::ZVertexSoA
@@ -234,11 +237,11 @@ function fit_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
     @assert nv_final <= nv_intermediate
     nv_final = nv_intermediate
     found_clusters = nv_final
-    # for i ∈ 1:found_clusters Already zerod out in constructor
-    #     zv[i] = 0
-    #     wv[i] = 0 
-    #     chi2[i] = 0 
-    # end
+    for i ∈ 1:found_clusters
+        zv[i] = 0
+        wv[i] = 0 
+        chi2[i] = 0 
+    end
     noise = 0 
     for i ∈ 1:nt
         if iv[i] > 9990
@@ -246,7 +249,8 @@ function fit_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
             continue
         end
         @assert iv[i] >= 1
-        @assert iv[i] <= int(found_clusters)
+        # print(Int(found_clusters))
+        @assert iv[i] <= Int(found_clusters)
         w = 1 / ezt2[i]
         zv[iv[i]] += zt[i]*w
         wv[iv[i]] += w
@@ -287,7 +291,6 @@ function split_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
     nv_final = vertices.nv_final # final number of vertices
     nn = vertices.ndof # number of nearest neighbors to each track
     iv = ws.iv  # vertex association to each track
-
     for kv ∈ 1:nv_final
         if nn[kv] < 4 
             continue
@@ -353,7 +356,8 @@ function split_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
         if chi2_dist < 4 
             continue 
         end
-        new_vertex = (ws.nv_intermediate + 1)
+        ws.nv_intermediate +=1
+        new_vertex = ws.nv_intermediate 
         for k ∈ 1:nq
             if new_v[k] == 1
                 iv[it[k]] = new_vertex
@@ -384,14 +388,17 @@ function sort_by_pt2(vertices::ZVertexSoA,ws::WorkSpace)
         if iv[i] > 9990
             continue
         end
+        # print(iv[i]-1," ")
         ptv2[iv[i]] += ptt2[i]
     end
     if nv_final == 1
         sort_ind[1] = 1 
         return
     end
+    # print(ptv2[1:nv_final])
     sort_ind = collect(1:nv_final)
     sort_ind = sort(sort_ind, lt = (i, j) -> ptv2[i] < ptv2[j])
+    # print(sort_ind.-1)
 end
 
 

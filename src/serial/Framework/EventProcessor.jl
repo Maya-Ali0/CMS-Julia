@@ -10,10 +10,10 @@ struct EventProcessor
     schedules::Vector{StreamSchedule}
 
     # Constructor
-    function EventProcessor(numOfStreams::Int,path::Vector{String},esproducers::Vector{String}, datadir::String)
+    function EventProcessor(numOfStreams::Int,path::Vector{String},esproducers::Vector{String}, datadir::String, validation::Bool)
         numberOfStreams = numOfStreams
         registry = ProductRegistry()
-        source = Source(registry,datadir)
+        source = Source(registry,datadir,validation)
         # print(source.raw_events)
         event_setup = EventSetup()
         for name in esproducers

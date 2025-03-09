@@ -7,7 +7,7 @@ const num_of_streams::Int = 0
 const warm_up_events::Int = 0 # Number of events to process before starting the benchmark (default 0).
 const max_events::Int = -1 # Number of events to process
 const run_for_minutes::Int = -1 # Continue processing the set of 1000 events until this many minutes have passed
-const validation::Bool = false #  Run (rudimentary) validation at the end.
+const validation::Bool = true #  Run (rudimentary) validation at the end.
 const histogram::Bool = false # prduce a histogram at the end
 const empty::Bool = false # Ignore all producers (used for testing only)
 
@@ -34,7 +34,7 @@ dataDir::String = (@__DIR__) * "/data/"
 
 # EP = EventProcessor(ed_modules,es_modules,dataDir)
 
-ev = EventProcessor(num_of_streams,ed_modules,es_modules,dataDir);
+ev = EventProcessor(num_of_streams,ed_modules,es_modules,dataDir,validation);
 println("Warming up")
 @time warm_up(ev)
 println("Warmup done")

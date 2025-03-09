@@ -1,7 +1,7 @@
 module VertexSOA
 const MAX_TRACKS::Int32 = 32 * 1024
 const MAX_VTX::Int32 = 1024
-struct ZVertexSoA
+mutable struct ZVertexSoA
     # Arrays for tracks and vertices
     idv::Vector{Int16}         # Vertex index for each associated track (-1 = not associated)
     zv::Vector{Float32}        # Output z-position of found vertices

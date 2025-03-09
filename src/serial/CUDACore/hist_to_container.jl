@@ -253,10 +253,12 @@ end
     be::Int = min(Int(n_bins(hist)), bs + n)
     bs = max(1, bs - n)
     @assert(be >= bs)
+    # println(bs)
     # func.(begin_h(hist,bs):end_h(hist,be)-1)
+    # println(begin_h(hist, bs))
+    # println(end_h(hist, be)-1)
     for pj ∈ begin_h(hist, bs):(end_h(hist, be)-1)
         func(hist.bins[pj])
-
     end
 end
 
