@@ -14,4 +14,3 @@ setup:
 
 clean:
 	rm -f *.tmp
-
