@@ -146,12 +146,12 @@ struct ParamsOnGPU{v <: AbstractVector{DetParams}}
         detParams::Vector{DetParams},
         layerGeometry::LayerGeometry,
         averageGeometry::AverageGeometry
-    )
-        new(commonParams, detParams, layerGeometry, averageGeometry)
+        ) where {v <: AbstractVector{DetParams}}
+        new{v}(commonParams, detParams, layerGeometry, averageGeometry)
     end
     function ParamsOnGPU()
         temp_vec = [DetParams()]
-        new(CommonParams(),temp_vec,LayerGeometry(),AverageGeometry())
+        new{v}(CommonParams(),temp_vec,LayerGeometry(),AverageGeometry())
     end
 end
 
