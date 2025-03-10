@@ -47,6 +47,7 @@ struct Producer
     end
     
 end
+using Printf
 function load_tracks(tracks,ws,pt_min)
     quality = tracks.m_quality
     fit = tracks.stateAtBS
@@ -74,7 +75,8 @@ function load_tracks(tracks,ws,pt_min)
         ws.zt[it] = zip(tracks,idx)
         ws.ezt2[it] = fit.covariance[idx,15]
         ws.ptt2[it] = pt*pt
-        print(pt, " ")
+        # @printf("%.6f",ws.ptt2[it])
+        # print(" ")
     end
 
 end
@@ -361,12 +363,30 @@ function split_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
         ws.nv_intermediate +=1
         new_vertex = ws.nv_intermediate 
         for k ∈ 1:nq
-            if new_v[k] == 1
+            if new_v[k] == 2
                 iv[it[k]] = new_vertex
             end
         end
     end # loop on vertices
 end
+
+# using Printf
+function print_vertex_validation(zvsoa::ZVertexSoA, filename::String)
+    # Open the file for writing
+    open(filename, "a") do io
+        # Write a header line
+        println(io, "VertexIndex\tz\tw\tchi2\tndof")
+        # Determine the number of vertices to print (assuming nv_final indicates valid entries)
+        nv = min(Int(zvsoa.nv_final), length(zvsoa.zv))
+        # Loop over valid vertices and write each vertex's data on one line
+        for i in 1:nv
+            # Format: vertex index, z-position, weight, chi², and ndof
+            @printf(io,"%d\t%.6f\t%.6f\t%.6f\t%d\n", i, zvsoa.zv[i], zvsoa.wv[i], zvsoa.chi2[i], zvsoa.ndof[i])
+        end
+    end
+end
+
+
 
 function sort_by_pt2(vertices::ZVertexSoA,ws::WorkSpace)
     n_tracks = ws.n_tracks
@@ -394,7 +414,7 @@ function sort_by_pt2(vertices::ZVertexSoA,ws::WorkSpace)
         # print(ptt2[i]," ")
         ptv2[iv[i]] += ptt2[i]
     end
-    println()
+    # println()
     # println(ptv2[1:nv_final])
     # println("cccc ",nv_final)
     if nv_final == 1
@@ -404,14 +424,15 @@ function sort_by_pt2(vertices::ZVertexSoA,ws::WorkSpace)
     # print(ptv2[1:nv_final])
     sort_ind = collect(1:nv_final)
     sort_ind = sort(sort_ind, lt = (i, j) -> ptv2[i] < ptv2[j])
-    open("vertexValidationJulia.txt","a") do file 
-        for i ∈ 1:nv_final
-            print(file,sort_ind[i]," ")
+    # open("vertexValidationJulia.txt","a") do file 
+    #     for i ∈ 1:nv_final
+    #         print(file,sort_ind[i]," ")
             
-        end
-        print(file,'\n')
-    end
+    #     end
+    #     print(file,'\n')
+    # end
     # print(sort_ind.-1)
+    print_vertex_validation(vertices,"testingVertices.txt")
 end
 
 

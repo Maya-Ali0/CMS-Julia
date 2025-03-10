@@ -35,9 +35,9 @@ dataDir::String = (@__DIR__) * "/data/"
 # EP = EventProcessor(ed_modules,es_modules,dataDir)
 
 ev = EventProcessor(num_of_streams,ed_modules,es_modules,dataDir,validation);
-println("Warming up")
-@time warm_up(ev)
-println("Warmup done")
+# println("Warming up")
+# @time warm_up(ev)
+# println("Warmup done")
 println("running")
 @time run_processor(ev)
 
