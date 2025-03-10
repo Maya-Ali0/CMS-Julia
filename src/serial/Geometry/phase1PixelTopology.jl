@@ -322,7 +322,7 @@ export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_inde
         
 
         function AverageGeometry(number_of_ladders_in_barrel,ladderZ::v,ladderX::v,ladderY::v,ladderR::v,ladderMinZ::v,ladderMaxZ::v,endCapZ::v) where {v <: AbstractVector{Float32}}
-            return new{Vector{Float32}}(number_of_ladders_in_barrel,ladderZ,ladderX,ladderY,ladderR,ladderMinZ,ladderMaxZ,endCapZ)
+            return new{v}(number_of_ladders_in_barrel,ladderZ,ladderX,ladderY,ladderR,ladderMinZ,ladderMaxZ,endCapZ)
         end
 
         function AverageGeometry()

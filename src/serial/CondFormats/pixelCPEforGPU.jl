@@ -115,7 +115,7 @@ struct LayerGeometry{v <: AbstractVector{UInt32},w <: AbstractVector{UInt8}}
     layer::w
 
     function LayerGeometry(a::v, b::w) where {v <: AbstractVector{UInt32},w <: AbstractVector{UInt8}}
-        new{Vector{UInt32},Vector{UInt8}}(a, b)
+        new{v,w}(a, b)
     end
     function LayerGeometry()
         new{Vector{UInt32},Vector{UInt8}}(
@@ -148,7 +148,7 @@ struct ParamsOnGPU{v <: AbstractVector{DetParams}}
         layerGeometry::LayerGeometry,
         averageGeometry::AverageGeometry
         ) where {v <: AbstractVector{DetParams}}
-        new{Vector{DetParams}}(commonParams, detParams, layerGeometry, averageGeometry)
+        new{v}(commonParams, detParams, layerGeometry, averageGeometry)
     end
     function ParamsOnGPU()
         temp_vec = [DetParams()]
