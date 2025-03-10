@@ -1,4 +1,4 @@
-# Julia Project README
+# Patatrack Standalone Application/Julia README
 
 ## Steps to Run the Julia Code
 
