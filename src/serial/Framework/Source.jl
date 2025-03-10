@@ -16,11 +16,11 @@ mutable struct Source
     validation::Bool
 
 
-    function Source(reg::ProductRegistry, dataDir::String,validation::Bool)
+    function Source(reg::ProductRegistry, dataDir::String, validation::Bool)
         digiClusterToken_ = EDPutTokenT{DigiClusterCount}()
         trackToken_ = EDPutTokenT{TrackCount}()
-        vertexToken_ =  EDPutTokenT{VertexCount}()
-        if(validation)
+        vertexToken_ = EDPutTokenT{VertexCount}()
+        if (validation)
             digiClusterToken_ = produces(reg, DigiClusterCount)
             trackToken_ = produces(reg, TrackCount)
             vertexToken_ = produces(reg, VertexCount)
@@ -35,13 +35,13 @@ mutable struct Source
         digi_cluster_count_v = DigiClusterCount[]
         track_count_v = TrackCount[]
         vertex_count_v = VertexCount[]
-        if(validation)
-            raw_events = readall(open(rawFilePath),open(verticesFilePath),open(tracksFilePath),open(digiclusterFilePath),digi_cluster_count_v,track_count_v,vertex_count_v,validation) # Reads 1000 event 
+        if (validation)
+            raw_events = readall(open(rawFilePath), open(verticesFilePath), open(tracksFilePath), open(digiclusterFilePath), digi_cluster_count_v, track_count_v, vertex_count_v, validation) # Reads 1000 event 
         else
-            raw_events = readall(open(rawFilePath),open(verticesFilePath),open(tracksFilePath),open(digiclusterFilePath),nothing,nothing,nothing,validation) # Reads 1000 event 
+            raw_events = readall(open(rawFilePath), open(verticesFilePath), open(tracksFilePath), open(digiclusterFilePath), nothing, nothing, nothing, validation) # Reads 1000 event 
         end
 
-        return new(raw_events, Atomic{Int}(1), rawToken,digiClusterToken_,trackToken_,vertexToken_,digi_cluster_count_v,track_count_v,vertex_count_v,validation)
+        return new(raw_events, Atomic{Int}(1), rawToken, digiClusterToken_, trackToken_, vertexToken_, digi_cluster_count_v, track_count_v, vertex_count_v, validation)
     end
 
 
@@ -65,7 +65,7 @@ function produce(src::Source, streamId::Int, reg::ProductRegistry)
     # end
     ev = Event(streamId, iev, reg)
     emplace(ev, src.rawToken, src.raw_events[iev])
-    if(src.validation)
+    if (src.validation)
         emplace(ev, src.digiClusterToken_, src.digi_cluster_count_v[iev])
         emplace(ev, src.trackToken_, src.track_count_v[iev])
         emplace(ev, src.vertexToken_, src.vertex_count_v[iev])

@@ -4,7 +4,7 @@ JULIA_FLAGS = --project=.
 SCRIPT = main.jl
 ARGS = 10
 
-all: run
+all: setup run
 
 run:
 	$(JULIA) $(JULIA_FLAGS) $(SCRIPT) $(ARGS)

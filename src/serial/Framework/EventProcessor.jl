@@ -2,7 +2,7 @@ using .ESPluginFactory
 using Dagger
 
 struct EventProcessor
- 
+
     numberOfStreams::Int
     source::Source
     event_setup::EventSetup
@@ -10,15 +10,15 @@ struct EventProcessor
     schedules::Vector{StreamSchedule}
 
     # Constructor
-    function EventProcessor(numOfStreams::Int,path::Vector{String},esproducers::Vector{String}, datadir::String, validation::Bool)
+    function EventProcessor(numOfStreams::Int, path::Vector{String}, esproducers::Vector{String}, datadir::String, validation::Bool)
         numberOfStreams = numOfStreams
         registry = ProductRegistry()
-        source = Source(registry,datadir,validation)
+        source = Source(registry, datadir, validation)
         # print(source.raw_events)
         event_setup = EventSetup()
         for name in esproducers
-            esp = create_plugin(name,datadir)
-            produce(esp,event_setup)
+            esp = create_plugin(name, datadir)
+            produce(esp, event_setup)
         end
 
         schedules = Vector{StreamSchedule}()
@@ -26,7 +26,7 @@ struct EventProcessor
             push!(schedules, StreamSchedule(registry, source, event_setup, i, path))
         end
 
-        new(numOfStreams,source,event_setup,registry,schedules)
+        new(numOfStreams, source, event_setup, registry, schedules)
     end
 end
 
