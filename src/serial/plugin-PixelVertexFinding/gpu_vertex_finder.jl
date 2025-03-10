@@ -74,6 +74,7 @@ function load_tracks(tracks,ws,pt_min)
         ws.zt[it] = zip(tracks,idx)
         ws.ezt2[it] = fit.covariance[idx,15]
         ws.ptt2[it] = pt*pt
+        print(pt, " ")
     end
 
 end
@@ -197,8 +198,8 @@ function cluster_tracks_by_density(vertices,ws,min_T,eps,err_max,chi2_max)
     #adjust the cluster id to be a positive value starting from 1
     for i ∈ 1:n_tracks
         iv[i] = -iv[i]
+        # print(iv[i], " ")
     end
-    # println(found_clusters)
     ws.nv_intermediate = vertices.nv_final = found_clusters
 end
 
@@ -236,6 +237,7 @@ function fit_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
     
     @assert nv_final <= nv_intermediate
     nv_final = nv_intermediate
+    vertices.nv_final = nv_intermediate
     found_clusters = nv_final
     for i ∈ 1:found_clusters
         zv[i] = 0
@@ -298,6 +300,7 @@ function split_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
         if chi2[kv] < chi2_max * nn[kv]
             continue
         end
+        
         MAX_TK = 512
         @assert nn[kv] < MAX_TK
         it = Vector{UInt32}(undef,MAX_TK) # track index
@@ -319,7 +322,6 @@ function split_vertices(vertices::ZVertexSoA,ws::WorkSpace,chi2_max)
         z_new = @MArray [0f0,0f0]
         w_new = @MArray [0f0,0f0]
         @assert (nq == (nn[kv] + 1) )
-        
         max_iter = 20
         more = true 
         while(more)
@@ -389,8 +391,12 @@ function sort_by_pt2(vertices::ZVertexSoA,ws::WorkSpace)
             continue
         end
         # print(iv[i]-1," ")
+        # print(ptt2[i]," ")
         ptv2[iv[i]] += ptt2[i]
     end
+    println()
+    # println(ptv2[1:nv_final])
+    # println("cccc ",nv_final)
     if nv_final == 1
         sort_ind[1] = 1 
         return
@@ -398,6 +404,13 @@ function sort_by_pt2(vertices::ZVertexSoA,ws::WorkSpace)
     # print(ptv2[1:nv_final])
     sort_ind = collect(1:nv_final)
     sort_ind = sort(sort_ind, lt = (i, j) -> ptv2[i] < ptv2[j])
+    open("vertexValidationJulia.txt","a") do file 
+        for i ∈ 1:nv_final
+            print(file,sort_ind[i]," ")
+            
+        end
+        print(file,'\n')
+    end
     # print(sort_ind.-1)
 end
 

@@ -49,7 +49,7 @@ mutable struct Source
 end
 
 function produce(src::Source, streamId::Int, reg::ProductRegistry)
-    if src.numEvents.value > 100
+    if src.numEvents.value > 6
         return nothing
     end
 
