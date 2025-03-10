@@ -2,6 +2,8 @@ module Patatrack
 import Base.length
 using Printf
 using StaticArrays: MArray
+using LinearAlgebra
+using Gtk4
 using Base
 using Base.Threads
 export FED_SLINK_END_MARKER, FED_SLINK_ERROR_WIDTH, FED_TCTRLID_EXTRACT,

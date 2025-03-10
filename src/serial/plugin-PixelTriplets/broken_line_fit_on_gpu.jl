@@ -123,7 +123,7 @@ function kernelBLFit(N::Int,
         end
 
         tkid = tupleMultiplicity.bins[tupleMultiplicity.off[nHits]+tuple_idx]
-        # println(log_file, "kernelBLFit INPUT (N=", N, ", tkid=", tkid, ", B=", B, ") - fast_fit:", fast_fit_results[(local_idx-1)*4+1:(local_idx-1)*4+4])
+        println(log_file, "kernelBLFit INPUT (N=", N, ", tkid=", tkid, ", B=", B, ") - fast_fit:", fast_fit_results[(local_idx-1)*4+1:(local_idx-1)*4+4])
 
         start_idx = (local_idx - 1) * (3 * N) + 1
         end_idx = start_idx + (3 * N) - 1
@@ -162,14 +162,14 @@ function kernelBLFit(N::Int,
         append!(eta_results, results.eta[tkid])
         append!(chi2_results, results.chi2[tkid])
 
-        # println(log_file, "Track tkid=", tkid, " Circle Fit:", circle.par)
-        # println(log_file, "Track tkid=", tkid, " Line Fit:", line.par)
-        # println(log_file, "Track tkid=", tkid, " pt:", results.pt[tkid])
-        # println(log_file, "Track tkid=", tkid, " eta:", results.eta[tkid])
-        # println(log_file, "Track tkid=", tkid, " chi2:", results.chi2[tkid])
-        # println(log_file, "Track tkid=", tkid, " circle.chi2:", circle.chi2)
-        # println(log_file, "Track tkid=", tkid, " line.chi2:", line.chi2)
-        # flush(log_file)
+        println(log_file, "Track tkid=", tkid, " Circle Fit:", circle.par)
+        println(log_file, "Track tkid=", tkid, " Line Fit:", line.par)
+        println(log_file, "Track tkid=", tkid, " pt:", results.pt[tkid])
+        println(log_file, "Track tkid=", tkid, " eta:", results.eta[tkid])
+        println(log_file, "Track tkid=", tkid, " chi2:", results.chi2[tkid])
+        println(log_file, "Track tkid=", tkid, " circle.chi2:", circle.chi2)
+        println(log_file, "Track tkid=", tkid, " line.chi2:", line.chi2)
+        flush(log_file)
     end
 
     return circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results
@@ -184,60 +184,60 @@ function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hits
     hits_geGPU = Vector{Float32}(undef, maxNumberOfConcurrentFits * 6 * 4)
     fast_fit = Vector{Float64}(undef, maxNumberOfConcurrentFits * 4)
     offset = 0
-    # open("log.txt", "w") do log_file
+    open("log.txt", "w") do log_file
 
-        # println(log_file, "Running kernelBLFastFit for N=3")
+        println(log_file, "Running kernelBLFastFit for N=3")
         fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(3, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(3), UInt32(offset), nothing)
-        # flush(log_file)
+        flush(log_file)
 
-        # println(log_file, "Running kernelBLFit for N=3")
-        # println("B= ", fitter.b_field)
+        println(log_file, "Running kernelBLFit for N=3")
+        println("B= ", fitter.b_field)
         circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results = kernelBLFit(
             3, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
             hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(3), UInt32(offset), nothing
         )
-        # flush(log_file)
+        flush(log_file)
 
-        # println(log_file, "Running kernelBLFastFit for N=4")
+        println(log_file, "Running kernelBLFastFit for N=4")
         fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(4, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(4), UInt32(offset), nothing)
-        # flush(log_file)
+        flush(log_file)
 
-        # println(log_file, "Running kernelBLFit for N=4")
-        # println("B= ", fitter.b_field)
+        println(log_file, "Running kernelBLFit for N=4")
+        println("B= ", fitter.b_field)
         circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results = kernelBLFit(
             4, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
             hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(4), UInt32(offset), nothing
         )
-        # flush(log_file)
+        flush(log_file)
 
 
         if (fitter.fit5as4)
-            # println(log_file, "Running Fit 5 as 4")
-            # println(log_file, "Running kernelBLFastFit for N=4")
+            println(log_file, "Running Fit 5 as 4")
+            println(log_file, "Running kernelBLFastFit for N=4")
             fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(4, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(5), UInt32(offset), nothing)
-            # flush(log_file)
+            flush(log_file)
 
-            # println(log_file, "Running kernelBLFit for N=4")
-            # println("B= ", fitter.b_field)
+            println(log_file, "Running kernelBLFit for N=4")
+            println("B= ", fitter.b_field)
             circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results = kernelBLFit(
                 4, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
                 hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(5), UInt32(offset), nothing
             )
-            # flush(log_file)
+            flush(log_file)
         else
-            # println(log_file, "Running kernelBLFastFit for N=5")
+            println(log_file, "Running kernelBLFastFit for N=5")
             fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(5, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(5), UInt32(offset), log_file)
-            # flush(log_file)
+            flush(log_file)
 
-            # println(log_file, "Running kernelBLFit for N=5")
-            # println("B= ", fitter.b_field)
+            println(log_file, "Running kernelBLFit for N=5")
+            println("B= ", fitter.b_field)
             circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results = kernelBLFit(
                 5, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
                 hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(5), UInt32(offset), log_file
             )
-            # flush(log_file)
+            flush(log_file)
         end
-    # end
+    end
 end
 
 end
