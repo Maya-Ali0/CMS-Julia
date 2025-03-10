@@ -56,7 +56,7 @@ function readDetParam(io::IOStream)
     return DetParamss
 end
 
-function f(x::PixelCPEFast) 
+function f(x) 
     println(p_CPEFast.m_detParamsGPU[1])
     return nothing
 end
@@ -100,11 +100,12 @@ function readCpeFast(io::IOStream,es::EventSetup)
 
     cpuData = ParamsOnGPU(cmParams,detParamsGPU,layerGeometry,averageGeometry)
 
+
     p_CPEFast = PixelCPEFast(detParamsGPU,cmParams,layerGeometry,averageGeometry,cpuData)
 
     p_CPEFast = cu(p_CPEFast)
 
-    #@cuda f(p_CPEFast)
+    @cuda f(p_CPEFast)
 
     println(typeof(p_CPEFast))
     println(typeof(p_CPEFast.m_detParamsGPU))

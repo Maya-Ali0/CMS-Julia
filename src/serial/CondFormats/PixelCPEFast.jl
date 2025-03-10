@@ -10,6 +10,7 @@ struct PixelCPEFast{v <: AbstractVector{DetParams}}
     cpuData_::ParamsOnGPU
 end
 
+Adapt.@adapt_structure PixelCPEFast
 
 
 # Define the getCPUProduct method
