@@ -10,11 +10,11 @@ all: setup download_raw build
 
 # Ensure the data directory exists
 $(DATA_DIR):
-    mkdir -p $(DATA_DIR)
+	mkdir -p $(DATA_DIR)
 
 # Download the data tar file if it doesn't exist
 $(DATA_TAR_GZ): $(URL_FILE) | $(DATA_DIR)
-    @echo "Downloading data_v2.tar.gz..."
+	@echo "Downloading data_v2.tar.gz..."
     curl -L -s -S $$(cat $(URL_FILE)) -o $(DATA_TAR_GZ)
 
 # Extract raw.bin from the tar file and verify integrity
@@ -32,10 +32,10 @@ setup:
 
 # Run the Julia project
 build:
-    $(JULIA) --project=$(TARGET_DIR) main.jl
+	$(JULIA) --project=$(TARGET_DIR) main.jl
 
 # Clean up downloaded and extracted files
 clean:
-    rm -f $(DATA_DIR)/*.bin $(DATA_TAR_GZ)
+	rm -f $(DATA_DIR)/*.bin $(DATA_TAR_GZ)
 
 .PHONY: all download_raw build clean setup
