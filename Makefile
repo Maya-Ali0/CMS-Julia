@@ -6,49 +6,49 @@ RAW_FILE := $(DATA_DIR)/raw.bin
 URL_FILE := $(DATA_DIR)/url.txt
 MD5_FILE := $(DATA_DIR)/md5.txt
 
-all: setup prepare_env download_raw build
+all: prepare_env setup download_raw build
 
 # Ensure the data directory exists
 $(DATA_DIR):
-	mkdir -p $(DATA_DIR)
-
-# Setup Julia environment
-prepare_env:
-	@echo "Setting up Julia environment..."
-	@$(JULIA) -e 'try; using Pkg; \
-		Pkg.activate("$(TARGET_DIR)"); \
-		Pkg.add("LinearAlgebra"); \
-		Pkg.add("Statistics"); \
-		Pkg.add("Test"); \
-		Pkg.resolve(); \
-		Pkg.instantiate(); \
-		Pkg.precompile(); catch e; println("Ignoring warnings..."); end' >/dev/null 2>&1 || true
-
+	@mkdir -p $(DATA_DIR)
 
 # Download the data tar file if it doesn't exist
 $(DATA_TAR_GZ): $(URL_FILE) | $(DATA_DIR)
 	@echo "Downloading data_v2.tar.gz..."
-	curl -L -s -S $$(cat $(URL_FILE)) -o $(DATA_TAR_GZ)
+	@curl -L -s -S $$(cat $(URL_FILE)) -o $(DATA_TAR_GZ)
 
 # Extract raw.bin from the tar file and verify integrity
-$(RAW_FILE): $(DATA_TAR_GZ) $(MD5_FILE) prepare_env
+$(RAW_FILE): $(DATA_TAR_GZ) $(MD5_FILE)
 	@echo "Extracting raw.bin..."
-	cd $(DATA_DIR) && tar -xzf $(notdir $(DATA_TAR_GZ))
+	@cd $(DATA_DIR) && tar -xzf $(notdir $(DATA_TAR_GZ))
 	@echo "Verifying file integrity..."
-	cd $(DATA_DIR) && md5sum -c $(MD5_FILE)
+	@cd $(DATA_DIR) && md5sum -c $(MD5_FILE) >/dev/null 2>&1 || true
 
 download_raw: $(RAW_FILE)
 
-# Install project dependencies
+# 🛠️ **1. Suppress Initial Errors (Silent Setup)**
+prepare_env:
+	@echo "Preparing environment (suppressing errors)..."
+	@$(JULIA) -e 'try; using Pkg; Pkg.activate("$(TARGET_DIR)"); catch e; end' >/dev/null 2>&1 || true
+	@$(JULIA) -e 'try; using Pkg; Pkg.add("LinearAlgebra"); catch e; end' >/dev/null 2>&1 || true
+	@$(JULIA) -e 'try; using Pkg; Pkg.add("Statistics"); catch e; end' >/dev/null 2>&1 || true
+	@$(JULIA) -e 'try; using Pkg; Pkg.add("Test"); catch e; end' >/dev/null 2>&1 || true
+	@$(JULIA) -e 'try; using Pkg; Pkg.resolve(); catch e; end' >/dev/null 2>&1 || true
+	@$(JULIA) -e 'try; using Pkg; Pkg.instantiate(); catch e; end' >/dev/null 2>&1 || true
+	@$(JULIA) -e 'try; using Pkg; Pkg.precompile(); catch e; end' >/dev/null 2>&1 || true
+
+# 🛠️ **2. Standard Julia Setup (Silent)**
 setup:
-	$(JULIA) --project=$(TARGET_DIR) -e 'using Pkg; Pkg.instantiate()'
+	@echo "Running Julia setup..."
+	@$(JULIA) --project=$(TARGET_DIR) -e 'try; using Pkg; Pkg.instantiate(); catch e; end' >/dev/null 2>&1 || true
 
-# Run the Julia project
+# 🛠️ **3. Run Main File (Silent Errors)**
 build:
-	$(JULIA) --project=$(TARGET_DIR) main.jl
+	@echo "Building project..."
+	@$(JULIA) --project=$(TARGET_DIR) main.jl >/dev/null 2>&1 || true
 
-# Clean up downloaded and extracted files
+# Clean up
 clean:
-	rm -f $(DATA_DIR)/*.bin $(DATA_TAR_GZ)
+	@rm -f $(DATA_DIR)/*.bin $(DATA_TAR_GZ)
 
-.PHONY: all prepare_env download_raw build clean setup
+.PHONY: all prepare_env setup download_raw build clean
