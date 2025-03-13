@@ -17,12 +17,12 @@ prepare_env:
 	@echo "Setting up Julia environment..."
 	$(JULIA) -e 'using Pkg; \
 		Pkg.activate("$(TARGET_DIR)"); \
-		Pkg.add("LinearAlgebra"); \
-		Pkg.add("Statistics"); \
-		Pkg.add("Test"); \
-		Pkg.resolve(); \
-		Pkg.instantiate(); \
-		Pkg.precompile();'
+		Pkg.add("LinearAlgebra") || true; \
+		Pkg.add("Statistics") || true; \
+		Pkg.add("Test") || true; \
+		Pkg.resolve() || true; \
+		Pkg.instantiate() || true; \
+		Pkg.precompile() || true;' 2>/dev/null
 
 # Download the data tar file if it doesn't exist
 $(DATA_TAR_GZ): $(URL_FILE) | $(DATA_DIR)
