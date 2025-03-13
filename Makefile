@@ -19,16 +19,16 @@ $(DATA_TAR_GZ): $(URL_FILE) | $(DATA_DIR)
 
 # Extract raw.bin from the tar file and verify integrity
 $(RAW_FILE): $(DATA_TAR_GZ) $(MD5_FILE)
-    @echo "Extracting raw.bin..."
-    cd $(DATA_DIR) && tar -xzf $(notdir $(DATA_TAR_GZ))
-    @echo "Verifying file integrity..."
-    cd $(DATA_DIR) && md5sum -c $(MD5_FILE)
+	@echo "Extracting raw.bin..."
+	cd $(DATA_DIR) && tar -xzf $(notdir $(DATA_TAR_GZ))
+	@echo "Verifying file integrity..."
+	cd $(DATA_DIR) && md5sum -c $(MD5_FILE)
 
 download_raw: $(RAW_FILE)
 
 # Install project dependencies
 setup:
-    $(JULIA) --project=$(TARGET_DIR) -e 'using Pkg; Pkg.instantiate()'
+	$(JULIA) --project=$(TARGET_DIR) -e 'using Pkg; Pkg.instantiate()'
 
 # Run the Julia project
 build:
