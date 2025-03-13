@@ -15,7 +15,7 @@ $(DATA_DIR):
 # Download the data tar file if it doesn't exist
 $(DATA_TAR_GZ): $(URL_FILE) | $(DATA_DIR)
 	@echo "Downloading data_v2.tar.gz..."
-    curl -L -s -S $$(cat $(URL_FILE)) -o $(DATA_TAR_GZ)
+	curl -L -s -S $$(cat $(URL_FILE)) -o $(DATA_TAR_GZ)
 
 # Extract raw.bin from the tar file and verify integrity
 $(RAW_FILE): $(DATA_TAR_GZ) $(MD5_FILE)
