@@ -57,7 +57,7 @@ function readDetParam(io::IOStream)
 end
 
 function f(x) 
-    println(p_CPEFast.m_detParamsGPU[1])
+    @cuprint x.m_detParamsGPU[1].x0
     return nothing
 end
 
@@ -98,18 +98,13 @@ function readCpeFast(io::IOStream,es::EventSetup)
 
     layerGeometry = LayerGeometry(layerStart,layer)
 
-    cpuData = ParamsOnGPU(cmParams,detParamsGPU,layerGeometry,averageGeometry)
+    cpuData = ParamsOnGPU(cmParams,detParamsGPU,averageGeometry,layerGeometry)
 
-
+    
     p_CPEFast = PixelCPEFast(detParamsGPU,cmParams,layerGeometry,averageGeometry,cpuData)
 
     p_CPEFast = cu(p_CPEFast)
-
-    @cuda f(p_CPEFast)
-
-    println(typeof(p_CPEFast))
-    println(typeof(p_CPEFast.m_detParamsGPU))
-
+    
     put!(es,p_CPEFast)
 end
 

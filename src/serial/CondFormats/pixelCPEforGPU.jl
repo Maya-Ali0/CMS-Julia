@@ -100,6 +100,10 @@ struct DetParams
     end
 end
 
+
+
+
+
 # const AverageGeometry = Phase1PixelTopology.AverageGeometry
 """ 
     ### LayerGeometry
@@ -114,16 +118,18 @@ struct LayerGeometry{v <: AbstractVector{UInt32},w <: AbstractVector{UInt8}}
     layerStart::v
     layer::w
 
-    function LayerGeometry(a::v, b::w) where {v <: AbstractVector{UInt32},w <: AbstractVector{UInt8}}
-        new{v,w}(a, b)
-    end
-    function LayerGeometry()
-        new{Vector{UInt32},Vector{UInt8}}(
-            Vector{UInt32}(),  # Empty vector for layerStart
-            Vector{UInt8}()    # Empty vector for layer
-        )
-    end
+    # function LayerGeometry()
+    #     new{Vector{UInt32},Vector{UInt8}}(
+    #         Vector{UInt32}(),  # Empty vector for layerStart
+    #         Vector{UInt8}()    # Empty vector for layer
+    #     )
+    # end
 end
+
+function LayerGeometry(a::v, b::w) where {v <: AbstractVector{UInt32},w <: AbstractVector{UInt8}}
+    LayerGeometry{v,w}(a, b)
+end
+
 Adapt.@adapt_structure LayerGeometry
 """
  ### ParamsOnGPU
@@ -136,26 +142,26 @@ Adapt.@adapt_structure LayerGeometry
     - `m_averageGeometry::AverageGeometry`: Average geometry data.
 
 """
-struct ParamsOnGPU{v <: AbstractVector{DetParams}}
+struct ParamsOnGPU{v <: AbstractVector{DetParams}, w <: AbstractVector{Float32},r <: AbstractVector{UInt32},z <: AbstractVector{UInt8}}
     m_commonParams::CommonParams
     m_detParams::v
-    m_layerGeometry::LayerGeometry
-    m_averageGeometry::AverageGeometry
+    m_averageGeometry::AverageGeometry{w}
+    m_layerGeometry::LayerGeometry{r,z}
 
-    function ParamsOnGPU(
-        commonParams::CommonParams,
-        detParams::v,
-        layerGeometry::LayerGeometry,
-        averageGeometry::AverageGeometry
-        ) where {v <: AbstractVector{DetParams}}
-        new{v}(commonParams, detParams, layerGeometry, averageGeometry)
-    end
-    function ParamsOnGPU()
-        temp_vec = [DetParams()]
-        new{Vector{DetParams}}(CommonParams(),temp_vec,LayerGeometry(),AverageGeometry())
-    end
+    # function ParamsOnGPU()
+    #     temp_vec = [DetParams()]
+    #     new{Vector{DetParams}}(CommonParams(),temp_vec,LayerGeometry(),AverageGeometry())
+    # end
 end
 
+function ParamsOnGPU(
+    commonParams::CommonParams,
+    detParams::v,
+    averageGeometry::AverageGeometry{w},
+    m_layerGeometry::LayerGeometry{r,z}
+    ) where {v <: AbstractVector{DetParams},w <: AbstractVector{Float32},r <: AbstractVector{UInt32},z <: AbstractVector{UInt8}}
+    ParamsOnGPU{v,w,r,z}(commonParams, detParams, averageGeometry,m_layerGeometry)
+end
 Adapt.@adapt_structure ParamsOnGPU
 
 function commonParams(params::ParamsOnGPU)
@@ -581,3 +587,61 @@ function errorFromDB(comParams::CommonParams, detParams::DetParams, cp::ClusPara
 end
 
 end
+
+
+
+# function f(x) 
+#     @cuprint x.detParams[1]
+#     return nothing
+# end
+
+
+
+# using Adapt
+# using CUDA
+
+# struct BB{v <: AbstractVector{Float32}}
+#     m_detParams2::v
+# end
+
+# function BB(
+#     detParams::v
+#     ) where {v <: AbstractVector{Float32}}
+#     BB{v}(detParams)
+# end
+
+# struct AA{v <: AbstractVector{Float32}, w <: AbstractVector{Float32}}
+#     detParams::v
+#     aa::BB{w}
+# end
+
+# function AA(
+#     detParams::v,
+#     aa::BB{v}
+#     ) where {v <: AbstractVector{Float32}}
+#     AA{v,v}(detParams, aa)
+# end
+
+# Adapt.@adapt_structure AA
+# Adapt.@adapt_structure BB
+
+
+# # --- Instantiation Example ---
+
+# # Create a sample vector of Float64 values.
+# det_params = Float32[0.1, 0.2, 0.3, 0.4]  # Vector{Float32}
+
+# # Instantiate a BB object using the sample vector.
+# bb_instance = BB(det_params)
+
+# # Instantiate an AA object using the same vector and the BB instance.
+# aa_instance = AA(det_params, bb_instance)
+
+# aa_instance = cu(aa_instance)
+
+
+
+
+# CUDA.@sync begin
+#     @cuda threads=256 f(aa_instance)
+# end

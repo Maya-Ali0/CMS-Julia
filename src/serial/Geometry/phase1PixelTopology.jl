@@ -321,22 +321,23 @@ export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_inde
         endCapZ::v  # just for pos and neg Layer1
         
 
-        function AverageGeometry(number_of_ladders_in_barrel,ladderZ::v,ladderX::v,ladderY::v,ladderR::v,ladderMinZ::v,ladderMaxZ::v,endCapZ::v) where {v <: AbstractVector{Float32}}
-            return new{v}(number_of_ladders_in_barrel,ladderZ,ladderX,ladderY,ladderR,ladderMinZ,ladderMaxZ,endCapZ)
-        end
-
-        function AverageGeometry()
-            number_of_ladders_in_barrel = 0
-            ladderZ = zeros(Float64, 148)
-            ladderX = zeros(Float64, 148)
-            ladderY = zeros(Float64, 148)
-            ladderR = zeros(Float64, 148)
-            ladderMinZ = zeros(Float64, 148)
-            ladderMaxZ = zeros(Float64, 148)
-            endCapZ = zeros(Float64, 2)
-            new{Vector{Float32}}(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
-        end
+        # function AverageGeometry()
+        #     number_of_ladders_in_barrel = 0
+        #     ladderZ = zeros(Float64, 148)
+        #     ladderX = zeros(Float64, 148)
+        #     ladderY = zeros(Float64, 148)
+        #     ladderR = zeros(Float64, 148)
+        #     ladderMinZ = zeros(Float64, 148)
+        #     ladderMaxZ = zeros(Float64, 148)
+        #     endCapZ = zeros(Float64, 2)
+        #     new{Vector{Float32}}(number_of_ladders_in_barrel, ladderZ, ladderX, ladderY, ladderR, ladderMinZ, ladderMaxZ, endCapZ)
+        # end
     end
+
+    function AverageGeometry(number_of_ladders_in_barrel,ladderZ::v,ladderX::v,ladderY::v,ladderR::v,ladderMinZ::v,ladderMaxZ::v,endCapZ::v) where {v <: AbstractVector{Float32}}
+        return AverageGeometry{v}(number_of_ladders_in_barrel,ladderZ,ladderX,ladderY,ladderR,ladderMinZ,ladderMaxZ,endCapZ)
+    end
+
     Adapt.@adapt_structure AverageGeometry
 
     
@@ -344,3 +345,9 @@ export AverageGeometry, number_of_module_in_barrel, number_of_layers, layer_inde
 end
 
 end
+
+
+
+
+
+
