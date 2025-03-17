@@ -23,11 +23,16 @@ struct SiPixelRecHitCUDA <: EDProducer
 end
 
 function produce(self::SiPixelRecHitCUDA,iEvent::Event, es::EventSetup)
-    fcpe = get(es, PixelCPEFast)
-    
+    fcpe = get(es, PixelCPEFast{CUDA.CuArray{Main.Patatrack.PixelGPU_h.DetParams, 1, CUDA.DeviceMemory}, CUDA.CuArray{UInt32, 1, CUDA.DeviceMemory}, CUDA.CuArray{UInt8, 1, CUDA.DeviceMemory}, CUDA.CuArray{Float32, 1, CUDA.DeviceMemory}})
+    #Temporary fix
     clusters = get(iEvent, self.token)
+    clusters = cu(clusters)
+
     
     digis = get(iEvent, self.tokenDigi)
+    digis = cu(digis)
+
+
     
     bs = get(iEvent, self.tBeamSpot)
     
@@ -36,7 +41,6 @@ function produce(self::SiPixelRecHitCUDA,iEvent::Event, es::EventSetup)
     if nHits >= max_hits()
         println("Clusters/Hits Overflow ",nHits," >= ", TrackingRecHit2DSOAView::maxHits())
     end
-    makeHits(digis, clusters, bs, getCPUProduct(fcpe))
     emplace(iEvent, self.tokenHit, makeHits(digis, clusters, bs, getCPUProduct(fcpe)))
     
 end

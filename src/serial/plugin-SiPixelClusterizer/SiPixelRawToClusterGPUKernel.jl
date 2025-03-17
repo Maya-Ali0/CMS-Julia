@@ -533,10 +533,10 @@ module pixelGPUDetails
         return r_id
     end
 
-
+#fixed some wrong types 
     function raw_to_digi_kernal(cabling_map::SiPixelFedCablingMapGPU , mod_to_unp :: Vector{UInt8} , word_counter::Integer, 
-                                word::Vector{UInt32} , fed_ids::Vector{UInt8} , xx::Vector{Int16} , yy::Vector{Int16} ,
-                                adc::Vector{Int32} , p_digi::Vector{UInt32} , raw_id_arr::Vector{UInt32} , module_id::Vector{Int16},
+                                word::Vector{UInt32} , fed_ids::Vector{UInt8} , xx::Vector{UInt16} , yy::Vector{UInt16} ,
+                                adc::Vector{UInt16} , p_digi::Vector{UInt32} , raw_id_arr::Vector{UInt32} , module_id::Vector{UInt16},
                                 err::Vector{PixelErrorCompact} , use_quality_info::Bool , include_errors::Bool , debug::Bool)
                                 
         first::UInt32 = 1

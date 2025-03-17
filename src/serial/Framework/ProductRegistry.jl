@@ -1,7 +1,7 @@
 mutable struct ProductRegistry
     current_module_index::Int
     consumed_modules::Set{UInt}
-    type_to_index::Dict{DataType, Tuple{UInt, UInt}} # module Index for first pair, product Index for second pair value
+    type_to_index::Dict{Type, Tuple{UInt, UInt}} # module Index for first pair, product Index for second pair value
 end
 ProductRegistry() = ProductRegistry(0,Set{UInt}(),Dict{DataType, Tuple{UInt, UInt}}())
 

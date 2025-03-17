@@ -23,7 +23,8 @@ function readBeam(io::IOStream,es::EventSetup)
     betaStar = read(io,Float32)
 
     beam = BeamSpotPOD(x,y,z,sigmaZ,beamWidthX,beamWidthY,dxdz,dydz,emittanceX,emittanceY,betaStar)
-
+    beam = cu(beam)
+    
     put!(es,beam)
 end
 
