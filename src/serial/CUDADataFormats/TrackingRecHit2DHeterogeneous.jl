@@ -31,24 +31,35 @@ mutable struct TrackingRecHit2DHeterogeneous
     n32::UInt32
     m_store16::Union{Nothing, Vector{Vector{UInt16}}} # UInt16 unique_ptr<uint16_t[]>
     m_store32::Union{Nothing, Vector{Vector{Float32}}} # Float32 unique_ptr<float[]>
+
+    m_xl::UInt32
+    m_yl::UInt32
+    m_xerr::UInt32
+    m_yerr::UInt32
+
+    m_xg::UInt32
+    m_yg::UInt32
+    m_zg::UInt32
+    m_rg::UInt32
+
+    m_charge::UInt32
+    m_hitsLayerStart::UInt32
+
+    m_iphi::UInt32
+    m_detInd::UInt32
+    m_xsize::UInt32
+    m_ysize::UInt32
+
+
+
     m_HistStore::HisToContainer
     m_AverageGeometryStore::AverageGeometry
-    m_view::TrackingRecHit2DSOAView
+
     m_nHits::UInt32
     m_hitsModuleStart::Vector{UInt32}
 
-    # needed as kernel params...
     m_hist::Hist
-    m_hitsLayerStart::Union{Nothing, Vector{UInt32}}
-    m_iphi::Union{Nothing, Vector{Int16}}
 
-
-    
-    
-    # // needed as kernel params...
-    # Hist* m_hist;
-    # uint32_t* m_hitsLayerStart;
-    # int16_t* m_iphi;
   
 
     """
