@@ -1,3 +1,4 @@
+ARGS ?=
 JULIA := julia
 TARGET_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 DATA_DIR := $(TARGET_DIR)/data
@@ -39,7 +40,8 @@ setup:
 
 build:
 	@echo "Building project..."
-	@$(JULIA) --project=$(TARGET_DIR) main.jl
+	# @$(JULIA) --project=$(TARGET_DIR) main.jl
+	@./serial.sh $(ARGS)
 
 clean:
 	@rm -f $(DATA_DIR)/*.bin $(DATA_TAR_GZ)
