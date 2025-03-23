@@ -37,3 +37,24 @@ print(a)
 #     # check that b was not modified together with a:
 #     @test b.device_is_outer_hit_of_cell[1].m_size[] == 0
 # end
+using StaticArrays
+using CUDA
+function testing_shared_memory()
+    ws = @cuStaticSharedMem(UInt32,1024)
+    # y = CUVector{UInt32}(undef,10)
+    # x = zeros(Int32,5)
+    # @cuprint(typeof(v))
+    # @cuprint(ws[threadIdx().x])
+    x = HistoContainer()
+    @cuprint(x.bins[1])
+    return
+end
+
+@cuda threads = 5 testing_shared_memory()
+
+
+struct HistoContainer{U <: AbstractArray{UInt32},V <: AbstractArray{UInt32}}
+    off::U # goes from bin 1 to bin N_BINS*N_HISTS + 1 
+    bins::V # holds indices to the values placed within a certain bin that are of type I. Indices for bins range from 1 to SIZE
+    psws::Int32 # prefix scan working place
+end

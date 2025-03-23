@@ -7,7 +7,7 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUCon
 
 #using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 
-using ..histogram: HisToContainer, zero, count!, finalize!, size, bin, val, begin_h, end_h, fill!, type_I
+using ..histogram: HisToContainer, zero, count!, finalize!, size, bin, val, begin_h, end_h, fill!, type_I, tot_bins
 
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
 using TaskLocalValues
@@ -93,173 +93,184 @@ end
 * @remarks InvId refers to an invalid pixel ID.
 """
 function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, cluster_id, num_elements)
-        
+    if (blockIdx().x > module_start[1]) 
+        return
+    end       
     # julia is 1 indexed
     first_module = 1
     end_module = module_start[1]
     #Hist{T, N, M, K, U} = HisToContainer{T, N, M, K, U} # was on line 120 question why did it cause a lot of memory allocation
-    for mod ∈ first_module:end_module # Go over all modules
-        first_pixel = module_start[mod + 1] # access index of starting pixel within module
-        this_module_id = id[first_pixel] # get module id
-        @assert this_module_id < MAX_NUM_MODULES
-        first = first_pixel
-        msize = num_elements
-        
-        for i ∈ first:num_elements
-            if id[i] == INV_ID 
-                continue
-            end
-            if id[i] != this_module_id
-                msize = min(msize, i)
+    first_pixel = module_start[blockIdx().x + 1] # access index of starting pixel within module
+    this_module_id = id[first_pixel] # get module id
+    @assert this_module_id < MAX_NUM_MODULES
+    first = first_pixel + (threadIdx().x - 1)
+    msize =  @cuStaticSharedMem(Int32, 1)
+    msize[1] = num_elements
+    sync_threads() # ?
+    
+    for i ∈ first:blockDim().x:num_elements
+        if id[i] == INV_ID 
+            continue
+        end
+        if id[i] != this_module_id
+            CUDA.atomic_min!(pointer(msize), i)
+            break
+        end
+    end
+    
+    max_pix_in_module = 4000
+    nbins = num_cols_in_module + 2
+    
+    # hist = CACHED_HIST[]
+    HistSM = HisToContainer{Int16, 418, 4000, 9, UInt16, 1,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{UInt16,AS.Shared}}
+    hist = @cuStaticSharedMem(HistSM,1)
+    hist[1] = HistSM()
+    hist = hist[1]
+    ws = @cuStaticSharedMem(UInt32,32)
+    # zero(hist)
+    for j ∈ threadIdx().x:blockDim().x:tot_bins(HistSM)
+        hist.off[j] = 0 
+    end
+    sync_threads()
+    @assert msize[1] == num_elements || (msize[1] < num_elements && id[msize[1]] != this_module_id)
+    if (threadIdx().x == 1) && ((msize[1] - first_pixel) > max_pix_in_module)
+        @cuprintf("too many pixels in module %d: %d > %d\n", this_module_id, msize[1] - first_pixel, max_pix_in_module)
+        msize[1] = max_pix_in_module + first_pixel
+    end
+    sync_threads()
+    @assert msize[1] - first_pixel <= max_pix_in_module
+    if (threadIdx().x == 1) && (msize[1] == num_elements) && (id[msize[1]] == this_module_id)
+        msize[1]+=1
+    end
+    sync_threads()
+    # fill histo
+    
+    for i ∈ first:blockDim().x:msize[1]-1
+        if id[i] == INV_ID
+            continue
+        end
+        count!(hist, Int16(y[i]))
+    end
+    sync_threads()
+    
+    finalize!(hist)
+    for i in first:blockDim().x:msize-1
+        if id[i] == INV_ID
+            continue 
+        end
+        fill!(hist, Int16(y[i]), type_I(hist)((i - first_pixel))) # m
+    end
+    
+    # println(hist)
+    
+    max_iter = size(hist) # number of digis added to hist
+    max_neighbours = 10
+    
+    # nearest neighbour 
+    nn = zeros(Int, max_iter, max_neighbours) # m
+    nnn = zeros(Int, max_iter) # m
+    
+    # fill NN
+    # testing = 0 
+    for (j, k) in zip(0:size(hist)-1, 1:size(hist)) # j is the index of the digi within the hist
+        @assert k <= max_iter
+        p = begin_h(hist) + j
+        i = val(hist,p) + first_pixel # index of 32bit word (digi)
+        @assert id[i] != INV_ID
+        @assert id[i] == this_module_id
+        be = bin(hist, Int16(y[i]) + Int16(1)) 
+        e = end_h(hist, be)
+        p += 1
+        @assert nnn[k] == 0 
+        while p < e
+            m = val(hist, p) + first_pixel # index of 32bit word (digi)
+            @assert m != i
+            @assert y[m] - 0 - y[i] >= 0
+            if y[m] - y[i] > 1
                 break
             end
-        end
-        
-        max_pix_in_module = 4000
-        nbins = num_cols_in_module + 2
-        
-        
-        
-        hist = CACHED_HIST[]
-        # hist = HisToContainer{Int16, 418, 4000, 9, UInt16, 1}()
-        zero(hist)
-        
-        @assert msize == num_elements || (msize < num_elements && id[msize] != this_module_id)
-        if msize - first_pixel > max_pix_in_module
-            @printf("too many pixels in module %d: %d > %d\n", this_module_id, msize - first_pixel, max_pix_in_module)
-            msize = max_pix_in_module + first_pixel
-        end
-        @assert msize - first_pixel <= max_pix_in_module
-        if(msize == num_elements && id[msize] == this_module_id)
-            msize+=1
-        end
-        # fill histo
-        
-        for i in first:msize-1
-            if id[i] == INV_ID
-                continue
-            end
-            count!(hist, Int16(y[i]))
-        end
-        
-        finalize!(hist)
-        for i in first:msize-1
-            if id[i] == INV_ID
-                continue 
-            end
-            fill!(hist, Int16(y[i]), type_I(hist)((i - first_pixel))) # m
-        end
-        
-        # println(hist)
-        
-        max_iter = size(hist) # number of digis added to hist
-        max_neighbours = 10
-        
-        # nearest neighbour 
-        nn = zeros(Int, max_iter, max_neighbours) # m
-        nnn = zeros(Int, max_iter) # m
-        
-        # fill NN
-        testing = 0 
-        for (j, k) in zip(0:size(hist)-1, 1:size(hist)) # j is the index of the digi within the hist
-            @assert k <= max_iter
-            p = begin_h(hist) + j
-            i = val(hist,p) + first_pixel # index of 32bit word (digi)
-            @assert id[i] != INV_ID
-            @assert id[i] == this_module_id
-            be = bin(hist, Int16(y[i]) + Int16(1)) 
-            e = end_h(hist, be)
-            p += 1
-            @assert nnn[k] == 0 
-            while p < e
-                m = val(hist, p) + first_pixel # index of 32bit word (digi)
-                @assert m != i
-                @assert y[m] - 0 - y[i] >= 0
-                if y[m] - y[i] > 1
-                    break
-                end
-                if abs(x[m] - x[i]) > 1
-                    p += 1
-                    continue
-                end
-                if this_module_id == 510 && i == 15187
-                    testing = k 
-                end
-                nnn[k] += 1
-                l = nnn[k]
-                @assert l <= max_neighbours
-                nn[k, l] = val(hist, p)
+            if abs(x[m] - x[i]) > 1
                 p += 1
-            end
-        end
-        
-        more = true
-        n_loops = 0
-        while more
-            if n_loops % 2 == 1
-                for j ∈ 0:size(hist)-1
-                    p = begin_h(hist) + j
-                    i = val(hist, p) + first_pixel
-                    m = cluster_id[i]
-                    while m != cluster_id[m]
-                        m = cluster_id[m]
-                    end
-                    cluster_id[i] = m
-                end
-            else
-                more = false
-                
-                for (j, k) ∈ zip(0:size(hist)-1, 1:size(hist))
-                    p = begin_h(hist) + j 
-                    i::Int = val(hist, p) + first_pixel
-                    for kk ∈ 1:nnn[k]
-                        l = nn[k, kk]
-                        m = l + first_pixel
-                        @assert m != i
-                        old = cluster_id[m]
-                        cluster_id[m] = min(cluster_id[m], cluster_id[i])
-                        if old != cluster_id[i]
-                            more = true
-                        end
-                        cluster_id[i] = min(cluster_id[i], old)
-                    end
-                end
-            end
-            n_loops += 1
-        end
-        
-        found_clusters = 0
-        
-        for i ∈ first:msize-1
-            if id[i] == INV_ID
                 continue
             end
-            if cluster_id[i] == i
-                old = found_clusters
-                found_clusters += 1
-                cluster_id[i] = -(old + 1)
-            end
+            # if this_module_id == 510 && i == 15187
+            #     testing = k 
+            # end
+            nnn[k] += 1
+            l = nnn[k]
+            @assert l <= max_neighbours
+            nn[k, l] = val(hist, p)
+            p += 1
         end
-    
-        for i ∈ first:msize-1
-            if id[i] == INV_ID 
-                continue
-            end
-            if cluster_id[i] > 0
-                cluster_id[i] = cluster_id[cluster_id[i]]
-            end
-        end
-    
-        for i ∈ first:msize-1
-            if id[i] == INV_ID 
-                cluster_id[i] = -9999
-                continue
-            end
-            cluster_id[i] = -cluster_id[i] 
-        end
-        n_clusters_in_module[this_module_id+1] = found_clusters
-        moduleId[mod] = this_module_id
     end
+    
+    more = true
+    n_loops = 0
+    while more
+        if n_loops % 2 == 1
+            for j ∈ 0:size(hist)-1
+                p = begin_h(hist) + j
+                i = val(hist, p) + first_pixel
+                m = cluster_id[i]
+                while m != cluster_id[m]
+                    m = cluster_id[m]
+                end
+                cluster_id[i] = m
+            end
+        else
+            more = false
+            
+            for (j, k) ∈ zip(0:size(hist)-1, 1:size(hist))
+                p = begin_h(hist) + j 
+                i::Int = val(hist, p) + first_pixel
+                for kk ∈ 1:nnn[k]
+                    l = nn[k, kk]
+                    m = l + first_pixel
+                    @assert m != i
+                    old = cluster_id[m]
+                    cluster_id[m] = min(cluster_id[m], cluster_id[i])
+                    if old != cluster_id[i]
+                        more = true
+                    end
+                    cluster_id[i] = min(cluster_id[i], old)
+                end
+            end
+        end
+        n_loops += 1
+    end
+    
+    found_clusters = 0
+    
+    for i ∈ first:msize-1
+        if id[i] == INV_ID
+            continue
+        end
+        if cluster_id[i] == i
+            old = found_clusters
+            found_clusters += 1
+            cluster_id[i] = -(old + 1)
+        end
+    end
+
+    for i ∈ first:msize-1
+        if id[i] == INV_ID 
+            continue
+        end
+        if cluster_id[i] > 0
+            cluster_id[i] = cluster_id[cluster_id[i]]
+        end
+    end
+
+    for i ∈ first:msize-1
+        if id[i] == INV_ID 
+            cluster_id[i] = -9999
+            continue
+        end
+        cluster_id[i] = -cluster_id[i] 
+    end
+    n_clusters_in_module[this_module_id+1] = found_clusters
+    moduleId[mod] = this_module_id
+
   
 end
 

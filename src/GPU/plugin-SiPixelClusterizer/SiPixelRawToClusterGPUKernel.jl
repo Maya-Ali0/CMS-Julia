@@ -696,7 +696,7 @@ module pixelGPUDetails
         n_modules = CUDA.@allowscalar clusters_d.module_start_d[1]
         set_n_modules_digis(digis_d,n_modules,word_counter)
         
-        find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
+        @cuda find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         # open("testingNumClusters.txt","w") do file
         #     for i ∈ 1:2000
         #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')

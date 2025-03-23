@@ -3,6 +3,7 @@ module histogram
 import Base.fill!
 using ..prefix_scan: block_prefix_scan
 using StaticArrays
+using CUDA
 struct AtomicPairCounter
     n::UInt32
     m::UInt32
@@ -17,14 +18,18 @@ end
     The off array within the struct stores the number of elements in the bins to its left excluding the elements inserted at bin indexed at b
     It represents the next available position where a new element can be inserted in array bins
 """
-struct HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS} # T is the type of discretized input values, NBINS is the number of bins, size is the maximum number of elements in bins, 
-    off::Vector{UInt32} # goes from bin 1 to bin N_BINS*N_HISTS + 1 
-    bins::Vector{I} # holds indices to the values placed within a certain bin that are of type I. Indices for bins range from 1 to SIZE
+struct HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U <: AbstractArray{UInt32},V <: AbstractArray{I}} # T is the type of discretized input values, NBINS is the number of bins, size is the maximum number of elements in bins, 
+    off::U # goes from bin 1 to bin N_BINS*N_HISTS + 1 
+    bins::V # holds indices to the values placed within a certain bin that are of type I. Indices for bins range from 1 to SIZE
     psws::Int32 # prefix scan working place
-    function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}() where {T,N_BINS,SIZE,S,I,N_HISTS}
-        new(Vector{UInt32}(undef, N_BINS * N_HISTS + 1), Vector{I}(undef, SIZE), 0)
-    end
+    # function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}() where {T,N_BINS,SIZE,S,I,N_HISTS,U <: AbstractArray{UInt32},V <: AbstractArray{I}}
+    #     new(U(undef, N_BINS * N_HISTS + 1), V(undef, SIZE), 0)
+    # end
 end
+function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}() where {T,N_BINS,SIZE,S,I,N_HISTS}
+    return HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}(@cuStaticSharedMem(UInt32,N_HISTS*N_BINS+1),@cuStaticSharedMem(I,SIZE),0)
+end
+
 
 HisToContainer{T,N_BINS,SIZE,S,I}() where {T,N_BINS,SIZE,S,I} = HisToContainer{T,N_BINS,SIZE,S,I,1}() # outer constructor with N_HISTS set to 1
 
@@ -68,7 +73,7 @@ functions given only the type but not an instance. Analogous to static members w
 size_t(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = S
 n_bins(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = N_BINS
 n_hists(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = N_HISTS
-tot_bins(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
+tot_bins(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
 n_bits(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
 capacity(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = SIZE
 hist_off(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}, nh::Int) where {T,N_BINS,SIZE,S,I,N_HISTS} = N_BINS * nh
@@ -163,14 +168,15 @@ end
 @inline function count!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, t::T) where {T,N_BINS,SIZE,S,I,N_HISTS}
     b::UInt32 = bin(hist, t)
     @assert(b <= n_bins(hist))
-    hist.off[b] += 1
+    CUDA.atomic_add!(pointer(hist.off,b),UInt32(1))
 end
 
 @inline function fill!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, t::T, j::I) where {T,N_BINS,SIZE,S,I,N_HISTS}
     b::UInt32 = bin(hist, t)
     @assert(b <= n_bins(hist))
-    w = hist.off[b]
-    hist.off[b] -= 1
+    # w = hist.off[b]
+    # hist.off[b] -= 1
+    w = CUDA.atomic_sub!(pointer(hist.off,b),1)
     @assert(w > 0)
     hist.bins[w] = j
 end
