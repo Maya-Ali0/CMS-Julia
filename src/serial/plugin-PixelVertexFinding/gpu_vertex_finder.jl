@@ -432,7 +432,7 @@ function sort_by_pt2(vertices::ZVertexSoA,ws::WorkSpace)
     #     print(file,'\n')
     # end
     # print(sort_ind.-1)
-    print_vertex_validation(vertices,"testingVertices.txt")
+    # print_vertex_validation(vertices,"testingVertices.txt")
 end
 
 
