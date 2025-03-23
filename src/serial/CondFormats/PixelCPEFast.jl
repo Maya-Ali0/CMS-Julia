@@ -13,6 +13,11 @@ end
 Adapt.@adapt_structure PixelCPEFast
 
 
+struct PixelCPEFastWrapper
+    xx::PixelCPEFast
+end
+
+
 # Define the getCPUProduct method
 function getCPUProduct(pixelCPE::PixelCPEFast)::ParamsOnGPU
     return pixelCPE.cpuData_

@@ -29,16 +29,27 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
 mutable struct TrackingRecHit2DHeterogeneous
     n16::UInt32
     n32::UInt32
-    m_store16::Union{Nothing, Vector{Vector{Int16}}}
-    m_store32::Union{Nothing, Vector{Vector{Float64}}}
+    m_store16::Union{Nothing, Vector{Vector{UInt16}}} # UInt16 unique_ptr<uint16_t[]>
+    m_store32::Union{Nothing, Vector{Vector{Float32}}} # Float32 unique_ptr<float[]>
     m_HistStore::HisToContainer
     m_AverageGeometryStore::AverageGeometry
     m_view::TrackingRecHit2DSOAView
     m_nHits::UInt32
     m_hitsModuleStart::Vector{UInt32}
+
+    # needed as kernel params...
     m_hist::Hist
     m_hitsLayerStart::Union{Nothing, Vector{UInt32}}
     m_iphi::Union{Nothing, Vector{Int16}}
+
+
+    
+    
+    # // needed as kernel params...
+    # Hist* m_hist;
+    # uint32_t* m_hitsLayerStart;
+    # int16_t* m_iphi;
+  
 
     """
         Constructor for TrackingRecHit2DHeterogeneous.
