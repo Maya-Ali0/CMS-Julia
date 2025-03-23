@@ -3,54 +3,194 @@ include("src/Patatrack.jl")
 using .Patatrack
 # using Profile, ProfileView
 using BenchmarkTools
-const num_of_threads::Int = 1
-const num_of_streams::Int = 0
-const warm_up_events::Int = 0 # Number of events to process before starting the benchmark (default 0).
-const max_events::Int = -1 # Number of events to process
-const run_for_minutes::Int = -1 # Continue processing the set of 1000 events until this many minutes have passed
-const validation::Bool = true #  Run (rudimentary) validation at the end.
-const histogram::Bool = false # prduce a histogram at the end
-const empty::Bool = false # Ignore all producers (used for testing only)
+using ArgParse
+using Printf
+using Dates
 
-function run(num_of_streams::Int)
+function print_help()
+    println("""
+    Usage: julia main.jl [--numberOfThreads NT] [--numberOfStreams NS] [--warmupEvents WE] [--maxEvents ME] [--runForMinutes RM]
+           [--data PATH] [--validation] [--histogram] [--empty]
 
-    ed_modules::Vector{String} = String[]
-    es_modules::Vector{String} = String[]
-
-    if (!empty)
-        ed_modules = ["SiPixelRawToClusterCUDA", "BeamSpotToPOD", "SiPixelRecHitCUDA", "CAHitNtupletCUDA", "PixelVertexProducerCUDA"]
-        es_modules = ["SiPixelFedCablingMapGPUWrapperESProducer", "SiPixelGainCalibrationForHLTGPUESProducer", "PixelCPEFastESProducer", "BeamSpotESProducer"]
-    end
-    if (validation)
-        push!(ed_modules, "CountValidator")
-    end
-
-    if (histogram)
-        push!(ed_modules, "HistoValidator")
-    end
-    #Not Currently Used
-    ##############################################################################################################################################################
-    es::EventSetup = EventSetup()
-    dataDir::String = (@__DIR__) * "/data/"
-
-    # EP = EventProcessor(ed_modules,es_modules,dataDir)
-
-    ev = EventProcessor(num_of_streams, ed_modules, es_modules, dataDir, validation)
-    # println("Warming up")
-    # @time warm_up(ev)
-    # println("Warmup done")
-    println("running")
-    @time run_processor(ev)
-
+    Options:
+      --numberOfThreads         Number of threads to use (default 1, use 0 to use all CPU cores)
+      --numberOfStreams        Number of concurrent events (default 0 = numberOfThreads)
+      --warmupEvents          Number of events to process before starting the benchmark (default 0)
+      --maxEvents             Number of events to process (default -1 for all events in the input file)
+      --runForMinutes         Continue processing the set of 1000 events until this many minutes have passed
+                             (default -1 for disabled; conflicts with --maxEvents)
+      --data                  Path to the 'data' directory (default 'data' in the directory of the executable)
+      --validation           Run (rudimentary) validation at the end
+      --histogram            Produce histograms at the end
+      --empty               Ignore all producers (for testing only)
+    """)
 end
 
+function parse_commandline()
+    s = ArgParseSettings(description="CMS Julia Event Processing")
+    s.add_help = false  # Disable the default --help option
 
+    @add_arg_table! s begin
+        "--numberOfThreads"
+        help = "Number of threads to use"
+        arg_type = Int
+        default = 1
+        "--numberOfStreams"
+        help = "Number of concurrent events"
+        arg_type = Int
+        default = 0
+        "--warmupEvents"
+        help = "Number of warmup events"
+        arg_type = Int
+        default = 0
+        "--maxEvents"
+        help = "Maximum number of events"
+        arg_type = Int
+        default = -1
+        "--runForMinutes"
+        help = "Run for specified minutes"
+        arg_type = Int
+        default = -1
+        "--data"
+        help = "Path to data directory"
+        arg_type = String
+        default = joinpath(@__DIR__, "data")
+        "--validation"
+        help = "Enable validation"
+        action = :store_true
+        "--histogram"
+        help = "Enable histogram"
+        action = :store_true
+        "--empty"
+        help = "Ignore all producers"
+        action = :store_true
+        "-h", "--help"
+        help = "Show this help message"
+        action = :store_true
+    end
 
-# number_of_streams = parse(Int, ARGS[1]) # First argument as number of events
-# print(number_of_streams)
+    return parse_args(s)
+end
+D
+function main()
+    args = parse_commandline()
 
-const number_of_streams = 1
-run(number_of_streams)
-println("Number of threads: ", Threads.nthreads())
+    if args["help"]
+        print_help()
+        return 0
+    end
 
+    # Validate arguments
+    if args["maxEvents"] >= 0 && args["runForMinutes"] >= 0
+        println("Got both --maxEvents and --runForMinutes, please give only one of them")
+        return 1
+    end
 
+    # Set number of threads
+    num_threads = args["numberOfThreads"]
+    if num_threads == 0
+        num_threads = Sys.CPU_THREADS
+    end
+    ENV["JULIA_NUM_THREADS"] = num_threads
+
+    # Set number of streams
+    num_streams = args["numberOfStreams"]
+    if num_streams == 0
+        num_streams = num_threads
+    end
+
+    # Validate data directory
+    data_dir = args["data"]
+    if !isdir(data_dir)
+        println("Data directory '$(data_dir)' does not exist")
+        return 1
+    end
+
+    # Initialize modules
+    ed_modules = String[]
+    es_modules = String[]
+
+    if !args["empty"]
+        ed_modules = [
+            "BeamSpotToPOD",
+            "SiPixelRawToClusterCUDA",
+            "SiPixelRecHitCUDA",
+            "CAHitNtupletCUDA",
+            "PixelVertexProducerCUDA"
+        ]
+        es_modules = [
+            "BeamSpotESProducer",
+            "SiPixelFedCablingMapGPUWrapperESProducer",
+            "SiPixelGainCalibrationForHLTGPUESProducer",
+            "PixelCPEFastESProducer"
+        ]
+
+        if args["validation"]
+            push!(ed_modules, "CountValidator")
+        end
+        if args["histogram"]
+            push!(ed_modules, "HistoValidator")
+        end
+    end
+
+    # Print processing information
+    if args["runForMinutes"] < 0
+        print("Processing $(args["maxEvents"]) events,")
+    else
+        print("Processing for about $(args["runForMinutes"]) minutes,")
+    end
+
+    if args["warmupEvents"] > 0
+        print(" after $(args["warmupEvents"]) events of warm up,")
+    end
+    println(" with $num_streams concurrent events and $num_threads threads.")
+
+    # Initialize EventProcessor
+    ev = EventProcessor(
+        num_streams,
+        ed_modules,
+        es_modules,
+        data_dir,
+        args["validation"]
+    )
+
+    # Warm up
+    try
+        if args["warmupEvents"] > 0
+            println("Warming up...")
+            @time warm_up(ev)
+        end
+
+        # Main processing
+        println("Processing...")
+        start_time = now()
+        cpu_start = time_ns()
+
+        @time run_processor(ev)
+
+        cpu_end = time_ns()
+        end_time = now()
+
+        # Calculate timing
+        elapsed_seconds = Dates.value(end_time - start_time) / 1000
+        cpu_time = (cpu_end - cpu_start) / 1e9
+
+        # Report results
+        processed_events = ev.source.numEvents[]  # Adjust this based on your actual event counter
+        throughput = processed_events / elapsed_seconds
+        cpu_usage = (cpu_time / elapsed_seconds / num_threads) * 100
+
+        @printf("Processed %d events in %.6e seconds, throughput %.2f events/s, CPU usage per thread: %.1f%%\n",
+            processed_events, elapsed_seconds, throughput, cpu_usage)
+
+    catch e
+        println("\n----------\nCaught exception:")
+        println(e)
+        return 1
+    end
+
+    return 0
+end
+
+# Run the main function
+exit(main())
