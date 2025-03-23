@@ -71,7 +71,7 @@ function parse_commandline()
 
     return parse_args(s)
 end
-D
+
 function main()
     args = parse_commandline()
 
