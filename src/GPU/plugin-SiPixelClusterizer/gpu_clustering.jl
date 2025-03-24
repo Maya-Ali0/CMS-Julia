@@ -97,9 +97,10 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         return
     end       
     # julia is 1 indexed
-    first_module = 1
-    end_module = module_start[1]
+    # first_module = 1
+    # end_module = module_start[1]
     #Hist{T, N, M, K, U} = HisToContainer{T, N, M, K, U} # was on line 120 question why did it cause a lot of memory allocation
+    
     first_pixel = module_start[blockIdx().x + 1] # access index of starting pixel within module
     this_module_id = id[first_pixel] # get module id
     @assert this_module_id < MAX_NUM_MODULES
@@ -113,7 +114,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             continue
         end
         if id[i] != this_module_id
-            CUDA.atomic_min!(pointer(msize), i)
+            CUDA.@atomic msize[1] = min(msize[1],i) # Min update for shared mem
             break
         end
     end
@@ -152,9 +153,15 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         count!(hist, Int16(y[i]))
     end
     sync_threads()
-    
-    finalize!(hist)
-    for i in first:blockDim().x:msize-1
+    if threadIdx().x <= 32
+        ws[threadIdx().x] = 0 
+    end
+    sync_threads()
+    finalize!(hist,ws)
+
+    sync_threads()
+
+    for i in first:blockDim().x:msize[1]-1
         if id[i] == INV_ID
             continue 
         end
@@ -163,7 +170,8 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     
     # println(hist)
     
-    max_iter = size(hist) # number of digis added to hist
+    # max_iter = size(hist) # number of digis added to hist
+    max_iter = 16
     max_neighbours = 10
     
     # nearest neighbour 

@@ -1,4 +1,5 @@
 module prefix_scan
+using CUDA
     """
         blockPrefixScan(ci::Vector{T}, co::Vector{T}, size::UInt32) where T
 
@@ -16,7 +17,7 @@ module prefix_scan
         end
     end
 
-    function warp_prefix_scan(c::AbstractVector{T},i::Integer,mask::UInt32)
+    function warp_prefix_scan(c::AbstractVector{T},i::Integer,mask::UInt32) where T
         lane_id = mod1(i,32)
         off_set = 1 
         val = c[i]
