@@ -16,6 +16,20 @@ module prefix_scan
         end
     end
 
+    function warp_prefix_scan(c::AbstractVector{T},i::Integer,mask::UInt32)
+        lane_id = mod1(i,32)
+        off_set = 1 
+        val = c[i]
+        while off_set < 32
+            val2 = CUDA.shfl_up_sync(mask,val,off_set)
+            if lane_id >= off_set + 1
+                val += val2
+            end
+            off_set <<= 1
+        end
+        c[i] = val
+    end
+
     """
         blockPrefixScan(c::Vector{T}, size::UInt32) where T
 
@@ -25,10 +39,38 @@ module prefix_scan
     - `c::Vector{T}`: Input/output array of type `T`.
     - `size::UInt32`: Number of elements to scan.
     """
-    function block_prefix_scan(c::Vector{T}, size) where T
-        for i in 2:size
-            c[i] = c[i] + c[i - 1]
+    function block_prefix_scan(c::AbstractVector{T},size::Integer,ws::AbstractVector{U}) where {T,U}
+
+        @assert size <= 1024
+        @assert blockDim().x % 32 == 0
+        first = threadIdx().x
+        mask = CUDA.vote_ballot_sync(0xffffffff,first <= size)
+
+        for i ∈ first:blockDim().x:size
+            warp_prefix_scan(c,i,mask)
+            lane_id = mod1(i,32)
+            warp_id = (i +31) / 32
+            if lane_id == 32
+                ws[warp_id] = c[i]
+            end
+            mask = CUDA.vote_ballot_sync(mask,i+blockDim().x <= size)
         end
+        sync_threads()
+        if size <= 32
+            return
+        end
+        if threadIdx().x <= 32
+            warp_prefix_scan(ws,threadIdx().x,mask)
+        end
+        sync_threads()
+
+        for i ∈ first+32:blockDim().x:size
+            warp_id = (i +31) / 32
+            c[i] += ws[warp_id-1]
+        end
+        # for i in 2:size
+        #     c[i] = c[i] + c[i - 1]
+        # end
     end
 
     """
