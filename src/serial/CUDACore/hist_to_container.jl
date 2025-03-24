@@ -4,6 +4,7 @@ import Base.fill!
 using ..prefix_scan: block_prefix_scan
 using StaticArrays
 using CUDA
+using Adapt
 struct AtomicPairCounter
     n::UInt32
     m::UInt32
@@ -26,8 +27,16 @@ struct HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U <: AbstractArray{UInt32},V <: 
     #     new(U(undef, N_BINS * N_HISTS + 1), V(undef, SIZE), 0)
     # end
 end
-function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}() where {T,N_BINS,SIZE,S,I,N_HISTS}
-    return HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}(@cuStaticSharedMem(UInt32,N_HISTS*N_BINS+1),@cuStaticSharedMem(I,SIZE),0)
+
+function HisToContainer(off::U, bins::V, psws::Int32) where {U <: AbstractArray{UInt32}, V <: AbstractArray}
+    # Set default phantom parameters.
+    T = Int16             # The type of discretized input values.
+    N_BINS = 128          # Example: number of bins.
+    SIZE = length(bins)   # Or some predetermined SIZE.
+    S = 8 * sizeof(UInt16)  # Some size factor.
+    I = UInt16      # The element type of bins, e.g. UInt16.
+    N_HISTS = 10          # Example value.
+    return HisToContainer{T, N_BINS, SIZE, S, I, N_HISTS, U, V}(off, bins, psws)
 end
 
 function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}() where {T,N_BINS,SIZE,S,I,N_HISTS,U <: AbstractArray{UInt32},V <: AbstractArray{I}}
@@ -35,6 +44,8 @@ function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}() where {T,N_BINS,SIZE,S,
 end
 
 HisToContainer{T,N_BINS,SIZE,S,I}() where {T,N_BINS,SIZE,S,I} = HisToContainer{T,N_BINS,SIZE,S,I,1}() # outer constructor with N_HISTS set to 1
+
+Adapt.@adapt_structure HisToContainer
 
 
 """

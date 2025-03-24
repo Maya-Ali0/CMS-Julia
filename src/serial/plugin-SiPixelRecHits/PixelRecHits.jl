@@ -12,6 +12,7 @@ using ..RecoLocalTracker_SiPixelRecHits_plugins_gpuPixelRecHits_h
 using ..PixelGPU_h
 using ..Printf
 using ..histogram:fill_many_from_vector
+using ..CUDA
 export makeHits
 # missing more includes
 
@@ -32,8 +33,13 @@ function makeHits(digis_d::SiPixelDigisSoA,
                   bs_d::BeamSpotPOD, 
                   cpeParams::ParamsOnGPU)
     nHits = nClusters(clusters_d)
-    
+
+    n16 = 4
+    n32 = 9
+
     hits_d = TrackingRecHit2DHeterogeneous(nHits, cpeParams, clus_module_start(clusters_d))
+    hits_d = cu(hits_d)
+    print(typeof(hits_d))
 
     if (n_modules(digis_d) != 0)
         getHits(cpeParams, bs_d, digiView(digis_d), n_digis(digis_d), clusterView(clusters_d), hist_view(hits_d))
