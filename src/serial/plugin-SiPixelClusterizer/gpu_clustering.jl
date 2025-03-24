@@ -11,7 +11,7 @@ using ..histogram: HisToContainer, zero, count!, finalize!, size, bin, val, begi
 
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
 using TaskLocalValues
-const CACHED_HIST = TaskLocalValue(() -> HisToContainer{Int16, 418, 4000, 9, UInt16, 1}()) # ? num_cols_in_module + 2 max_pix_in_module ? ? ?
+const CACHED_HIST = TaskLocalValue(() -> HisToContainer{Int16, 418, 4000, 9, UInt16, 1, Vector{UInt32}, Vector{UInt16}}()) # ? num_cols_in_module + 2 max_pix_in_module ? ? ?
 #using ..histogram: HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
 
 #using ..gpuConfig

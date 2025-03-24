@@ -8,6 +8,7 @@ using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h: Trac
 using ..histogram: HisToContainer
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
+using ..Adapt
 """
     Struct representing the heterogeneous data for 2D tracking hits.
 
@@ -25,12 +26,15 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
     - `m_hitsLayerStart::Union{Nothing, Vector{UInt32}}`: Optional start indices for hits in layers, initialized as Nothing or a vector of UInt32.
     - `m_iphi::Union{Nothing, Vector{UInt16}}`: Optional vector of indices in phi, initialized as Nothing or a vector of UInt16.
 """
-    const Hist = HisToContainer{Int16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10}
-mutable struct TrackingRecHit2DHeterogeneous
+
+    Hist = HisToContainer{Int16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10}
+
+
+mutable struct TrackingRecHit2DHeterogeneous{U <: AbstractArray{UInt16},V <: AbstractArray{Float32},W <: AbstractVector{UInt32}}
     n16::UInt32
     n32::UInt32
-    m_store16::Union{Nothing, Vector{Vector{UInt16}}} # UInt16 unique_ptr<uint16_t[]>
-    m_store32::Union{Nothing, Vector{Vector{Float32}}} # Float32 unique_ptr<float[]>
+    m_store16::U # UInt16 unique_ptr<uint16_t[]>
+    m_store32::V # Float32 unique_ptr<float[]>
 
     m_xl::UInt32
     m_yl::UInt32
@@ -50,99 +54,109 @@ mutable struct TrackingRecHit2DHeterogeneous
     m_xsize::UInt32
     m_ysize::UInt32
 
-
-
-    m_HistStore::HisToContainer
+    m_HistStore::Hist
     m_AverageGeometryStore::AverageGeometry
 
     m_nHits::UInt32
-    m_hitsModuleStart::Vector{UInt32}
+    m_hitsModuleStart::W
 
-    m_hist::Hist
 
-  
+    m_cpe_params::ParamsOnGPU
 
-    """
-        Constructor for TrackingRecHit2DHeterogeneous.
-
-        ## Arguments
-        - `nHits::Integer`: Number of hits.
-        - `cpe_params::ParamsOnGPU`: Parameters for charge propagation estimation (CPE).
-        - `hitsModuleStart::Vector{Integer}`: Start indices of modules for hits.
-        - `Hist::HisToContainer`: Histogram container for hits.
-
-        ## Fields Initialized
-        - `n16`: Set to 4.
-        - `n32`: Set to 9.
-        - `m_store16`: Initialized as a vector of vectors of UInt16.
-        - `m_store32`: Initialized as a vector of vectors of Float64.
-        - `m_HistStore`: Set to `Hist`.
-        - `m_AverageGeometryStore`: Initialized with a vector containing one `AverageGeometry` object.
-        - `m_view`: Initialized with one `TrackingRecHit2DSOAView` object.
-    """
-    function TrackingRecHit2DHeterogeneous(nHits::Integer, cpe_params::ParamsOnGPU, hitsModuleStart::Vector{UInt32})
-        n16 = 4
-        n32 = 9
-    
-        if nHits == 0
-            return new(n16, n32, Vector{Vector{Int16}}()
-            , Vector{Vector{Float64}}(), HisToContainer{0,0,0,0,UInt32}(), AverageGeometry(), TrackingRecHit2DSOAView(), nHits, hitsModuleStart, Hist(), Vector{UInt32}(), Vector{Int16}()) #added dummy values for HisToContainer
-        end
-    
-        # Initialize storage vectors
-        m_store16 = [Vector{Int16}(undef, nHits) for _ in 1:n16]
-        m_store32 = [Vector{Float64}(undef, nHits) for _ in 1:n32]
-        m_store32_UInt32 = [Vector{UInt32}(undef, nHits) for _ in 1:n32]
-        append!(m_store32, [Vector{Float64}(undef, 11)])
-        append!(m_store32_UInt32, [Vector{UInt32}(undef, 11)])
-
-        # Initialize AverageGeometry and Histogram store
-        m_AverageGeometryStore = AverageGeometry()
-        m_HistStore = Hist()
-    
-        # Define local functions to access storage
-        function get16(i)
-            return  m_store16[i + 1]
-        end
-        function get32(i) 
-            return m_store32[i + 1] 
-        end
-        function get32_uint(i)
-            return m_store32_UInt32[i + 1] 
-        end
-    
-        # Initialize hits_layer_start and m_iphi
-        hits_layer_start = Vector{Integer}(get32_uint(n32))
-        m_iphi =  get16(0)
-    
-        # Create and initialize the TrackingRecHit2DSOAView object
-        m_view = TrackingRecHit2DSOAView(
-            get32(0),
-            get32(1),
-            get32(2),
-            get32(3),
-            get32(4),
-            get32(5),
-            get32(6),
-            get32(7),
-            m_iphi,
-            get32_uint(8),
-            get16(2),
-            get16(3),
-            get16(1),
-            m_AverageGeometryStore,
-            cpe_params,
-            hitsModuleStart,
-            hits_layer_start,
-            m_HistStore,
-            UInt32(nHits)
-        )    
-        
-
-        # Return a new instance of TrackingRecHit2DHeterogeneous
-        return new(n16, n32, m_store16, m_store32, m_HistStore, m_AverageGeometryStore, m_view, nHits, hitsModuleStart, m_HistStore, hits_layer_start, m_iphi)
-    end
 end
+
+Adapt.@adapt_structure TrackingRecHit2DHeterogeneous
+
+
+
+
+
+"""
+Constructor for TrackingRecHit2DHeterogeneous.
+
+## Arguments
+- `nHits::Integer`: Number of hits.
+- `cpe_params::ParamsOnGPU`: Parameters for charge propagation estimation (CPE).
+- `hitsModuleStart::Vector{Integer}`: Start indices of modules for hits.
+- `Hist::HisToContainer`: Histogram container for hits.
+
+## Fields Initialized
+- `n16`: Set to 4.
+- `n32`: Set to 9.
+- `m_store16`: Initialized as a vector of vectors of UInt16.
+- `m_store32`: Initialized as a vector of vectors of Float64.
+- `m_HistStore`: Set to `Hist`.
+- `m_AverageGeometryStore`: Initialized with a vector containing one `AverageGeometry` object.
+- `m_view`: Initialized with one `TrackingRecHit2DSOAView` object.
+"""
+function TrackingRecHit2DHeterogeneous(nHits::UInt32, cpe_params::ParamsOnGPU, hitsModuleStart::Vector{UInt32}) where {U <: AbstractArray{UInt16},V <: AbstractArray{Float32},W <: AbstractVector{UInt32}}
+    n16 = 4
+    n32 = 9
+
+    # if nHits == 0 # to fix later
+    #     return new(n16, n32, Vector{Vector{Int16}}()
+    #     , Vector{Vector{Float64}}(), HisToContainer{0,0,0,0,UInt32}(), AverageGeometry(), TrackingRecHit2DSOAView(), nHits, hitsModuleStart, Hist(), Vector{UInt32}(), Vector{Int16}()) #added dummy values for HisToContainer
+    # end
+
+    # Initialize storage vectors
+    m_store16 = [Vector{UInt16}(undef, nHits) for _ in 1:n16]
+    m_store32 = [Vector{Float32}(undef, nHits) for _ in 1:n32]
+
+    append!(m_store32, [Vector{Float32}(undef, 11)])
+
+    # Initialize AverageGeometry and Histogram store
+    m_AverageGeometryStore = AverageGeometry()
+    m_HistStore = Hist()
+
+    # Define local functions to access storage
+    function get16(i)
+        return  1 + (i+1)*nHits
+    end
+    function get32(i) 
+        return 1 + (i+1)*nHits
+    end
+
+    m_xl::UInt32 = get32(0)
+    m_yl::UInt32 = get32(1)
+    m_xerr::UInt32 = get32(2)
+    m_yerr::UInt32 = get32(3)
+
+    m_xg::UInt32 = get32(4)
+    m_yg::UInt32 = get32(5)
+    m_zg::UInt32 = get32(6)
+    m_rg::UInt32 = get32(7)
+
+    m_charge::UInt32 = get32(8)
+    m_hitsLayerStart::UInt32 = get32(9)
+
+    m_iphi::UInt32 = get16(0)
+    m_detInd::UInt32 = get16(1)
+    m_xsize::UInt32 = get16(2)
+    m_ysize::UInt32 = get16(3)
+
+    # Return a new instance of TrackingRecHit2DHeterogeneous
+    return TrackingRecHit2DHeterogeneous{U,V,W}(n16, n32, m_store16, m_store32, m_xl, m_yl, m_xerr, m_yerr, m_xg, m_yg, m_zg, m_rg, m_charge, m_hitsLayerStart, m_iphi, m_detInd, m_xsize, m_ysize, m_HistStore, m_AverageGeometryStore, nHits, hitsModuleStart, cpe_params)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 """
     Accessor function for retrieving the view from TrackingRecHit2DHeterogeneous.
