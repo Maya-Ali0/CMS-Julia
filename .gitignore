@@ -9,3 +9,4 @@ data/raw.bin
 data_v2.tar.gz
 !data/md5.txt
 !data/url.txt
+compiled_cms/
