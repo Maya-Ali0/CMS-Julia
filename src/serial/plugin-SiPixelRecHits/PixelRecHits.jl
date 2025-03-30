@@ -38,20 +38,25 @@ function makeHits(digis_d::SiPixelDigisSoA,
     n32 = 9
 
     hits_d = TrackingRecHit2DHeterogeneous(nHits, cpeParams, clus_module_start(clusters_d))
+
     hits_d = cu(hits_d)
-    print(typeof(hits_d))
 
-    if (n_modules(digis_d) != 0)
-        getHits(cpeParams, bs_d, digiView(digis_d), n_digis(digis_d), clusterView(clusters_d), hist_view(hits_d))
+    # print(typeof(hits_d))
+    threadsPerBlock::Int32 = 128;
+    num_blocks::UInt32 = n_modules(digis_d)
+    print(num_blocks)
+
+    if (num_blocks != 0)
+        @cuda blocks=num_blocks threads=threadsPerBlock getHits(cpeParams, bs_d, digis_d)#, n_digis(digis_d), clusters_d)
     end
 
-    if (nHits != 0)
-        setHitsLayerStart(clus_module_start(clusters_d), cpeParams, hits_layer_start(hits_d))
-    end
+    # if (nHits != 0)
+    #     setHitsLayerStart(clus_module_start(clusters_d), cpeParams, hits_layer_start(hits_d))
+    # end
 
-    if (nHits != 0)
-       fill_many_from_vector(phi_binner(hits_d), 10, i_phi(hist_view(hits_d)), hits_layer_start(hits_d), nHits)
-    end
+    # if (nHits != 0)
+    #    fill_many_from_vector(phi_binner(hits_d), 10, i_phi(hist_view(hits_d)), hits_layer_start(hits_d), nHits)
+    # end
 
     # counter = 0
     # for x ∈ phi_binner(hits_d).bins

@@ -4,6 +4,7 @@ using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 using .CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
 using .RecoLocalTracker_SiPixelRecHits_plugins_PixelRecHits_h
 using .PluginFactory
+using CUDA
 
 # more includes are missing (waiting on files to be done)
 
@@ -22,6 +23,11 @@ struct SiPixelRecHitCUDA <: EDProducer
     end
 end
 
+function f(a::SiPixelDigisSoA)
+    @cuprint(a.n_modules_h)
+    return nothing
+end
+
 function produce(self::SiPixelRecHitCUDA,iEvent::Event, es::EventSetup)
     fcpe = get(es, PixelCPEFast{CUDA.CuArray{Main.Patatrack.PixelGPU_h.DetParams, 1, CUDA.DeviceMemory}, CUDA.CuArray{UInt32, 1, CUDA.DeviceMemory}, CUDA.CuArray{UInt8, 1, CUDA.DeviceMemory}, CUDA.CuArray{Float32, 1, CUDA.DeviceMemory}})
     #Temporary fix
@@ -32,7 +38,7 @@ function produce(self::SiPixelRecHitCUDA,iEvent::Event, es::EventSetup)
     digis = get(iEvent, self.tokenDigi)
     digis = cu(digis)
 
-
+    @cuda blocks=2 threads=3 f(digis)
     
     bs = get(iEvent, self.tBeamSpot)
     

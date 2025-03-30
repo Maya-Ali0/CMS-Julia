@@ -1,5 +1,5 @@
 module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
-export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind, clus, xx, yy, adc
+export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind, clus, xx, yy, adc, copy_with_n_modules_digis
   # Structure to hold a constant view of device data
   potato = 123
   struct DeviceConstView
@@ -10,7 +10,7 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
     clus::Vector{Int32}       # Cluster indices of pixels
   end
 
-  mutable struct SiPixelDigisSoA{U <: AbstractVector{Int32},V <: AbstractVector{UInt16},W <: AbstractVector{UInt32}}
+  struct SiPixelDigisSoA{U <: AbstractVector{Int32},V <: AbstractVector{UInt16},W <: AbstractVector{UInt32}}
       pdigi_d::W      # Digis data
       raw_id_arr_d::W   # Raw ID array
       xx_d::V         # Local X-coordinates of each pixel
@@ -40,6 +40,28 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
       # Return a new instance of SiPixelDigisSoA with initialized values
       return SiPixelDigisSoA(pdigi_d, raw_id_arr_d, xx_d, yy_d, adc_d, module_ind_d, clus_d, UInt32(0), UInt32(0))
   end
+
+
+  function copy_with_n_modules_digis(
+    s::SiPixelDigisSoA,
+    n_modules::Integer,
+    n_digis::Integer
+)
+n_digis = UInt32(n_digis)
+    return SiPixelDigisSoA(
+        s.pdigi_d,
+        s.raw_id_arr_d,
+        s.xx_d,
+        s.yy_d,
+        s.adc_d,
+        s.module_ind_d,
+        s.clus_d,
+        n_modules,
+        n_digis
+    )
+end
+
+
 
   """
   Set the number of modules and digis

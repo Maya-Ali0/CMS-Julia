@@ -6,7 +6,7 @@ module pixelGPUDetails
 
     using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
     
-    using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA,set_n_modules_digis
+    using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA:SiPixelDigisSoA,set_n_modules_digis,copy_with_n_modules_digis
     
     using ..cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA:SiPixelDigiErrorsSoA
 
@@ -230,7 +230,7 @@ module pixelGPUDetails
     struct responsible for raw_data to cluster conversion
         stores digis_d , clusters_d, and digi_errors_d
     """
-    struct SiPixelRawToClusterGPUKernel
+    mutable struct SiPixelRawToClusterGPUKernel    # decleaing this as mutable
         digis_d::SiPixelDigisSoA
         clusters_d::SiPixelClustersSoA
         digi_errors_d::SiPixelDigiErrorsSoA
@@ -690,7 +690,9 @@ module pixelGPUDetails
         
         count_modules(digis_d.module_ind_d,clusters_d.module_start_d,digis_d.clus_d,word_counter)
         
-        set_n_modules_digis(digis_d,clusters_d.module_start_d[1],word_counter)
+        # set_n_modules_digis(digis_d,clusters_d.module_start_d[1],word_counter)
+        gpu_algo.digis_d = copy_with_n_modules_digis(digis_d,clusters_d.module_start_d[1],word_counter)
+        digis_d = gpu_algo.digis_d # Caution
         
         find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         # open("testingNumClusters.txt","w") do file
