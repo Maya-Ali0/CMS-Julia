@@ -1,5 +1,5 @@
 module CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
-export SiPixelClustersSoA, nClusters, clus_module_start, clusterView, DeviceConstView, module_start, setNClusters!, module_id, clus_in_module
+export SiPixelClustersSoA, nClusters, clus_module_start, clusterView, DeviceConstView, module_start, setNClusters!, module_id, clus_in_module, copy_with_n_clusters
     """
     Struct to represent a constant view of the device data.
     """
@@ -13,13 +13,27 @@ export SiPixelClustersSoA, nClusters, clus_module_start, clusterView, DeviceCons
     """
     Struct to hold the cluster data in a CUDA-compatible structure.
     """
-    mutable struct SiPixelClustersSoA{V <: AbstractVector{UInt32}}
+    struct SiPixelClustersSoA{V <: AbstractVector{UInt32}}
         module_start_d::V       # Pointer to the module start data
         clus_in_module_d::V      # Pointer to the number of clusters in each module
         module_id_d::V          # Pointer to the module ID data
         clus_module_start_d::V   # Pointer to the start index of clusters in each module
         nClusters_h::UInt32                 # Number of clusters (stored on host)
     end
+
+    function copy_with_n_clusters(
+        s::SiPixelClustersSoA,
+        nClusters_h::UInt32
+    )
+        return SiPixelClustersSoA(
+            s.module_start_d,
+            s.clus_in_module_d,
+            s.module_id_d,
+            s.clus_module_start_d,
+            nClusters_h
+        )
+    end
+
 
     """
     Constructor for SiPixelClustersSoA.

@@ -5,7 +5,7 @@ using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUM_CL
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: AverageGeometry
 using ..SOA_h
 using ..PixelGPU_h
-const Hist = HisToContainer{Int16,128,MAX_NUM_CLUSTERS,8 * sizeof(UInt16),UInt16,10}
+# const Hist = HisToContainer{Int16,128,MAX_NUM_CLUSTERS,8 * sizeof(UInt16),UInt16,10}
 export max_hits, TrackingRecHit2DSOAView, average_geometry, cpe_params, CommonParams, DetParams, LayerGeometry, ClusParamsT, n_hits, x_global, y_global, z_global, set_x_global, set_y_global, set_z_global, charge, detector_index, x_local, y_local, cluster_size_x, cluster_size_y, xerr_local, yerr_local, hits_layer_start, r_global, i_phi
 export Hist, phi_binner
 """

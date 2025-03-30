@@ -10,6 +10,7 @@ using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopolog
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants
 using ..Adapt
 using ..CUDA
+using ..PixelGPU_h
 """
     Struct representing the heterogeneous data for 2D tracking hits.
 
@@ -28,15 +29,15 @@ using ..CUDA
     - `m_iphi::Union{Nothing, Vector{UInt16}}`: Optional vector of indices in phi, initialized as Nothing or a vector of UInt16.
 """
 
-    Hist = HisToContainer{Int16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10, Vector{UInt32}, Vector{UInt16}}
+    Hist = HisToContainer{Int16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10}
     
 
 
-mutable struct TrackingRecHit2DHeterogeneous{U <: AbstractVector{UInt16},V <: AbstractVector{Float32}}#, w <:AbstractVector{UInt32}}
+struct TrackingRecHit2DHeterogeneous{U <: AbstractVector{UInt16},H <: AbstractVector{Float32},V <: AbstractVector{Float32}, X <: AbstractVector{DetParams}, Y <: AbstractVector{UInt32}, Z <: AbstractVector{UInt8}, w <:AbstractVector{UInt32},a <: AbstractArray{UInt32},b <: AbstractArray{UInt16}}
     n16::UInt32
     n32::UInt32
     m_store16::U # UInt16 unique_ptr<uint16_t[]>
-    m_store32::V # Float32 unique_ptr<float[]>
+    m_store32::H # Float32 unique_ptr<float[]>
 
     m_xl::UInt32
     m_yl::UInt32
@@ -56,16 +57,13 @@ mutable struct TrackingRecHit2DHeterogeneous{U <: AbstractVector{UInt16},V <: Ab
     m_xsize::UInt32
     m_ysize::UInt32
 
-    # m_HistStore::HisToContainer{Int16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10, w, U}
-    m_AverageGeometryStore::AverageGeometry
+    m_HistStore::HisToContainer{Int16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10,a,b}
+    m_AverageGeometryStore::AverageGeometry{H}
 
     m_nHits::UInt32
-    m_hitsModuleStart::CuArray{UInt32}
+    m_hitsModuleStart::w
 
-
-    m_cpe_params::ParamsOnGPU
-
-    
+    m_cpe_params::ParamsOnGPU{X,V,Y,Z}
 
 end
 
@@ -93,7 +91,8 @@ Constructor for TrackingRecHit2DHeterogeneous.
 - `m_AverageGeometryStore`: Initialized with a vector containing one `AverageGeometry` object.
 - `m_view`: Initialized with one `TrackingRecHit2DSOAView` object.
 """
-function TrackingRecHit2DHeterogeneous(nHits::UInt32, cpe_params::ParamsOnGPU, hitsModuleStart::CuArray{UInt32})
+function TrackingRecHit2DHeterogeneous(nHits::UInt32, cpe_params::ParamsOnGPU{w,v,r,z}, hitsModuleStart)  where {v <: AbstractVector{Float32}, w <: AbstractVector{DetParams}, r <: AbstractVector{UInt32}, z <: AbstractVector{UInt8}}
+    
     n16 = 4
     n32 = 9
 
@@ -110,7 +109,7 @@ function TrackingRecHit2DHeterogeneous(nHits::UInt32, cpe_params::ParamsOnGPU, h
 
     # Initialize AverageGeometry and Histogram store
     m_AverageGeometryStore = AverageGeometry()
-    # m_HistStore = Hist()
+    m_HistStore = HisToContainer{Int16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10,Vector{UInt32},Vector{UInt16}}()
 
     # Define local functions to access storage
     function get16(i)
@@ -139,7 +138,7 @@ function TrackingRecHit2DHeterogeneous(nHits::UInt32, cpe_params::ParamsOnGPU, h
     m_ysize::UInt32 = get16(3)
 
     # Return a new instance of TrackingRecHit2DHeterogeneous
-    return TrackingRecHit2DHeterogeneous{typeof(m_store16),typeof(m_store32)}(n16, n32, m_store16, m_store32, m_xl, m_yl, m_xerr, m_yerr, m_xg, m_yg, m_zg, m_rg, m_charge, m_hitsLayerStart, m_iphi, m_detInd, m_xsize, m_ysize, m_AverageGeometryStore, nHits, hitsModuleStart, cpe_params)
+    return TrackingRecHit2DHeterogeneous{Vector{UInt16},Vector{Float32},v,w,r,z,typeof(hitsModuleStart),Vector{UInt32},Vector{UInt16}}(n16, n32, m_store16, m_store32, m_xl, m_yl, m_xerr, m_yerr, m_xg, m_yg, m_zg, m_rg, m_charge, m_hitsLayerStart, m_iphi, m_detInd, m_xsize, m_ysize, m_HistStore, m_AverageGeometryStore, nHits, hitsModuleStart, cpe_params)
 end
 
 

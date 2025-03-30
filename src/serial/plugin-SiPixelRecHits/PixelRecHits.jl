@@ -28,6 +28,11 @@ function setHitsLayerStart(hitsModuleStart::Vector{UInt32}, cpeParams::ParamsOnG
     end
 end
 
+function f(a::TrackingRecHit2DHeterogeneous)
+    @cuprint(a.m_hitsModuleStart[1])
+    return nothing
+end
+
 function makeHits(digis_d::SiPixelDigisSoA,
                   clusters_d::SiPixelClustersSoA,
                   bs_d::BeamSpotPOD, 
@@ -38,17 +43,20 @@ function makeHits(digis_d::SiPixelDigisSoA,
     n32 = 9
 
     hits_d = TrackingRecHit2DHeterogeneous(nHits, cpeParams, clus_module_start(clusters_d))
-
+    # print(typeof(hits_d.m_store32))
     hits_d = cu(hits_d)
 
-    # print(typeof(hits_d))
-    threadsPerBlock::Int32 = 128;
-    num_blocks::UInt32 = n_modules(digis_d)
-    print(num_blocks)
+    @cuda blocks=2 threads=3 f(hits_d)
 
-    if (num_blocks != 0)
-        @cuda blocks=num_blocks threads=threadsPerBlock getHits(cpeParams, bs_d, digis_d)#, n_digis(digis_d), clusters_d)
-    end
+
+    # # print(typeof(hits_d))
+    # threadsPerBlock::Int32 = 128;
+    # num_blocks::UInt32 = n_modules(digis_d)
+    # print(num_blocks)
+
+    # if (num_blocks != 0)
+    #     @cuda blocks=num_blocks threads=threadsPerBlock getHits(cpeParams, bs_d, digis_d, n_digis(digis_d), clusters_d, hits_d)
+    # end
 
     # if (nHits != 0)
     #     setHitsLayerStart(clus_module_start(clusters_d), cpeParams, hits_layer_start(hits_d))

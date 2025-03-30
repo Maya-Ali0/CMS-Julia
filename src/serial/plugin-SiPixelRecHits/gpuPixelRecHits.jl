@@ -6,6 +6,7 @@ using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopolog
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
+using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 using ..PixelGPU_h
 using ..SOA_h
 using ..DataFormatsMathAPPROX_ATAN2_H
@@ -31,16 +32,17 @@ export getHits
 """
 function getHits(cpeParams::ParamsOnGPU, 
                    bs::BeamSpotPOD,
-                  pdigis::SiPixelDigisSoA)
-               #   numElements::UInt32,
-               #   pclusters::SiPixelClustersSoA)
+                  pdigis::SiPixelDigisSoA,
+                  numElements::UInt32,
+                  pclusters::SiPixelClustersSoA,
+                  phits::TrackingRecHit2DHeterogeneous)
 
           # idx = threadIdx().x + (blockIdx().x - 1) * blockDim().x
           # if idx <= length(data)
           #      @cuprint idx #cpeParams.m_detParams[idx])
           # end
           # return
-          @cuprint(pdigis.xx_d[1],"\n")
+          @cuprint(pclusters.nClusters_h,"\n")
           return nothing
 #         hits = phits
 #         digis = pdigis

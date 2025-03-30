@@ -720,7 +720,7 @@ module pixelGPUDetails
         # end
         fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
 
-        setNClusters!(clusters_d,clusters_d.clus_module_start_d[gpuClustering.MAX_NUM_MODULES])
+        clusters_d = copy_with_n_clusters(clusters_d,clusters_d.clus_module_start_d[gpuClustering.MAX_NUM_MODULES])
         # open("fill_hits_module.txt","w") do file
         #     for i ∈ 1:MAX_NUM_MODULES+1
         #         write(file,string(clusters_d.clus_module_star_d[i]),'\n')

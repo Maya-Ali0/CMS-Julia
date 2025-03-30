@@ -19,7 +19,7 @@ end
     The off array within the struct stores the number of elements in the bins to its left excluding the elements inserted at bin indexed at b
     It represents the next available position where a new element can be inserted in array bins
 """
-struct HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U <: AbstractArray{UInt32},V <: AbstractArray{I}} # T is the type of discretized input values, NBINS is the number of bins, size is the maximum number of elements in bins, 
+struct HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U <: AbstractArray{UInt32},V <: AbstractArray{UInt16}} # T is the type of discretized input values, NBINS is the number of bins, size is the maximum number of elements in bins, 
     off::U # goes from bin 1 to bin N_BINS*N_HISTS + 1 
     bins::V # holds indices to the values placed within a certain bin that are of type I. Indices for bins range from 1 to SIZE
     psws::Int32 # prefix scan working place
@@ -28,11 +28,11 @@ struct HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U <: AbstractArray{UInt32},V <: 
     # end
 end
 
-function HisToContainer(off::U, bins::V, psws::Int32) where {U <: AbstractArray{UInt32}, V <: AbstractArray}
+function HisToContainer(off::U, bins::V, psws::Int32) where {U <: AbstractArray{UInt32}, V <: AbstractArray{UInt16}}
     # Set default phantom parameters.
     T = Int16             # The type of discretized input values.
     N_BINS = 128          # Example: number of bins.
-    SIZE = length(bins)   # Or some predetermined SIZE.
+    SIZE = UInt32(48 * 1024)
     S = 8 * sizeof(UInt16)  # Some size factor.
     I = UInt16      # The element type of bins, e.g. UInt16.
     N_HISTS = 10          # Example value.
@@ -47,6 +47,27 @@ HisToContainer{T,N_BINS,SIZE,S,I}() where {T,N_BINS,SIZE,S,I} = HisToContainer{T
 
 Adapt.@adapt_structure HisToContainer
 
+
+# struct HisToContainerr{T,U <: AbstractArray{UInt32},V <: AbstractArray{UInt16}} # T is the type of discretized input values, NBINS is the number of bins, size is the maximum number of elements in bins, 
+#     off::U # goes from bin 1 to bin N_BINS*N_HISTS + 1 
+#     bins::V # holds indices to the values placed within a certain bin that are of type I. Indices for bins range from 1 to SIZE
+#     psws::Int32 # prefix scan working place
+#     # function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}() where {T,N_BINS,SIZE,S,I,N_HISTS,U <: AbstractArray{UInt32},V <: AbstractArray{I}}
+#     #     new(U(undef, N_BINS * N_HISTS + 1), V(undef, SIZE), 0)
+#     # end
+# end
+
+# function HisToContainerr(off::U, bins::V, psws::Int32) where {U <: AbstractArray{UInt32}, V <: AbstractArray{UInt16}}
+#     # Set default phantom parameters.
+#     T = Int16             # The type of discretized input values.
+#     return HisToContainerr{T, U, V}(off, bins, psws)
+# end
+
+
+# function HisToContainerr{T,U,V}() where {T,U <: AbstractArray{UInt32},V <: AbstractArray{UInt16}}
+#     return HisToContainerr{T,U,V}(U(undef, 5), V(undef, 5), 0)
+# end
+# Adapt.@adapt_structure HisToContainerr
 
 """
     Type Alias for a histogram that does not store the inserted indices of the values

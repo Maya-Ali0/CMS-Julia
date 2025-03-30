@@ -23,10 +23,10 @@ struct SiPixelRecHitCUDA <: EDProducer
     end
 end
 
-function f(a::SiPixelDigisSoA)
-    @cuprint(a.n_modules_h)
-    return nothing
-end
+# function f(a::SiPixelClustersSoA)
+#     @cuprint(a.nClusters_h)
+#     return nothing
+# end
 
 function produce(self::SiPixelRecHitCUDA,iEvent::Event, es::EventSetup)
     fcpe = get(es, PixelCPEFast{CUDA.CuArray{Main.Patatrack.PixelGPU_h.DetParams, 1, CUDA.DeviceMemory}, CUDA.CuArray{UInt32, 1, CUDA.DeviceMemory}, CUDA.CuArray{UInt8, 1, CUDA.DeviceMemory}, CUDA.CuArray{Float32, 1, CUDA.DeviceMemory}})
@@ -34,11 +34,8 @@ function produce(self::SiPixelRecHitCUDA,iEvent::Event, es::EventSetup)
     clusters = get(iEvent, self.token)
     clusters = cu(clusters)
 
-    
     digis = get(iEvent, self.tokenDigi)
     digis = cu(digis)
-
-    @cuda blocks=2 threads=3 f(digis)
     
     bs = get(iEvent, self.tBeamSpot)
     
