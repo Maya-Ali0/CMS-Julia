@@ -6,13 +6,17 @@ DATA_TAR_GZ := $(DATA_DIR)/data_v2.tar.gz
 RAW_FILE := $(DATA_DIR)/raw.bin
 URL_FILE := $(DATA_DIR)/url.txt
 MD5_FILE := $(DATA_DIR)/md5.txt
-COMPILED_DIR := $(TARGET_DIR)/compiled_cms
+COMPILED_DIR := $(TARGET_DIR)/lib/julia-serial
+EXECUTABLE := julia-serial
 
-compile: prepare_compiler prepare_env setup download_raw
+julia-serial: prepare_compiler prepare_env setup download_raw
 	@echo "Ensuring required packages..."
 	@$(JULIA) --project=$(TARGET_DIR) prepare_compiler_deps.jl
 	@echo "Compiling application with PackageCompiler..."
 	@$(JULIA) --project=$(TARGET_DIR) compile_app.jl
+	@cp $(COMPILED_DIR)/bin/cms_executable ./$(EXECUTABLE)
+	@chmod +x ./$(EXECUTABLE)
+	@echo "Compilation complete! You can now run ./$(EXECUTABLE)"
 
 prepare_compiler:
 	@echo "Setting up PackageCompiler..."
@@ -60,8 +64,9 @@ build:
 
 clean: clean-compiled
 	@rm -f $(DATA_DIR)/*.bin $(DATA_TAR_GZ)
+	@rm -f ./$(EXECUTABLE)
 
 clean-compiled:
 	@rm -rf $(COMPILED_DIR)
 
-.PHONY: all prepare_env setup download_raw build clean compile run-compiled clean-compiled prepare_compiler
+.PHONY: all prepare_env setup download_raw build clean julia-serial run-compiled clean-compiled prepare_compiler

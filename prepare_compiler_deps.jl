@@ -1,5 +1,7 @@
 using Pkg
 
+Pkg.activate(".")
+
 deps = [
     "ArgParse",
     "BenchmarkTools",

@@ -1,7 +1,5 @@
-# using Revise
-include("src/Patatrack.jl")
+include("src/julia-serial/Patatrack.jl")
 using .Patatrack
-# using Profile, ProfileView
 using BenchmarkTools
 using ArgParse
 using Printf
