@@ -5,7 +5,8 @@ create_app(".", "compiled_cms";
     include_transitive_dependencies=true,
     precompile_execution_file="main.jl",
     cpu_target="native",
-    force=true
+    force=true,
+    filter_stdlibs=true
 )
 
 println("Compilation complete! Executable is in compiled_cms/bin/cms_executable")
