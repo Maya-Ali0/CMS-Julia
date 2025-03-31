@@ -46,17 +46,15 @@ function makeHits(digis_d::SiPixelDigisSoA,
     # print(typeof(hits_d.m_store32))
     hits_d = cu(hits_d)
 
-    @cuda blocks=2 threads=3 f(hits_d)
 
+    # print(typeof(hits_d))
+    threadsPerBlock::Int32 = 128;
+    num_blocks::UInt32 = n_modules(digis_d)
+    print(num_blocks)
 
-    # # print(typeof(hits_d))
-    # threadsPerBlock::Int32 = 128;
-    # num_blocks::UInt32 = n_modules(digis_d)
-    # print(num_blocks)
-
-    # if (num_blocks != 0)
-    #     @cuda blocks=num_blocks threads=threadsPerBlock getHits(cpeParams, bs_d, digis_d, n_digis(digis_d), clusters_d, hits_d)
-    # end
+    if (num_blocks != 0)
+        @cuda blocks=num_blocks threads=threadsPerBlock getHits(cpeParams, bs_d, digis_d, n_digis(digis_d), clusters_d, hits_d)
+    end
 
     # if (nHits != 0)
     #     setHitsLayerStart(clus_module_start(clusters_d), cpeParams, hits_layer_start(hits_d))

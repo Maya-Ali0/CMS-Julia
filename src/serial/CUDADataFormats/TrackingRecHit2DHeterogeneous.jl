@@ -1,6 +1,6 @@
 module CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 
-export TrackingRecHit2DHeterogeneous, hist_view, ParamsOnGPU, hits_layer_start, phi_binner, iphi, Hist
+export TrackingRecHit2DHeterogeneous, hist_view, ParamsOnGPU, hits_layer_start, phi_binner, iphi, Hist, average_geometry
 export n_hits
 
 # Import necessary types and functions from other modules
@@ -155,10 +155,9 @@ end
 
 
 
+#Accessor for AverageGeometry
 
-
-
-
+average_geometry(self::TrackingRecHit2DHeterogeneous) = self.m_AverageGeometryStore
 
 
 """
@@ -227,19 +226,5 @@ phi_binner(hit::TrackingRecHit2DHeterogeneous) = hit.m_hist
 """
 iphi(hit::TrackingRecHit2DHeterogeneous) = hit.m_iphi
 
-function test_tracking_rec_hit()
-    hitsModuleStart = Integer[1, 2, 3] 
-    cpe_params = ParamsOnGPU()
-    Hist = HisToContainer{Int16, 128, MAX_NUM_CLUSTERS, 8 * sizeof(UInt16), UInt16, 10}()
-    hits = TrackingRecHit2DHeterogeneous(3, cpe_params, hitsModuleStart, Hist)
-    
-    println("Number of hits: ", n_hits(hits))
-    println("Hits module start: ", hits_module_start(hits))
-    
-    if !isempty(view(hits))
-        println("First view element: ", view(hits)[1])
-    end
-end
-# test_tracking_rec_hit()
 
 end

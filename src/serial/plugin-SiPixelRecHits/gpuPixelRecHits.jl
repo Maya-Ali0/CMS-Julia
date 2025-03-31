@@ -5,7 +5,7 @@ using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopolog
 # using ..gpuConfig
 using ..CUDADataFormatsSiPixelClusterInterfaceSiPixelClustersSoA
 using ..CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
-using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
+# using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h
 using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 using ..PixelGPU_h
 using ..SOA_h
@@ -37,60 +37,57 @@ function getHits(cpeParams::ParamsOnGPU,
                   pclusters::SiPixelClustersSoA,
                   phits::TrackingRecHit2DHeterogeneous)
 
-          # idx = threadIdx().x + (blockIdx().x - 1) * blockDim().x
-          # if idx <= length(data)
-          #      @cuprint idx #cpeParams.m_detParams[idx])
-          # end
-          # return
+          hits = phits
+
+          # Obtain thread and block indices
+          tx = threadIdx().x
+          bx = blockIdx().x
+          bd = blockDim().x
+
+          if bx == 1
+               agc = average_geometry(hits)
+               ag  = averageGeometry(cpeParams)
+
+               # Parallel loop: each thread processes a subset of ladders
+               for il = tx:bd:number_of_ladders_in_barrel
+                    agc.ladderZ[il]    = ag.ladderZ[il]    - bs.z
+                    agc.ladderX[il]    = ag.ladderX[il]    - bs.x
+                    agc.ladderY[il]    = ag.ladderY[il]    - bs.y
+                    agc.ladderR[il]    = sqrt( agc.ladderX[il]^2 + agc.ladderY[il]^2 )
+                    agc.ladderMinZ[il] = ag.ladderMinZ[il] - bs.z
+                    agc.ladderMaxZ[il] = ag.ladderMaxZ[il] - bs.z
+               end
+
+               # One thread (the first thread) handles the endcap update
+               if tx == 1
+                    agc.endCapZ[1] = ag.endCapZ[1] - bs.z
+                    agc.endCapZ[2] = ag.endCapZ[2] - bs.z
+               end
+          end
+
+
           @cuprint(pclusters.nClusters_h,"\n")
           return nothing
-#         hits = phits
-#         digis = pdigis
-#         clusters = pclusters
-# #
-#        # write(file, "FOR 1 EVENT THIS IS WHAT's HAPPENING:\n##############################################\n")
-
-#         agc = average_geometry(hits)
-#         ag = averageGeometry(cpeParams)
-
-#    #     write(file, "FOR I FROM 1 to $(number_of_ladders_in_barrel)\n")
-
-#         for il in 1:number_of_ladders_in_barrel
-#        #     write(file, "agc.ladderZ[$il] = $(ag.ladderZ[il] - bs.z)\n")
-#             agc.ladderZ[il] = ag.ladderZ[il] - bs.z
-#        #     write(file, "agc.ladderX[$il] = $(ag.ladderX[il] - bs.z)\n")
-#             agc.ladderX[il] = ag.ladderX[il] - bs.x
-#        #     write(file, "agc.ladderY[$il] = $(ag.ladderY[il] - bs.z)\n")
-#             agc.ladderY[il] = ag.ladderY[il] - bs.y
-#        #     write(file, "agc.ladderR[$il] = $(sqrt(agc.ladderX[il] * agc.ladderX[il] + agc.ladderY[il] * agc.ladderY[il]))\n")
-#             agc.ladderR[il] = sqrt(agc.ladderX[il] * agc.ladderX[il] + agc.ladderY[il] * agc.ladderY[il])
-#        #     write(file, "agc.ladderMinZ[$il] = $(ag.ladderMinZ[il] - bs.z)\n")
-#             agc.ladderMinZ[il] = ag.ladderMinZ[il] - bs.z
-#        #     write(file, "agc.ladderMaxZ[$il] = $(ag.ladderMaxZ[il] - bs.z)\n")
-#             agc.ladderMaxZ[il] = ag.ladderMaxZ[il] - bs.z
-#         end
-#    #     write(file, "agc.endCapZ[0] = $(ag.endCapZ[1] - bs.z)\n")
-#         agc.endCapZ[1] = ag.endCapZ[1] - bs.z
-#    #     write(file, "agc.endCapZ[1] = $(ag.endCapZ[2] - bs.z)\n")
-#         agc.endCapZ[2] = ag.endCapZ[2] - bs.z
-
-#    #     write(file, "##############################################\n")
+          # hits = phits
+          # digis = pdigis
+          # clusters = pclusters
 
 
 
-#         InvId = 9999
-#         MaxHitsInIter = PixelGPU_h.MaxHitsInIter
 
-#         clusParams = ClusParamsT{100000}()
+        InvId = 9999
+        MaxHitsInIter = PixelGPU_h.MaxHitsInIter
 
-#         firstModule = 1
-#      #    write(file, "firstModule: $firstModule\n")
+        clusParams = ClusParamsT{100000}() #160 ?? 
 
-#         endModule = module_start(clusters, 1)
-#         #print(endModule)
-#      #    write(file, "endModule: $endModule\n")
-#      #    write(file, "##############################################\n")
-#      #    write(file, "FOR module 1 to $(endModule )\n")
+        firstModule = 1
+     #    write(file, "firstModule: $firstModule\n")
+
+        endModule = module_start(clusters, 1)
+        #print(endModule)
+     #    write(file, "endModule: $endModule\n")
+     #    write(file, "##############################################\n")
+     #    write(file, "FOR module 1 to $(endModule )\n")
 
 #         for mod in firstModule:endModule
 #             #write(file, "me = $(module_id(clusters, mod))\n")
