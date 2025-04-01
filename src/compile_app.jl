@@ -1,6 +1,6 @@
 using PackageCompiler
 
-create_app(".", "compiled_cms";
+create_app(".", "lib/julia-serial";
     executables=["main.jl" => "cms_executable"],
     include_transitive_dependencies=true,
     precompile_execution_file="main.jl",
@@ -9,4 +9,4 @@ create_app(".", "compiled_cms";
     filter_stdlibs=true
 )
 
-println("Compilation complete! Executable is in compiled_cms/bin/cms_executable")
+println("Compilation complete! Executable is in lib/julia-serial/bin/cms_executable")

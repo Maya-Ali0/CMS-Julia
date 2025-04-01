@@ -1,13 +1,14 @@
 ARGS ?=
 JULIA := julia
 TARGET_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-DATA_DIR := $(TARGET_DIR)/data
+PROJECT_ROOT := $(shell dirname $(TARGET_DIR))
+DATA_DIR := $(PROJECT_ROOT)/data
 DATA_TAR_GZ := $(DATA_DIR)/data_v2.tar.gz
 RAW_FILE := $(DATA_DIR)/raw.bin
 URL_FILE := $(DATA_DIR)/url.txt
 MD5_FILE := $(DATA_DIR)/md5.txt
 COMPILED_DIR := $(TARGET_DIR)/lib/julia-serial
-EXECUTABLE := julia-serial
+EXECUTABLE := cms_executable
 
 julia-serial: prepare_compiler prepare_env setup download_raw
 	@echo "Ensuring required packages..."
@@ -63,10 +64,10 @@ build:
 	@./serial.sh $(ARGS)
 
 clean: clean-compiled
-	@rm -f $(DATA_DIR)/*.bin $(DATA_TAR_GZ)
-	@rm -f ./$(EXECUTABLE)
+	@$(RMFILE) $(DATA_DIR)/*.bin $(DATA_TAR_GZ) 2>nul || true
+	@$(RMFILE) ./$(EXECUTABLE) 2>nul || true
 
 clean-compiled:
-	@rm -rf $(COMPILED_DIR)
+	@$(RM) $(COMPILED_DIR) 2>nul || true
 
 .PHONY: all prepare_env setup download_raw build clean julia-serial run-compiled clean-compiled prepare_compiler

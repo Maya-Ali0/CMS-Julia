@@ -10,7 +10,10 @@ deps = [
     "Dates",
     "Printf",
     "InteractiveUtils",
-    "DataStructures"
+    "DataStructures",
+    "LinearAlgebra",
+    "Statistics",
+    "Test"
 ]
 
 for dep in deps
@@ -23,4 +26,5 @@ for dep in deps
 end
 
 Pkg.resolve()
+Pkg.instantiate()
 Pkg.precompile()
