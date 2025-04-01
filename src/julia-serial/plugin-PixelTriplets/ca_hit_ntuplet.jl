@@ -10,7 +10,7 @@ end
 function produce(self::CAHitNtuplet, i_event::Event, i_setup::EventSetup)
     bf = 0.0114256972711507 # 1/fieldInGeV
     hits = get(i_event, self.token_hit_cpu)
-    println(hits.m_nHits)
+    # println(hits.m_nHits)
     tracks = make_tuples(self.gpu_algo, hits, bf)
     emplace(i_event, self.token_track_cpu, tracks)
 end

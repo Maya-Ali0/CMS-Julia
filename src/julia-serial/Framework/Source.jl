@@ -14,9 +14,11 @@ mutable struct Source
     vertex_count_v::Vector{VertexCount}
 
     validation::Bool
+    max_events::Int
 
 
-    function Source(reg::ProductRegistry, dataDir::String, validation::Bool)
+    function Source(reg::ProductRegistry, dataDir::String, validation::Bool, max_events::Int)
+        max_events = max_events
         digiClusterToken_ = EDPutTokenT{DigiClusterCount}()
         trackToken_ = EDPutTokenT{TrackCount}()
         vertexToken_ = EDPutTokenT{VertexCount}()
@@ -49,7 +51,7 @@ mutable struct Source
 end
 
 function produce(src::Source, streamId::Int, reg::ProductRegistry)
-    if src.numEvents.value > 1000
+    if src.numEvents.value > src.max_events
         return nothing
     end
 

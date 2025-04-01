@@ -1,9 +1,5 @@
 using PackageCompiler
 
-using Pkg
-Pkg.instantiate()
-Pkg.precompile()
-
 create_app(".", "lib/julia-serial";
     executables=["main.jl" => "cms_executable"],
     include_transitive_dependencies=true,

@@ -1,4 +1,4 @@
-include("julia-serial/Patatrack.jl")
+include("src/Patatrack.jl")
 using .Patatrack
 using BenchmarkTools
 using ArgParse
@@ -44,7 +44,7 @@ function parse_commandline()
         "--maxEvents"
         help = "Maximum number of events"
         arg_type = Int
-        default = -1
+        default = 1000
         "--runForMinutes"
         help = "Run for specified minutes"
         arg_type = Int
@@ -52,7 +52,7 @@ function parse_commandline()
         "--data"
         help = "Path to data directory"
         arg_type = String
-        default = joinpath(@__DIR__, "data")
+        default = "../../data"
         "--validation"
         help = "Enable validation"
         action = :store_true
@@ -149,7 +149,8 @@ function main()
         ed_modules,
         es_modules,
         data_dir,
-        args["validation"]
+        args["validation"],
+        args["maxEvents"]
     )
 
     # Warm up
