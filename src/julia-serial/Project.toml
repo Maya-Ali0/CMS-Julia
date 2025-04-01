@@ -1,3 +1,7 @@
+name = "Patatrack"
+uuid = "ce1ae720-3ead-11ef-b74e-df6127114046"
+version = "0.0.1-DEV"
+
 [deps]
 AbstractFFTs = "621f4979-c628-5d54-868e-fcf4e3e8185c"
 AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
@@ -141,3 +145,16 @@ demumble_jll = "1e29f10c-031c-5a83-9565-69cddfc27673"
 libblastrampoline_jll = "8e850b90-86db-534c-a0d3-1478176c7d93"
 nghttp2_jll = "8e850ede-7688-5339-a07c-302acd2aaf8d"
 p7zip_jll = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
+
+[compat]
+ArgParse = "1.2.0"
+BenchmarkTools = "1.6.0"
+CUDA = "5.7.1"
+Dagger = "0.18.14"
+DataStructures = "0.18.22"
+Dates = "1.11.0"
+InteractiveUtils = "1.11.0"
+LinearAlgebra = "1.11.0"
+Printf = "1.11.0"
+Statistics = "1.11.1"
+Test = "1.11.0"

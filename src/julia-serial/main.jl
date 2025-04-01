@@ -1,4 +1,4 @@
-include("src/julia-serial/Patatrack.jl")
+include("julia-serial/Patatrack.jl")
 using .Patatrack
 using BenchmarkTools
 using ArgParse
