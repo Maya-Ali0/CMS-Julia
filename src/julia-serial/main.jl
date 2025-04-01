@@ -175,7 +175,7 @@ function main()
         cpu_time = (cpu_end - cpu_start) / 1e9
 
         # Report results
-        processed_events = ev.source.numEvents[]  # Adjust this based on your actual event counter
+        processed_events = ev.source.numEvents[] - 1  # Adjust this based on your actual event counter
         throughput = processed_events / elapsed_seconds
         cpu_usage = (cpu_time / elapsed_seconds / num_threads) * 100
 
