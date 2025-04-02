@@ -152,7 +152,6 @@ function main()
         args["validation"],
         args["maxEvents"]
     )
-
     # Warm up
     try
         if args["warmupEvents"] > 0

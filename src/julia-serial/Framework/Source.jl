@@ -18,7 +18,6 @@ mutable struct Source
 
 
     function Source(reg::ProductRegistry, dataDir::String, validation::Bool, max_events::Int)
-        max_events = max_events
         digiClusterToken_ = EDPutTokenT{DigiClusterCount}()
         trackToken_ = EDPutTokenT{TrackCount}()
         vertexToken_ = EDPutTokenT{VertexCount}()
@@ -43,7 +42,7 @@ mutable struct Source
             raw_events = readall(open(rawFilePath), open(verticesFilePath), open(tracksFilePath), open(digiclusterFilePath), nothing, nothing, nothing, validation) # Reads 1000 event 
         end
 
-        return new(raw_events, Atomic{Int}(1), rawToken, digiClusterToken_, trackToken_, vertexToken_, digi_cluster_count_v, track_count_v, vertex_count_v, validation)
+        return new(raw_events, Atomic{Int}(1), rawToken, digiClusterToken_, trackToken_, vertexToken_, digi_cluster_count_v, track_count_v, vertex_count_v, validation, max_events)
     end
 
 
