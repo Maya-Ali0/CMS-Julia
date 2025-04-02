@@ -7,11 +7,10 @@ using Dates
 
 function print_help()
     println("""
-    Usage: julia main.jl [--numberOfThreads NT] [--numberOfStreams NS] [--warmupEvents WE] [--maxEvents ME] [--runForMinutes RM]
+    Usage: julia main.jl [--numberOfStreams NS] [--warmupEvents WE] [--maxEvents ME] [--runForMinutes RM]
            [--data PATH] [--validation] [--histogram] [--empty]
 
     Options:
-      --numberOfThreads         Number of threads to use (default 1, use 0 to use all CPU cores)
       --numberOfStreams        Number of concurrent events (default 0 = numberOfThreads)
       --warmupEvents          Number of events to process before starting the benchmark (default 0)
       --maxEvents             Number of events to process (default -1 for all events in the input file)
@@ -29,11 +28,7 @@ function parse_commandline()
     s.add_help = false  # Disable the default --help option
 
     @add_arg_table! s begin
-        "--numberOfThreads"
-        help = "Number of threads to use"
-        arg_type = Int
-        default = 1
-        "--numberOfStreams"
+       "--numberOfStreams"
         help = "Number of concurrent events"
         arg_type = Int
         default = 0
@@ -84,17 +79,10 @@ function main()
         return 1
     end
 
-    # Set number of threads
-    num_threads = args["numberOfThreads"]
-    if num_threads == 0
-        num_threads = Sys.CPU_THREADS
-    end
-    ENV["JULIA_NUM_THREADS"] = num_threads
-
     # Set number of streams
     num_streams = args["numberOfStreams"]
     if num_streams == 0
-        num_streams = num_threads
+        num_streams = Threads.nthreads()
     end
 
     # Validate data directory
@@ -140,8 +128,10 @@ function main()
 
     if args["warmupEvents"] > 0
         print(" after $(args["warmupEvents"]) events of warm up,")
+    else
+        args["warmupEvents"] = args["maxEvents"]
     end
-    println(" with $num_streams concurrent events and $num_threads threads.")
+    println(" with $num_streams concurrent events and $(Threads.nthreads()) threads.")
 
     # Initialize EventProcessor
     ev = EventProcessor(
@@ -150,14 +140,13 @@ function main()
         es_modules,
         data_dir,
         args["validation"],
-        args["maxEvents"]
+        args["warmupEvents"]
     )
-
     # Warm up
     try
         if args["warmupEvents"] > 0
             println("Warming up...")
-            @time warm_up(ev)
+            @time warm_up(ev,args["maxEvents"])
         end
 
         # Main processing
@@ -177,7 +166,7 @@ function main()
         # Report results
         processed_events = ev.source.numEvents[] - 1  # Adjust this based on your actual event counter
         throughput = processed_events / elapsed_seconds
-        cpu_usage = (cpu_time / elapsed_seconds / num_threads) * 100
+        cpu_usage = (cpu_time / elapsed_seconds / Threads.nthreads()) * 100
 
         @printf("Processed %d events in %.6e seconds, throughput %.2f events/s, CPU usage per thread: %.1f%%\n",
             processed_events, elapsed_seconds, throughput, cpu_usage)

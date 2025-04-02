@@ -1,5 +1,4 @@
 using .ESPluginFactory
-using Dagger
 
 struct EventProcessor
 
@@ -49,9 +48,10 @@ function run_processor(ev::EventProcessor)
     @info "All stream schedules have completed."
 end
 
-function warm_up(ev::EventProcessor)
+function warm_up(ev::EventProcessor, run_max_events::Int)
     @threads for i in 1:ev.numberOfStreams
         run_stream(ev.schedules[i])
     end
     ev.source.numEvents[] = 1
+    ev.source.max_events = run_max_events
 end
