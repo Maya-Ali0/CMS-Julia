@@ -128,6 +128,8 @@ function main()
 
     if args["warmupEvents"] > 0
         print(" after $(args["warmupEvents"]) events of warm up,")
+    else
+        args["warmupEvents"] = args["maxEvents"]
     end
     println(" with $num_streams concurrent events and $(Threads.nthreads()) threads.")
 
@@ -138,13 +140,13 @@ function main()
         es_modules,
         data_dir,
         args["validation"],
-        args["maxEvents"]
+        args["warmupEvents"]
     )
     # Warm up
     try
         if args["warmupEvents"] > 0
             println("Warming up...")
-            @time warm_up(ev)
+            @time warm_up(ev,args["maxEvents"])
         end
 
         # Main processing
