@@ -8,7 +8,10 @@ MD5_FILE := $(DATA_DIR)/md5.txt
 COMPILED_DIR := lib/julia-serial
 EXECUTABLE := julia-serial
 
-julia-serial: $(EXECUTABLE)
+fix-precompile:
+    @sed -i 's/@assert/# @assert/g' "C:\Users\user\.julia\packages\FixedPointNumbers\Dn4hv\src\precompile.jl"
+
+julia-serial: fix-precompile $(EXECUTABLE)
 
 $(EXECUTABLE): prepare_deps download_raw
 	@echo "Compiling application with PackageCompiler..."

@@ -4,6 +4,11 @@ data/cablingMap.bin
 data/fedIds.bin
 data/gain.bin
 data/raw.bin
+data/beamspot.bin
+data/tracks.bin
+data/vertices.bin
+data/digicluster.bin
+data/cpefast.bin
 .vscode/
 *.txt
 data_v2.tar.gz
