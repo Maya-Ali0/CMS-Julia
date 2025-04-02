@@ -1,5 +1,4 @@
 using .ESPluginFactory
-using Dagger
 
 struct EventProcessor
 

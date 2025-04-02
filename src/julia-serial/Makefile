@@ -1,4 +1,5 @@
-JULIA := julia
+JULIA := $(HOME)/julia/julia-1.11.4/bin/julia
+
 DATA_DIR := ../../data
 TARGET_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 DATA_TAR_GZ := $(DATA_DIR)/data_v2.tar.gz
