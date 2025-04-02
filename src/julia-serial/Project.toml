@@ -26,6 +26,7 @@ Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 CompilerSupportLibraries_jll = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 ConcurrentCollections = "5060bff5-0b44-40c5-b522-fcd3ca5cecdd"
 Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
+Dagger = "d58978e5-989f-55fb-8d15-ea34adc7bf54"
 DataAPI = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
@@ -149,6 +150,7 @@ p7zip_jll = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
 ArgParse = "1.2.0"
 BenchmarkTools = "1.6.0"
 CUDA = "5.7.1"
+Dagger = "0.18.14"
 DataStructures = "0.18.22"
 Dates = "1.11.0"
 InteractiveUtils = "1.11.0"
@@ -157,6 +159,5 @@ Printf = "1.11.0"
 Statistics = "1.11.1"
 Test = "1.11.0"
 
-[preferences]
-CUDA = {extensions = false}
-
+[preferences.CUDA]
+extensions = false

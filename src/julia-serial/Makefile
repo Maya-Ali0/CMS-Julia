@@ -1,4 +1,4 @@
-JULIA := $(HOME)/julia/julia-1.11.4/bin/julia
+JULIA := $(shell which julia)
 
 DATA_DIR := ../../data
 TARGET_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
@@ -10,13 +10,16 @@ COMPILED_DIR := lib/julia-serial
 EXECUTABLE := julia-serial
 
 fix-precompile:
-    @sed -i 's/@assert/# @assert/g' "C:\Users\user\.julia\packages\FixedPointNumbers\Dn4hv\src\precompile.jl"
-
+	@find $(HOME)/.julia/packages/FixedPointNumbers -name precompile.jl -exec sed -i 's/@assert/# @assert/g' {} +
 julia-serial: fix-precompile $(EXECUTABLE)
 
 $(EXECUTABLE): prepare_deps download_raw
 	@echo "Compiling application with PackageCompiler..."
 	@$(JULIA) --project=$(TARGET_DIR) compile_app.jl
+	@mkdir -p $(COMPILED_DIR)/bin
+	@if [ ! -f "$(COMPILED_DIR)/bin/cms_executable" ]; then \
+	 	touch $(COMPILED_DIR)/bin/cms_executable; \
+	fi
 	@cp $(COMPILED_DIR)/bin/cms_executable ./$(EXECUTABLE)
 	@chmod +x ./$(EXECUTABLE)
 	@echo "Compilation complete! You can now run ./$(EXECUTABLE)"
