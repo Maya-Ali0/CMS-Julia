@@ -16,3 +16,4 @@ data_v2.tar.gz
 !data/url.txt
 compiled_cms/
 src/julia-serial/compile
+src/julia-serial/julia_main.exe

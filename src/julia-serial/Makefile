@@ -11,18 +11,20 @@ EXECUTABLE := julia_main
 
 fix-precompile:
 	@$(JULIA) -e 'using Pkg; pkg_path = joinpath(DEPOT_PATH[1], "packages", "FixedPointNumbers"); for (root, _, files) in walkdir(pkg_path); for file in files; if file == "precompile.jl"; content = read(joinpath(root, file), String); write(joinpath(root, file), replace(content, "@assert" => "# @assert")); end; end; end'
+
 julia-serial: fix-precompile $(EXECUTABLE)
 
 $(EXECUTABLE): prepare_deps download_raw
 	@echo "Compiling application with PackageCompiler..."
-	@$(JULIA) --project=$(TARGET_DIR) compile_app.jl
+	@$(JULIA) --project=$(TARGET_DIR) -e "ENV[\"JULIA_DEBUG\"] = \"PackageCompiler\"; include(\"compile_app.jl\")"
 	@mkdir -p $(COMPILED_DIR)/bin
-	@if [ ! -f "$(COMPILED_DIR)/bin/$(EXECUTABLE).exe" ]; then \
-		touch "$(COMPILED_DIR)/bin/$(EXECUTABLE).exe"; \
+	@if [ ! -f "$(COMPILED_DIR)/bin/bin/julia.exe" ]; then \
+		echo "Error: Executable not found in $(COMPILED_DIR)/bin/bin/"; \
+		exit 1; \
 	fi
-	@cp "$(COMPILED_DIR)/bin/$(EXECUTABLE).exe" ./$(EXECUTABLE)
-	@chmod +x ./$(EXECUTABLE)
-	@echo "Compilation complete! You can now run ./$(EXECUTABLE)"
+	@cp "$(COMPILED_DIR)/bin/bin/julia.exe" ./$(EXECUTABLE).exe
+	@chmod +x ./$(EXECUTABLE).exe
+	@echo "Compilation complete! Executable is ./$(EXECUTABLE).exe"
 
 prepare_deps:
 	@echo "Installing PackageCompiler and required packages..."
@@ -48,7 +50,7 @@ download_raw: $(RAW_FILE)
 clean:
 	@echo "Cleaning build artifacts and data..."
 	@rm -rf $(COMPILED_DIR)
-	@rm -f $(EXECUTABLE)
+	@rm -f $(EXECUTABLE).exe
 	# @rm -f $(DATA_DIR)/raw.bin
 	@rm -f $(DATA_TAR_GZ)
 

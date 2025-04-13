@@ -9,4 +9,4 @@ create_app(".", "compile/bin";
     include_lazy_artifacts=true
 )
 
-println("Compilation complete! Executable is in compile/bin/julia-main.exe")
+println("Compilation    complete! Executable is in compile/bin/julia_main.exe")
