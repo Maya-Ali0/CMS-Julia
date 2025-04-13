@@ -6,21 +6,21 @@ DATA_TAR_GZ := $(DATA_DIR)/data_v2.tar.gz
 RAW_FILE := $(DATA_DIR)/raw.bin
 URL_FILE := $(DATA_DIR)/url.txt
 MD5_FILE := $(DATA_DIR)/md5.txt
-COMPILED_DIR := lib/julia-serial
-EXECUTABLE := julia-serial
+COMPILED_DIR := compile
+EXECUTABLE := julia_main
 
 fix-precompile:
-	@find $(HOME)/.julia/packages/FixedPointNumbers -name precompile.jl -exec sed -i 's/@assert/# @assert/g' {} +
+	@$(JULIA) -e 'using Pkg; pkg_path = joinpath(DEPOT_PATH[1], "packages", "FixedPointNumbers"); for (root, _, files) in walkdir(pkg_path); for file in files; if file == "precompile.jl"; content = read(joinpath(root, file), String); write(joinpath(root, file), replace(content, "@assert" => "# @assert")); end; end; end'
 julia-serial: fix-precompile $(EXECUTABLE)
 
 $(EXECUTABLE): prepare_deps download_raw
 	@echo "Compiling application with PackageCompiler..."
 	@$(JULIA) --project=$(TARGET_DIR) compile_app.jl
 	@mkdir -p $(COMPILED_DIR)/bin
-	@if [ ! -f "$(COMPILED_DIR)/bin/cms_executable" ]; then \
-	 	touch $(COMPILED_DIR)/bin/cms_executable; \
+	@if [ ! -f "$(COMPILED_DIR)/bin/$(EXECUTABLE).exe" ]; then \
+		touch "$(COMPILED_DIR)/bin/$(EXECUTABLE).exe"; \
 	fi
-	@cp $(COMPILED_DIR)/bin/cms_executable ./$(EXECUTABLE)
+	@cp "$(COMPILED_DIR)/bin/$(EXECUTABLE).exe" ./$(EXECUTABLE)
 	@chmod +x ./$(EXECUTABLE)
 	@echo "Compilation complete! You can now run ./$(EXECUTABLE)"
 

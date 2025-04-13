@@ -1,5 +1,5 @@
-include("src/Patatrack.jl")
-using .Patatrack
+# include("Patatrack.jl")
+using Patatrack
 using BenchmarkTools
 using ArgParse
 using Printf
@@ -28,7 +28,7 @@ function parse_commandline()
     s.add_help = false  # Disable the default --help option
 
     @add_arg_table! s begin
-       "--numberOfStreams"
+        "--numberOfStreams"
         help = "Number of concurrent events"
         arg_type = Int
         default = 0
@@ -65,7 +65,7 @@ function parse_commandline()
     return parse_args(s)
 end
 
-function main()
+function julia_main()::Cint
     args = parse_commandline()
 
     if args["help"]
@@ -146,7 +146,7 @@ function main()
     try
         if args["warmupEvents"] > 0
             println("Warming up...")
-            @time warm_up(ev,args["maxEvents"])
+            @time warm_up(ev, args["maxEvents"])
         end
 
         # Main processing
@@ -179,6 +179,3 @@ function main()
 
     return 0
 end
-
-# Run the main function
-exit(main())

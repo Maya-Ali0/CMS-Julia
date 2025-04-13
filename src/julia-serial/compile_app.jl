@@ -1,13 +1,12 @@
 using PackageCompiler
 
-create_app(".", "lib/julia-serial";
-    executables=["main.jl" => "cms_executable"],
-    include_transitive_dependencies=true,
-    precompile_execution_file="main.jl",
+create_app(".", "compile/bin";
+    executables=["main.jl" => "julia_main"],
+    precompile_execution_file="run_main.jl",
     cpu_target="native",
     force=true,
     filter_stdlibs=true,
     include_lazy_artifacts=true
 )
 
-println("Compilation complete! Executable is in lib/julia-serial/bin/cms_executable")
+println("Compilation complete! Executable is in compile/bin/julia-main.exe")
