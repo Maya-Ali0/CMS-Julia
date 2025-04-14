@@ -1,6 +1,10 @@
-include("main.jl")
-ARGS = ["--maxEvents", "10", "--warmupEvents", "5"]
+println("Starting run_main.jl…")
 
-if abspath(PROGRAM_FILE) == @__FILE__
-    exit(julia_main())
-end
+include("main.jl")
+# ARGS = ["--maxEvents", "10", "--warmupEvents", "5"]
+
+println("Calling julia_main()…")
+exit_code = julia_main()
+println("julia_main() finished with exit code: ", exit_code)
+println("Exiting run_main.jl…")
+exit(exit_code)

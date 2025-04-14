@@ -66,6 +66,7 @@ function parse_commandline()
 end
 
 function julia_main()::Cint
+    println("Hello from julia_main()!")
     args = parse_commandline()
 
     if args["help"]
@@ -176,6 +177,7 @@ function julia_main()::Cint
         println(e)
         return 1
     end
+    println("Finished processing events.")
 
     return 0
 end
