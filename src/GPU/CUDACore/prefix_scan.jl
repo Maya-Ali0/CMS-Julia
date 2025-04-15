@@ -41,16 +41,15 @@ using CUDA
     - `size::UInt32`: Number of elements to scan.
     """
     function block_prefix_scan(c::AbstractVector{T},size::Integer,ws::AbstractVector{U}) where {T,U}
-
         @assert size <= 1024
         @assert blockDim().x % 32 == 0
         first = threadIdx().x
         mask = CUDA.vote_ballot_sync(0xffffffff,first <= size)
-
+        
         for i ∈ first:blockDim().x:size
             warp_prefix_scan(c,i,mask)
             lane_id = mod1(i,32)
-            warp_id = (i +31) / 32
+            warp_id = (i +31) ÷ 32
             if lane_id == 32
                 ws[warp_id] = c[i]
             end
@@ -61,17 +60,19 @@ using CUDA
             return
         end
         if threadIdx().x <= 32
-            warp_prefix_scan(ws,threadIdx().x,mask)
+            warp_prefix_scan(ws,threadIdx().x,0xffffffff)
         end
         sync_threads()
 
         for i ∈ first+32:blockDim().x:size
-            warp_id = (i +31) / 32
+            warp_id = (i +31) ÷ 32
             c[i] += ws[warp_id-1]
         end
+        
         # for i in 2:size
         #     c[i] = c[i] + c[i - 1]
         # end
+        
     end
 
     """

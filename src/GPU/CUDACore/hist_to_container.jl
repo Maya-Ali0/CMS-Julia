@@ -176,7 +176,7 @@ end
     @assert(b <= n_bins(hist))
     # w = hist.off[b]
     # hist.off[b] -= 1
-    w = CUDA.@atomic hist.off[b] -= 1
+    w = CUDA.atomic_sub!(pointer(hist.off,b),UInt32(1))
     @assert(w > 0)
     hist.bins[w] = j
 end
@@ -205,9 +205,9 @@ end
 end
 
 @inline function finalize!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS},ws::AbstractVector{V}) where {T,N_BINS,SIZE,S,I,N_HISTS,V}
-    @assert hist.off[tot_bins(hist)] == 0
+    @cuassert hist.off[tot_bins(hist)] == 0
     block_prefix_scan(hist.off, tot_bins(hist),ws)
-    @assert(hist.off[tot_bins(hist)] == hist.off[tot_bins(hist)-1])
+    @cuassert(hist.off[tot_bins(hist)] == hist.off[tot_bins(hist)-1])
 end
 size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = UInt32(hist.off[tot_bins(hist)])
 size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b) where {T,N_BINS,SIZE,S,I,N_HISTS} = hist.off[b+1] - hist.off[b]

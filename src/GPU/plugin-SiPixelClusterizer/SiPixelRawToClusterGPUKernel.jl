@@ -536,7 +536,7 @@ module pixelGPUDetails
     end
 
 
-    function raw_to_digi_kernal(cabling_map::SiPixelFedCablingMapGPU , mod_to_unp :: W , word_counter::Integer, 
+    function raw_to_digi_kernel(cabling_map::SiPixelFedCablingMapGPU , mod_to_unp :: W , word_counter::Integer, 
                                 word::U , fed_ids::W , xx::V , yy::V ,
                                 adc::V , p_digi::U , raw_id_arr::U , module_id::V,
                                 err::X , use_quality_info::Bool , include_errors::Bool , debug::Bool) where {U <: AbstractVector{UInt32},V <: AbstractVector{UInt16},W <: AbstractVector{UInt8}, X}
@@ -668,59 +668,29 @@ module pixelGPUDetails
         digis_d = gpu_algo.digis_d
         digis_d = cu(digis_d)
         if include_errors
-            digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors) # m
+            digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors) 
         end
         
-        clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES) # m
+        clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES)
         clusters_d = cu(clusters_d)
-        # if word_counter != 0 # incase of empty event
-        #     open("outputDigis.txt","w") do file
-        #         for i ∈ 0:48315
-        #             write(file,string(word_fed.words[i+1]),'\n')
-        #         end
-        #     end
         word_fed = cu(word_fed)
         @assert(0 == word_counter % 2)
-        @cuda threads = 256 raw_to_digi_kernal(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
+        @cuda threads = 256 raw_to_digi_kernel(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
             digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, cu(digi_errors_d.error_d),use_quality_info,include_errors,debug)
         #end # end for raw to digi
         gains = cu(gains)
         @cuda calib_digis(is_run_2,digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,gains,word_counter,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
-        # open("outputDigis.txt","w") do file
-        #     for i ∈ 0:48315
-        #         write(file,"xx[",string(i), "] = ", string(digis_d.xx_d[i+1])," yy[",string(i), "] = ", string(digis_d.yy_d[i+1])," adc[",string(i), "] = ", string(digis_d.adc_d[i+1], " moduleid[",string(i),"] = ",digis_d.module_ind_d[i+1]," pdigi[",string(i),"] = ",string(digis_d.pdigi_d[i+1])," rawidarr[",string(i),"] = ",digis_d.raw_id_arr_d[i+1],'\n'))
-        #     end
-        # end
-        
         @cuda count_modules(digis_d.module_ind_d,clusters_d.module_start_d,digis_d.clus_d,word_counter)
         n_modules = CUDA.@allowscalar clusters_d.module_start_d[1]
         set_n_modules_digis(digis_d,n_modules,word_counter)
+        threads_per_block = 256
+        blocks = gpuClustering.MAX_NUM_MODULES
+        @cuda threads = 32 find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         
-        @cuda find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
-        # open("testingNumClusters.txt","w") do file
-        #     for i ∈ 1:2000
-        #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
-        #     end
-        # end
         
-        cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
+        @cuda cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         
-        # open("testingClustersDigisIds.txt","w") do file
-        #     for i ∈ 1:word_counter
-        #         if(digis_d.clus_d[i] == 9999 || digis_d.clus_d[i] == -9999 )
-        #             write(file,string(digis_d.clus_d[i]),'\n')
-        #         else
-        #             write(file,string(digis_d.clus_d[i]-1),'\n')
-        #         end
-                
-        #     end
-        # end
-        # open("testingNumClusters.txt","w") do file
-        #     for i ∈ 1:2000
-        #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
-        #     end
-        # end
-        fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
+        @cuda fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
 
         setNClusters!(clusters_d,clusters_d.clus_module_start_d[gpuClustering.MAX_NUM_MODULES])
         # open("fill_hits_module.txt","w") do file
@@ -741,14 +711,25 @@ module pixelGPUDetails
     
     """
     function fill_hits_module_start(clus_start::Vector{UInt32}, module_start::Vector{UInt32})
-        @assert (gpuClustering.MAX_NUM_MODULES < 2048)
+        @cuassert (gpuClustering.MAX_NUM_MODULES < 2048)
+        @cuassert gridDim().x == 1
+        @cuassert blockIdx().x == 0
+        first = threadIdx().x
+
         @assert module_start[1] == 0
-        for i ∈ 1:gpuClustering.MAX_NUM_MODULES
+        for i ∈ first:blockDim().x:gpuClustering.MAX_NUM_MODULES
             module_start[i + 1] = min(MAX_HITS_IN_MODULE, clus_start[i])
         end
-        block_prefix_scan(view(module_start,2:length(module_start)), view(module_start,2:length(module_start)),length(module_start)-1)
+        ws = @cuStaticSharedMem(UInt32,32)
+        block_prefix_scan(view(module_start,2:length(module_start)), view(module_start,2:length(module_start)),length(module_start)-1,ws)
+        block_prefix_scan(view(module_start,2:length(module_start)), view(module_start,2:length(module_start)),length(module_start)-1,ws)
+
+        for i ∈ first+1025:blockDim().x:(gpuClustering.MAX_NUM_MODULES + 1)
+            module_start[i] += module_start[1024]
+        end
+        sync_threads()
         MAX_HITS = gpuClustering.MAX_NUM_CLUSTERS
-        for i ∈ 1:gpuClustering.MAX_NUM_MODULES + 1
+        for i ∈ first:blockDim().x:(gpuClustering.MAX_NUM_MODULES + 1)
             if module_start[i] > MAX_HITS
                 module_start[i] = MAX_HITS
             end
