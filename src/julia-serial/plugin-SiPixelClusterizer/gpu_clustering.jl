@@ -25,11 +25,11 @@ if isdefined(Main, :GPU_SMALL_EVENTS)
 else
     const max_hits_in_iter() = 160 # optimized for real data PU 50
 end
-MAX_NUM_MODULES::UInt32 = 2000
-MAX_NUM_CLUSTERS_PER_MODULES::Int32 = 1024
-MAX_HITS_IN_MODULE::UInt32 = 1024 # as above
-MAX_NUM_CLUSTERS::UInt32 = pixelGPUConstants.MAX_NUMBER_OF_HITS
-INV_ID::UInt16 = 9999 # must be > MaxNumModules
+const MAX_NUM_MODULES::UInt32 = 2000
+const MAX_NUM_CLUSTERS_PER_MODULES::Int32 = 1024
+const MAX_HITS_IN_MODULE::UInt32 = 1024 # as above
+const MAX_NUM_CLUSTERS::UInt32 = pixelGPUConstants.MAX_NUMBER_OF_HITS
+const INV_ID::UInt16 = 9999 # must be > MaxNumModules
 ###
 
 """
