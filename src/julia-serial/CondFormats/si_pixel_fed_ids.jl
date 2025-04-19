@@ -15,7 +15,7 @@ export fed_ids
     """
 
     # Stripped-down version of SiPixelFedCablingMap
-    mutable struct SiPixelFedIds
+    struct SiPixelFedIds
         _fed_ids::Vector{UInt32}
 
         function SiPixelFedIds(fed_ids::Vector{UInt32})
