@@ -18,7 +18,7 @@ module gpuClusterCharge
         ok = CACHED_OK[]
         # newclusId = Vector{UInt16}(undef, MAX_NUM_CLUSTERS_PER_MODULES) # m 
         newclusId = CACHED_NEWCLUSID[]
-        
+        fill(charge,In32(0))
         firstModule = 1
         endModule = moduleStart[1]
         for mod ∈ firstModule:endModule
