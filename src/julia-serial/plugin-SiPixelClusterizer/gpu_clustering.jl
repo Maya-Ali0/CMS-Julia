@@ -12,6 +12,8 @@ using ..histogram: HisToContainer, zero, count!, finalize!, size, bin, val, begi
 using ..Geometry_TrackerGeometryBuilder_phase1PixelTopology_h.phase1PixelTopology: num_cols_in_module
 using TaskLocalValues
 const CACHED_HIST = TaskLocalValue(() -> HisToContainer{Int16, 418, 4000, 9, UInt16, 1}()) # ? num_cols_in_module + 2 max_pix_in_module ? ? ?
+const CACHED_NN = TaskLocalValue(()-> Matrix{UInt16}(undef,160*416, 10))
+const CACHED_NNN = TaskLocalValue(()-> zeros(UInt8,160*416))
 #using ..histogram: HisToContainer, zero, count, finalize, size, bin, val, begin_h, end_h
 
 #using ..gpuConfig
@@ -150,14 +152,17 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         # println(hist)
         
         max_iter = size(hist) # number of digis added to hist
+        # max_iter = 160 * 416
         max_neighbours = 10
         
         # nearest neighbour 
-        nn = zeros(Int, max_iter, max_neighbours) # m
-        nnn = zeros(Int, max_iter) # m
-        
+        # nn = Matrix{UInt16}(undef,max_iter, max_neighbours) # m
+        # nnn = zeros(UInt8, max_iter) # m
+        nn = CACHED_NN[]
+        nnn = CACHED_NNN[]
+        fill!(nnn,UInt8(0))
         # fill NN
-        testing = 0 
+        # testing = 0 
         for (j, k) in zip(0:size(hist)-1, 1:size(hist)) # j is the index of the digi within the hist
             @assert k <= max_iter
             p = begin_h(hist) + j
@@ -179,9 +184,9 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
                     p += 1
                     continue
                 end
-                if this_module_id == 510 && i == 15187
-                    testing = k 
-                end
+                # if this_module_id == 510 && i == 15187
+                #     testing = k 
+                # end
                 nnn[k] += 1
                 l = nnn[k]
                 @assert l <= max_neighbours

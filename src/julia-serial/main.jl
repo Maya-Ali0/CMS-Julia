@@ -102,8 +102,8 @@ function julia_main()::Cint
             "BeamSpotToPOD",
             "SiPixelRawToClusterCUDA",
             "SiPixelRecHitCUDA",
-            "CAHitNtupletCUDA",
-            "PixelVertexProducerCUDA"
+            # "CAHitNtupletCUDA",
+            # "PixelVertexProducerCUDA"
         ]
         es_modules = [
             "BeamSpotESProducer",
