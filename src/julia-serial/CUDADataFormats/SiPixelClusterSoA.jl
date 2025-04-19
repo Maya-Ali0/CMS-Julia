@@ -81,10 +81,10 @@ export SiPixelClustersSoA, nClusters, clus_module_start, clusterView, DeviceCons
     """
     function SiPixelClustersSoA(maxClusters)
         # Allocate memory for the data arrays.
-        module_start_d = zeros(UInt32, maxClusters + 1)
-        clus_in_module_d = zeros(UInt32, maxClusters)
-        module_id_d = zeros(UInt32, maxClusters)
-        clus_module_start_d = zeros(UInt32, maxClusters + 1)
+        module_start_d = Vector{UInt32}(undef,maxClusters + 1)
+        clus_in_module_d = Vector{UInt32}(undef,maxClusters)
+        module_id_d = Vector{UInt32}(undef,maxClusters)
+        clus_module_start_d = Vector{UInt32}(undef,maxClusters + 1)
 
         view_d = DeviceConstView(module_start_d, clus_in_module_d, module_id_d, clus_module_start_d)
     
