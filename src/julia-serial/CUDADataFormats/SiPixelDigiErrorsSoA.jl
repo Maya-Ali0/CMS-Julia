@@ -9,7 +9,7 @@ module cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
     """
     struct SiPixelDigiErrorsSoA
         error_d::Vector{PixelErrorCompact}    # Pointer to the error data
-        data_d::Vector{PixelErrorCompact}     # Pointer to the array of size maxFedWords    
+        # data_d::Vector{PixelErrorCompact}     # Pointer to the array of size maxFedWords    
         formatterErrors_h::PixelFormatterErrors         # Pixel formatter errors 
         
         """
@@ -22,17 +22,17 @@ module cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
         """
         function SiPixelDigiErrorsSoA(maxFedWords, errors::PixelFormatterErrors)
             # Allocate memory for the data arrays.
-            data_d = Vector{PixelErrorCompact}(undef, maxFedWords)
-            fill!(data_d, PixelErrorCompact())  # Zero-initialize
+            # data_d = Vector{PixelErrorCompact}(undef, maxFedWords)
+            # fill!(data_d, PixelErrorCompact())  # Zero-initialize
 
             error_d = Vector{PixelErrorCompact}(undef, maxFedWords)
             fill!(error_d, PixelErrorCompact())
 
             # @assert isempty(error_d)
-            @assert length(data_d) == maxFedWords
+            # @assert length(data_d) == maxFedWords
 
             # Return a new instance of SiPixelDigiErrorsSoA
-            new(data_d, error_d, errors)
+            new(error_d, errors)
         end
     end
 
