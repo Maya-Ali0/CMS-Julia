@@ -7,10 +7,17 @@ module gpuClusterCharge
     include("../CUDADataFormats/gpu_clustering_constants.jl")
     using .CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants:INV_ID, MAX_NUM_CLUSTERS_PER_MODULES, MAX_NUM_MODULES
     using Printf
+    using TaskLocalValues
+    const CACHED_CHARGE = TaskLocalValue(()-> fill(Int32(0),MAX_NUM_CLUSTERS_PER_MODULES))
+    const CACHED_OK = TaskLocalValue(()-> Vector{UInt8}(undef, MAX_NUM_CLUSTERS_PER_MODULES))
+    const CACHED_NEWCLUSID = TaskLocalValue(()-> Vector{UInt16}(undef, MAX_NUM_CLUSTERS_PER_MODULES))
     function cluster_charge_cut(id, adc, moduleStart, nClustersInModule, moduleId, clusterId, numElements)
-        charge = fill(0,MAX_NUM_CLUSTERS_PER_MODULES) # m
-        ok = fill(0, MAX_NUM_CLUSTERS_PER_MODULES) # m
-        newclusId = fill(0, MAX_NUM_CLUSTERS_PER_MODULES) # m 
+        # charge = fill(Int32(0),MAX_NUM_CLUSTERS_PER_MODULES) # m
+        charge = CACHED_CHARGE[]
+        # ok = Vector{UInt8}(undef, MAX_NUM_CLUSTERS_PER_MODULES) # m
+        ok = CACHED_OK[]
+        # newclusId = Vector{UInt16}(undef, MAX_NUM_CLUSTERS_PER_MODULES) # m 
+        newclusId = CACHED_NEWCLUSID[]
         
         firstModule = 1
         endModule = moduleStart[1]
@@ -51,7 +58,7 @@ module gpuClusterCharge
 
             @assert nClus <= MAX_NUM_CLUSTERS_PER_MODULES
 
-            fill!(charge,0)
+            # fill!(charge,0)
 
             for i in first:numElements
                 if id[i] == INV_ID | id[i] == -INV_ID 
