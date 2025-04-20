@@ -177,29 +177,27 @@ function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hits
         hitsGPU, hits_geGPU, fast_fit, UInt32(3), UInt32(offset), nothing
     )
 
-    #fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(4, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(4), UInt32(offset), nothing)
+    kernelBLFastFit(4, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(4), UInt32(offset), nothing)
 
-    #circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results = kernelBLFit(
-    #    4, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
-    #    hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(4), UInt32(offset), nothing
-    #)
+    kernelBLFit(4, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
+        hitsGPU, hits_geGPU, fast_fit, UInt32(4), UInt32(offset), nothing)
 
 
-    #if (fitter.fit5as4)
-    #    fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(4, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(5), UInt32(offset), nothing)
+    if (fitter.fit5as4)
+        kernelBLFastFit(4, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(5), UInt32(offset), nothing)
 
-    #    circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results = kernelBLFit(
-    #        4, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
-    #        hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(5), UInt32(offset), nothing
-    #    )
-    #else
-    #    fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(5, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(5), UInt32(offset), log_file)
+        kernelBLFit(
+            4, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
+            hitsGPU, hits_geGPU, fast_fit, UInt32(5), UInt32(offset), nothing
+        )
+    else
+        kernelBLFastFit(5, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(5), UInt32(offset), log_file)
 
-    #    circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results = kernelBLFit(
-    #        5, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
-    #        hits_results, hits_ge_results, fast_fit_resultsGPU, UInt32(5), UInt32(offset), log_file
-    #    )
-    #end
+        kernelBLFit(
+            5, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
+            hitsGPU, hits_geGPU, fast_fit, UInt32(5), UInt32(offset), log_file
+        )
+    end
 end
 
 end
