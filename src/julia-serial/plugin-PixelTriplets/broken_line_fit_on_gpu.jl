@@ -84,7 +84,7 @@ function kernelBLFastFit(N::Int,
             end
         end
 
-        #RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.BL_Fast_fit(hits, fast_fit)
+        RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.BL_Fast_fit(hits, fast_fit)
         
         #@assert !isnan(fast_fit[1])
         #@assert !isnan(fast_fit[2])
