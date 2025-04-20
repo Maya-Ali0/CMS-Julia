@@ -141,7 +141,7 @@ end
 #     \param B magnetic field in Gev/cm/c.
 #     \param results PreparedBrokenLineData to be filled (see description of PreparedBrokenLineData).
 #   */
-@inline function prepare_broken_line_data(hits::Matrix{Float64}, fast_fit::Vector{Float64}, B::Float64, results::PreparedBrokenLineData)
+@inline function prepare_broken_line_data(hits, fast_fit, B::Float64, results::PreparedBrokenLineData)
     n = size(hits, 2)
     d = zeros(2)
     e = zeros(2)
@@ -303,7 +303,7 @@ end
 #     \details The function implements the steps 2 and 3 of the Broken Line fit with the curvature correction.\n
 #     The step 2 is the least square fit, done by imposing the minimum constraint on the cost function and solving the consequent linear system. It determines the fitted parameters u and \Delta\kappa and their covariance matrix.
 #     The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
-@inline function BL_Circle_fit(hits::Matrix{Float64}, hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, circle_results::circle_fit)
+@inline function BL_Circle_fit(hits, hits_ge, fast_fit, B::Float64, data::PreparedBrokenLineData, circle_results::circle_fit)
     # open("debug_output.txt", "a") do f
         n = size(hits, 2)
         circle_results.q = data.q
@@ -501,7 +501,7 @@ end
 # The step 2 is the least square fit, done by imposing the minimum constraint on the cost function and solving the consequent linear system. It determines the fitted parameters u and their covariance matrix.
 # The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
 # */
-@inline function BL_Line_fit(hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, line_results::line_fit)
+@inline function BL_Line_fit(hits_ge, fast_fit, B::Float64, data::PreparedBrokenLineData, line_results::line_fit)
     # open("debug_output.txt", "a") do f
         n = size(hits_ge, 2)
         radii = data.radii

@@ -86,10 +86,10 @@ function kernelBLFastFit(N::Int,
 
         RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.BL_Fast_fit(hits, fast_fit)
         
-        #@assert !isnan(fast_fit[1])
-        #@assert !isnan(fast_fit[2])
-        #@assert !isnan(fast_fit[3])
-        #@assert !isnan(fast_fit[4])
+        @assert !isnan(fast_fit[1])
+        @assert !isnan(fast_fit[2])
+        @assert !isnan(fast_fit[3])
+        @assert !isnan(fast_fit[4])
     end
     return Nothing   # Return the full array of fast fits
 end
@@ -111,31 +111,6 @@ function kernelBLFit(N::Int,
     maxNumberOfConcurrentFits = 24 * 1024
     local_start = 1
 
-    circle_fit_results = Float64[]
-    line_fit_results = Float64[]
-    pt_results = Float64[]
-    eta_results = Float64[]
-    chi2_results = Float64[]
-
-    for local_idx in local_start:maxNumberOfConcurrentFits
-        tuple_idx = local_idx + offset
-        if tuple_idx >= size(tupleMultiplicity, nHits) + 1
-            break
-        end
-
-        tkid = tupleMultiplicity.bins[tupleMultiplicity.off[nHits]+tuple_idx]
-        # println(log_file, "kernelBLFit INPUT (N=", N, ", tkid=", tkid, ", B=", B, ") - fast_fit:", fast_fit_results[(local_idx-1)*4+1:(local_idx-1)*4+4])
-
-        start_idx = (local_idx - 1) * (3 * N) + 1
-        end_idx = start_idx + (3 * N) - 1
-        hits = reshape(phits[start_idx:end_idx], 3, N)
-
-        fast_fit = fast_fit_results[(local_idx-1)*4+1:(local_idx-1)*4+4]
-
-        start_idx_ge = (local_idx - 1) * (6 * N) + 1
-        end_idx_ge = start_idx_ge + (6 * N) - 1
-        hits_ge = reshape(phits_ge[start_idx_ge:end_idx_ge], 6, N)
-
         data = RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.PreparedBrokenLineData(
             1,
             zeros(Float64, 2, N),
@@ -148,6 +123,29 @@ function kernelBLFit(N::Int,
         circle = RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h.circle_fit()
         line = RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h.line_fit()
 
+    for local_idx in local_start:maxNumberOfConcurrentFits
+        tuple_idx = local_idx + offset
+        if tuple_idx >= size(tupleMultiplicity, nHits) + 1
+            break
+        end
+
+        tkid = tupleMultiplicity.bins[tupleMultiplicity.off[nHits]+tuple_idx]
+
+        start_idx = (local_idx - 1) * (3 * N) + 1
+        end_idx = start_idx + (3 * N) - 1
+        
+        @views hits = reshape(view(phits,start_idx:end_idx),3, N)
+
+        f0 = (local_idx-1)*4 + 1
+        f1 = f0 + 3
+        fast_fit = @views view(fast_fit_results, f0:f1)
+
+        start_idx_ge = (local_idx - 1) * (6 * N) + 1
+        end_idx_ge = start_idx_ge + (6 * N) - 1
+        
+        @views hits_ge = reshape(view(phits_ge, start_idx_ge:end_idx_ge),6,N)
+
+       
         RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.prepare_broken_line_data(hits, fast_fit, B, data)
         RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.BL_Line_fit(hits_ge, fast_fit, B, data, line)
         RecoPixelVertexing_PixelTrackFitting_interface_BrokenLine_h.BL_Circle_fit(hits, hits_ge, fast_fit, B, data, circle)
@@ -157,23 +155,9 @@ function kernelBLFit(N::Int,
         results.eta[tkid] = asinh(line.par[1])
         results.chi2[tkid] = (line.chi2 + circle.chi2) / (2 * N - 5)
 
-        append!(circle_fit_results, circle.par)
-        append!(line_fit_results, line.par)
-        append!(pt_results, results.pt[tkid])
-        append!(eta_results, results.eta[tkid])
-        append!(chi2_results, results.chi2[tkid])
+   end
 
-        # println(log_file, "Track tkid=", tkid, " Circle Fit:", circle.par)
-        # println(log_file, "Track tkid=", tkid, " Line Fit:", line.par)
-        # println(log_file, "Track tkid=", tkid, " pt:", results.pt[tkid])
-        # println(log_file, "Track tkid=", tkid, " eta:", results.eta[tkid])
-        # println(log_file, "Track tkid=", tkid, " chi2:", results.chi2[tkid])
-        # println(log_file, "Track tkid=", tkid, " circle.chi2:", circle.chi2)
-        # println(log_file, "Track tkid=", tkid, " line.chi2:", line.chi2)
-        # flush(log_file)
-    end
-
-    return circle_fit_results, line_fit_results, pt_results, eta_results, chi2_results
+    return Nothing 
 end
 
 
@@ -188,10 +172,10 @@ function launchBrokenLineKernelsOnCPU(fitter::HelixFitOnGPU, hv::HitsOnGPU, hits
 
     kernelBLFastFit(3, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(3), UInt32(offset), nothing)
 
-    #kernelBLFit(
-    #    3, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
-    #    hitsGPU, hits_geGPU, fast_fit, UInt32(3), UInt32(offset), nothing
-    #)
+    kernelBLFit(
+        3, fitter.tuple_multiplicity_d, Float64(fitter.b_field), fitter.output_soa_d,
+        hitsGPU, hits_geGPU, fast_fit, UInt32(3), UInt32(offset), nothing
+    )
 
     #fast_fit_resultsGPU, hits_results, hits_ge_results = kernelBLFastFit(4, tuples_d, fitter.tuple_multiplicity_d, hv, hitsGPU, hits_geGPU, fast_fit, UInt32(4), UInt32(offset), nothing)
 
