@@ -102,8 +102,8 @@ function julia_main()::Cint
             "BeamSpotToPOD",
             "SiPixelRawToClusterCUDA",
             "SiPixelRecHitCUDA",
-            # "CAHitNtupletCUDA",
-            # "PixelVertexProducerCUDA"
+            "CAHitNtupletCUDA",
+            "PixelVertexProducerCUDA"
         ]
         es_modules = [
             "BeamSpotESProducer",
@@ -144,7 +144,7 @@ function julia_main()::Cint
         args["warmupEvents"]
     )
     # Warm up
-    try
+    
         if args["warmupEvents"] > 0
             println("Warming up...")
             @time warm_up(ev, args["maxEvents"])
@@ -172,12 +172,7 @@ function julia_main()::Cint
         @printf("Processed %d events in %.6e seconds, throughput %.2f events/s, CPU usage per thread: %.1f%%\n",
             processed_events, elapsed_seconds, throughput, cpu_usage)
 
-    catch e
-        println("\n----------\nCaught exception:")
-        println(e)
-        return 1
-    end
-    println("Finished processing events.")
+        println("Finished processing events.")
 
     return 0
 end
