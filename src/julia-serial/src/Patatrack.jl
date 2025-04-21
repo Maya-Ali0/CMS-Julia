@@ -113,7 +113,7 @@ export CountValidator
 export HistoValidator
 export warm_up
 export n_hits
-
+include("../../../src/julia-serial/CUDACore/simple_matrix.jl")
 include("../../../src/julia-serial/Framework/ESPluginFactory.jl")
 include("../../../src/julia-serial/DataFormats/track_count.jl")
 include("../../../src/julia-serial/DataFormats/vertex_count.jl")

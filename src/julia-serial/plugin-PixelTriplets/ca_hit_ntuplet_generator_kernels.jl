@@ -90,11 +90,11 @@ cuts = QualityCuts(MArray{Tuple{4},Float32}((0.68177776, 0.74609577, -0.08035491
 mutable struct CAHitNTupletGeneratorKernels
     #cell_storage::Vector{UInt8}
     device_the_cell_neighbors::CellNeighborsVector
-    device_the_cell_neighbors_container::Vector{CellNeighbors}
+    # device_the_cell_neighbors_container::Vector{CellNeighbors}
     device_the_cell_tracks::CellTracksVector
-    device_the_cell_tracks_container::Vector{CellTracks}
+    # device_the_cell_tracks_container::Vector{CellTracks}
     device_the_cells::Vector{GPUCACell}
-    device_is_outer_hit_of_cell::Vector{OuterHitOfCell}
+    device_is_outer_hit_of_cell::OuterHitOfCellVector
     device_n_cells::MVector{1,UInt32}
     device_hit_tuple_counter::MVector{2,UInt32}
     device_hit_to_tuple::HitToTuple
@@ -102,16 +102,19 @@ mutable struct CAHitNTupletGeneratorKernels
     m_params::Params
     counters::Counters
     function CAHitNTupletGeneratorKernels(params::Params)
-        is_outer_hit_of_cell = [OuterHitOfCell() for _ ∈ 1:15e4]
-        the_cell_neighbors_container = [CellNeighbors() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellNeighbors
-        the_cell_tracks_container = [CellTracks() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellTracks
+        # is_outer_hit_of_cell = [OuterHitOfCell() for _ ∈ 1:15e4]
+        is_outer_hit_of_cell = OuterHitOfCellVector(0,0)
+        # the_cell_neighbors_container = [CellNeighbors() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellNeighbors
+        the_cell_neighbors_container = CellNeighborsVector(64,MAX_NUM_OF_ACTIVE_DOUBLETS)
+        # the_cell_tracks_container = [CellTracks() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellTracks
+        the_cell_tracks_container = CellTracksVector(64,MAX_NUM_OF_ACTIVE_DOUBLETS)
         the_cells = Vector{GPUCACell}(undef, params.max_num_of_doublets)
         device_hit_to_tuple = HitToTuple()
         device_tuple_multiplicity = TupleMultiplicity()
         zero(device_hit_to_tuple)
         zero(device_tuple_multiplicity)
-        new(CellNeighborsVector(MAX_NUM_OF_ACTIVE_DOUBLETS, the_cell_neighbors_container), the_cell_neighbors_container,
-            CellTracksVector(MAX_NUM_OF_ACTIVE_DOUBLETS, the_cell_tracks_container), the_cell_tracks_container, the_cells, is_outer_hit_of_cell,
+        new(the_cell_neighbors_container,
+            the_cell_tracks_container, the_cells, is_outer_hit_of_cell,
             MVector{1,UInt32}(0), MVector{2,UInt32}(0, 0), device_hit_to_tuple, device_tuple_multiplicity, params, Counters())
     end
 end
@@ -140,6 +143,7 @@ function build_doublets(self::CAHitNTupletGeneratorKernels, hh::HitsOnCPU)
     # println("Building Doublets out of ", current_n_hits, " Hits")
     # cell_storage
     # @timev self.device_is_outer_hit_of_cell = [OuterHitOfCell() for _ ∈ 1:max(1,current_n_hits)]
+    self.device_is_outer_hit_of_cell = OuterHitOfCellVector(MAX_CELLS_PER_HIT,current_n_hits)
     init_doublets(self.device_is_outer_hit_of_cell, current_n_hits, self.device_the_cell_neighbors, self.device_the_cell_tracks)
     if (current_n_hits == 0)
         return
@@ -174,12 +178,12 @@ function launch_kernels(self::CAHitNTupletGeneratorKernels, hh, tracks_d)
     if num_hits > 1 && self.m_params.early_fish_bone
         fish_bone(hist_view(hh), self.device_the_cells, self.device_n_cells, self.device_is_outer_hit_of_cell, num_hits, false)
     end
-    kernel_find_ntuplets(hist_view(hh), self.device_the_cells, self.device_n_cells, self.device_the_cell_tracks, tuples_d, self.device_hit_tuple_counter, quality_d, self.m_params.min_hits_per_ntuplet)
+    kernel_find_ntuplets(hist_view(hh), self.device_the_cells, self.device_n_cells, self.device_the_cell_tracks, tuples_d, self.device_hit_tuple_counter, quality_d, self.m_params.min_hits_per_ntuplet,self.device_the_cell_neighbors)
     if self.m_params.do_stats
         kernel_mark_used((hist_view(hh), self.device_the_cells, self.device_n_cells))
     end
     bulk_finalize_fill(tuples_d, self.device_hit_tuple_counter)
-    kernel_early_duplicate_remover(self.device_the_cells, self.device_n_cells[1], tuples_d, quality_d)
+    kernel_early_duplicate_remover(self.device_the_cells, self.device_n_cells[1], tuples_d, quality_d,self.device_the_cell_tracks)
 
     kernel_countMultiplicity(tuples_d, quality_d, self.device_tuple_multiplicity)
     finalize!(self.device_tuple_multiplicity)
@@ -215,11 +219,11 @@ function launch_kernels(self::CAHitNTupletGeneratorKernels, hh, tracks_d)
     # end
 end
 
-function classify_tuples(self::CAHitNTupletGeneratorKernels, hh::HitsOnCPU, tracks_d)
+function classify_tuples(self::CAHitNTupletGeneratorKernels, hh::HitsOnCPU, tracks_d,the_cell_tracks::CellTracksVector)
     tuples_d = tracks_d.hit_indices
     quality_d = tracks_d.m_quality
     kernel_classify_tracks(tuples_d, tracks_d, self.m_params.cuts, quality_d)
-    kernel_fast_duplicate_remover(self.device_the_cells, self.device_n_cells, tuples_d, tracks_d)
+    kernel_fast_duplicate_remover(self.device_the_cells, self.device_n_cells, tuples_d, tracks_d,the_cell_tracks)
     kernel_count_hit_in_tracks(tuples_d, quality_d, self.device_hit_to_tuple)
     finalize!(self.device_hit_to_tuple)
     kernel_fill_hit_in_tracks(tuples_d, quality_d, self.device_hit_to_tuple)

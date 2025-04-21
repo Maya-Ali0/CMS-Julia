@@ -13,6 +13,7 @@ using ..Patatrack: CircleEq, compute, dca0, curvature
 using ..Patatrack: Quality, dup, bad, loose
 using ..histogram: n_bins, size, count_direct, fill_direct, tot_bins, begin_h, end_h
 using ..Tracks: tip, zip
+using Setfield:@set
 function maxNumber()
     return 32 * 1024
 end
@@ -41,7 +42,7 @@ function test(x)
         sleep(0.1)
     end
 end
-function kernel_connect(hhp::TrackingRecHit2DSOAView, cells::Vector{GPUCACell}, n_cells, cell_neighbors::CellNeighborsVector, is_outer_hit_of_cell::Vector{OuterHitOfCell}, hard_curv_cut::AbstractFloat, pt_min::AbstractFloat, ca_theta_cut_barrel::AbstractFloat, ca_theta_cut_forward::AbstractFloat, dca_cut_inner_triplet::AbstractFloat, dca_cut_outer_triplet::AbstractFloat) #=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=#
+function kernel_connect(hhp::TrackingRecHit2DSOAView, cells::Vector{GPUCACell}, n_cells, cell_neighbors::CellNeighborsVector, is_outer_hit_of_cell::OuterHitOfCellVector, hard_curv_cut::AbstractFloat, pt_min::AbstractFloat, ca_theta_cut_barrel::AbstractFloat, ca_theta_cut_forward::AbstractFloat, dca_cut_inner_triplet::AbstractFloat, dca_cut_outer_triplet::AbstractFloat) #=apc1::AtomicPairCounter, apc2::AtomicPairCounter,=#
     first_cell_index = 1
     first = 1
     apc1 = 0
@@ -63,8 +64,8 @@ function kernel_connect(hhp::TrackingRecHit2DSOAView, cells::Vector{GPUCACell}, 
         outer_hit_id = this_cell.the_outer_hit_id
 
 
-        number_of_possible_neighbors = length(is_outer_hit_of_cell[inner_hit_id])
-        vi = data(is_outer_hit_of_cell[inner_hit_id])
+        number_of_possible_neighbors = length(is_outer_hit_of_cell,inner_hit_id)
+        vi = is_outer_hit_of_cell[:,inner_hit_id]
 
         last_bpix1_det_index::UInt32 = 96
         last_barrel_det_index::UInt32 = 1184
@@ -89,13 +90,21 @@ function kernel_connect(hhp::TrackingRecHit2DSOAView, cells::Vector{GPUCACell}, 
             aligned = are_aligned(r1, z1, ri, zi, ro, zo, pt_min, is_barrel ? ca_theta_cut_barrel : ca_theta_cut_forward)
             cut = dca_cut(this_cell, other_cell, hhp, get_inner_det_index(other_cell, hhp) < last_bpix1_det_index ? dca_cut_inner_triplet : dca_cut_outer_triplet, hard_curv_cut, 0)
             if aligned && cut
-                add_outer_neighbor(other_cell, cell_index, cell_neighbors)
+                add_outer_neighbor(cells,other_cell_index,cell_index, cell_neighbors)
                 # triplet_info = @sprintf("%d %d\n",cell_index-1,other_cell_index-1)
                 # open("tripletsTestingJulia.txt","a") do file
                 #     write(file,triplet_info)
                 # end
-                this_cell.the_used |= 1
-                other_cell.the_used |= 1
+                if this_cell.the_used != 1
+                    this_cell = cells[cell_index]
+                    cells[cell_index] = @set this_cell.the_used |= 1
+                end
+                if other_cell.the_used != 1
+                    other_cell = cells[other_cell_index]
+                    cells[other_cell_index] = @set other_cell.the_used |= 1
+                end
+                # this_cell.the_used |= 1
+                # other_cell.the_used |= 1
             end
             # if inner_other_cell_hit == 9415 && outer_other_cell_hit == 10291
             #     println(other_cell.the_doublet_id)
@@ -104,7 +113,7 @@ function kernel_connect(hhp::TrackingRecHit2DSOAView, cells::Vector{GPUCACell}, 
     end
 end
 
-function kernel_find_ntuplets(hits, cells, n_cells, cell_tracks, found_ntuplets, hit_tuple_counter, quality, min_hits_per_ntuplet)
+function kernel_find_ntuplets(hits, cells, n_cells, cell_tracks, found_ntuplets, hit_tuple_counter, quality, min_hits_per_ntuplet,cell_neighbors)
     stack = Stack{UInt32}()
     for idx ∈ 1:n_cells[1]
         this_cell = cells[idx]
@@ -116,7 +125,7 @@ function kernel_find_ntuplets(hits, cells, n_cells, cell_tracks, found_ntuplets,
         do_it = min_hits_per_ntuplet > 3 ? p_id < 3 : p_id < 8 || p_id > 12
 
         if do_it
-            find_ntuplets(this_cell, Val{6}(), cells, cell_tracks, found_ntuplets, hit_tuple_counter, quality, stack, min_hits_per_ntuplet, p_id < 3)
+            find_ntuplets(this_cell, Val{6}(), cells, cell_tracks, found_ntuplets, hit_tuple_counter, quality, stack, min_hits_per_ntuplet, p_id < 3,cell_neighbors)
             @assert isempty(stack)
         end
     end
@@ -125,28 +134,29 @@ end
 function kernel_marked_used(hits, cells, n_cells)
     for idx ∈ 1:n_cells
         this_cell = cells[idx]
-        if !isempty(this_cell.the_tracks)
-            this_cell.the_used |= 2
+        if this_cell.the_tracks != 1
+            cells[idx] = @set this_cell.the_used = 2
         end
     end
 end
 
-function kernel_early_duplicate_remover(cells, n_cells, found_ntuplets, quality)
+function kernel_early_duplicate_remover(cells, n_cells, found_ntuplets, quality,tracks::CellTracksVector)
     duplicate = dup
     @assert(n_cells != 0)
     for idx ∈ 1:n_cells
         this_cell = cells[idx]
-        if length(this_cell.the_tracks) < 2
+        cell_tracks = tracks[:,this_cell.the_tracks]
+        if length(cell_tracks) < 2
             continue
         end
         max_num_hits = 0
 
-        for it ∈ this_cell.the_tracks
+        for it ∈ cell_tracks
             n_h = size(found_ntuplets, it)
             max_num_hits = max(max_num_hits, n_h)
         end
 
-        for it ∈ this_cell.the_tracks
+        for it ∈ cell_tracks
             n_h = size(found_ntuplets, it)
             if n_h != max_num_hits
                 quality[it] = duplicate
@@ -237,28 +247,29 @@ function kernel_classify_tracks(tuples,tracks,cuts,quality)
 end
 
 
-function kernel_fast_duplicate_remover(cells,n_cells,found_Ntuplets,tracks)
+function kernel_fast_duplicate_remover(cells,n_cells,found_Ntuplets,tracks,the_cell_tracks::CellTracksVector)
     @assert(n_cells != 0)
     first = 1
     nt = n_cells[1]
     
     for idx ∈ first:nt
         this_cell = cells[idx]
-        if this_cell.the_tracks.m_size < 2
+        cell_tracks = the_cell_tracks[:,this_cell.the_tracks]
+        if length(cell_tracks) < 2
             continue
         end
         mc = 10000f0
         im = 60000
         score = it -> abs(tip(tracks,it))
-        for it_index ∈ 1:this_cell.the_tracks.m_size
-            it = this_cell.the_tracks[it_index]
+        for it_index ∈ 1:length(cell_tracks)
+            it = cell_tracks[it_index]
             if tracks.m_quality[it]  == loose && score(it) < mc
                 mc = score(it)
                 im = it
             end
         end
-        for it_index ∈ 1:this_cell.the_tracks.m_size
-            it = this_cell.the_tracks[it_index]
+        for it_index ∈ 1:length(cell_tracks)
+            it = cell_tracks[it_index]
             if tracks.m_quality[it] != bad && it != im
                 tracks.m_quality[it] = dup
             end

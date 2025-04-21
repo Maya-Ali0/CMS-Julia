@@ -88,24 +88,24 @@ end
     end
 
     
-    function init_doublets(is_outer_hit_of_cell::Vector{OuterHitOfCell},n_hits::Integer,cell_neighbors::CellNeighborsVector,
+    function init_doublets(is_outer_hit_of_cell::OuterHitOfCellVector,n_hits::Integer,cell_neighbors::CellNeighborsVector,
                            cell_tracks::CellTracksVector)
-        @assert(!isempty(is_outer_hit_of_cell))
+        # @assert(!isempty(is_outer_hit_of_cell))
         first = 1
-        for i ∈ first:n_hits
-            reset!(is_outer_hit_of_cell[i])
-        end
+        # for i ∈ first:n_hits
+        #     reset!(is_outer_hit_of_cell[i])
+        # end
         i = extend!(cell_neighbors)
-        @assert(i == 0)
-        reset!(cell_neighbors[1])
+        @assert(i == 1)
+        # reset!(cell_neighbors[1])
         i = extend!(cell_tracks)
-        @assert(i == 0)
-        reset!(cell_tracks[1])
-        extend!(cell_neighbors)
-        extend!(cell_tracks)
+        @assert(i == 1)
+        # reset!(cell_tracks[1])
+        # extend!(cell_neighbors)
+        # extend!(cell_tracks)
     end
     function get_doublets_from_histo(cells::Vector{GPUCACell},n_cells,cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,
-                                     hhp::TrackingRecHit2DHeterogeneous,is_outer_hit_of_cell::Vector{OuterHitOfCell},n_actual_pairs::Integer,
+                                     hhp::TrackingRecHit2DHeterogeneous,is_outer_hit_of_cell::OuterHitOfCellVector,n_actual_pairs::Integer,
                                      ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,do_pt_cut::Bool,max_num_of_doublets::Integer)
         doublets_from_histo(layer_pairs,n_actual_pairs,cells,n_cells,cell_neighbors,
         cell_tracks,hhp,is_outer_hit_of_cell,phi_cuts,min_z,max_z,max_r,ideal_cond,
@@ -119,7 +119,7 @@ end
     is_outer_hit_of_cell: a vector of vectors for every outer hit which holds indices to all doublets that it participates in
     """
     function doublets_from_histo(layer_pairs::SArray{Tuple{layer_pairs_2}},n_pairs::Integer,cells::Vector{GPUCACell},n_cells,cell_neighbors::CellNeighborsVector,
-                                 cell_tracks::CellTracksVector,hh::TrackingRecHit2DHeterogeneous,is_outer_hit_of_cell::Vector{OuterHitOfCell},phi_cuts:: SArray{Tuple{n_layer_pairs}},
+                                 cell_tracks::CellTracksVector,hh::TrackingRecHit2DHeterogeneous,is_outer_hit_of_cell::OuterHitOfCellVector,phi_cuts:: SArray{Tuple{n_layer_pairs}},
                                  min_z::SArray{Tuple{n_layer_pairs}},max_z::SArray{Tuple{n_layer_pairs}},max_r::SArray{Tuple{n_layer_pairs}},ideal_cond::Bool,do_cluster_cut::Bool,do_z0_cut::Bool,
                                  do_pt_cut::Bool,max_num_of_doublets::Integer) where {n_layer_pairs, layer_pairs_2}
         """
@@ -346,8 +346,7 @@ end
                         break
                     end
                     cells[n_cells[1]] = GPUCACell(cell_neighbors,cell_tracks,hist_view(hh),pair_layer_id,n_cells[1],i,oi)
-                    push!(is_outer_hit_of_cell[oi],n_cells[1])
-                    
+                    push!(is_outer_hit_of_cell,oi,n_cells[1])
                 end
                 current_bin = current_bin+1
                 if(current_bin == (n_bins(hist)+1))

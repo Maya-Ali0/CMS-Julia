@@ -73,7 +73,7 @@ function getHits(cpeParams::ParamsOnGPU,
         InvId = 9999
         MaxHitsInIter = PixelGPU_h.MaxHitsInIter
 
-        clusParams = ClusParamsT{100000}()
+        clusParams = ClusParamsT{PixelGPU_h.MaxHitsInIter}()
 
         firstModule = 1
      #    write(file, "firstModule: $firstModule\n")

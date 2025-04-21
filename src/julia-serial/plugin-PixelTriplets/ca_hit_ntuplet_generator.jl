@@ -67,31 +67,31 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DH
     tracks = TrackSOA()
     soa = tracks
     @assert !isnothing(soa)
-    # kernels = CAHitNTupletGeneratorKernels(self.m_params) # m 
-    kernels = CACHED_KERNELS[]
-    resetCAHitNTupletGeneratorKernels(kernels)
+    kernels = CAHitNTupletGeneratorKernels(self.m_params) # m 
+    # kernels = CACHED_KERNELS[]
+    # resetCAHitNTupletGeneratorKernels(kernels)
     kernels.counters = self.m_counters
 
-    build_doublets(kernels, hits_d) # doesnt modify n_hits
+    build_doublets(kernels, hits_d) # doesnt modify n_hits 124.197 to 172.237
     launch_kernels(kernels, hits_d, tracks)
     fill_hit_det_indices(hist_view(hits_d), tracks)
-    # if(! const bool useRiemannFit_;)
+    # # if(! const bool useRiemannFit_;)
 
-    # HelixFitOnGPU fitter(bfield, m_params.fit5as4_);
-    # fitter.allocateOnGPU(&(soa->hitIndices), kernels.tupleMultiplicity(), soa);
+    # # HelixFitOnGPU fitter(bfield, m_params.fit5as4_);
+    # # fitter.allocateOnGPU(&(soa->hitIndices), kernels.tupleMultiplicity(), soa);
 
     fitter = HelixFitOnGPU(Float32(b_field), self.m_params.fit_5_as_4)
 
-    # fitter.tuple_multiplicity_d is nothing 
+    # # fitter.tuple_multiplicity_d is nothing 
     allocate_on_gpu!(fitter, hit_indices(soa), kernels.device_tuple_multiplicity, soa)
 
-    # for i in 1:15
-    #     println("i: ", i)
-    #     println(fitter.tuple_multiplicity_d.bins[fitter.tuple_multiplicity_d.off[3]+i])
-    # end
+    # # for i in 1:15
+    # #     println("i: ", i)
+    # #     println(fitter.tuple_multiplicity_d.bins[fitter.tuple_multiplicity_d.off[3]+i])
+    # # end
 
     launchBrokenLineKernelsOnCPU(fitter, hist_view(hits_d), n_hits(hits_d), UInt32(24 * 1024))
     
-    classify_tuples(kernels,hits_d,tracks)
+    # classify_tuples(kernels,hits_d,tracks,kernels.device_the_cell_tracks)
     return tracks
 end

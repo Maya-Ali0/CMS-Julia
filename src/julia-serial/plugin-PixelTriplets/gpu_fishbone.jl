@@ -1,16 +1,16 @@
-using ..caConstants:MAX_CELLS_PER_HIT
+using ..caConstants:MAX_CELLS_PER_HIT,OuterHitOfCellVector
 using ..gpuCACELL
-function fish_bone(hits,cells,n_cells,is_outer_hit_of_cell,n_hits,check_track)
-    max_cells_per_hit = MAX_CELLS_PER_HIT
-    δx =  Vector{Float32}(undef,max_cells_per_hit)
-    δy =  Vector{Float32}(undef,max_cells_per_hit)
-    δz =  Vector{Float32}(undef,max_cells_per_hit)
-    norms =  Vector{Float32}(undef,max_cells_per_hit)
-    inner_detector_index =  Vector{UInt16}(undef,max_cells_per_hit)
-    cell_indices_vector =  Vector{UInt32}(undef,max_cells_per_hit)
+using Setfield:@set
+function fish_bone(hits,cells::Vector{GPUCACell},n_cells,is_outer_hit_of_cell::OuterHitOfCellVector,n_hits,check_track)
+    δx =  Vector{Float32}(undef,MAX_CELLS_PER_HIT)
+    δy =  Vector{Float32}(undef,MAX_CELLS_PER_HIT)
+    δz =  Vector{Float32}(undef,MAX_CELLS_PER_HIT)
+    norms =  Vector{Float32}(undef,MAX_CELLS_PER_HIT)
+    inner_detector_index =  Vector{UInt16}(undef,MAX_CELLS_PER_HIT)
+    cell_indices_vector =  Vector{UInt32}(undef,MAX_CELLS_PER_HIT)
 
     for idy ∈ 1:n_hits
-        cells_vector = is_outer_hit_of_cell[idy]
+        cells_vector = is_outer_hit_of_cell[:,idy]
         num_of_outer_doublets = length(cells_vector)
         if num_of_outer_doublets < 2
             continue
@@ -48,10 +48,10 @@ function fish_bone(hits,cells,n_cells,is_outer_hit_of_cell,n_hits,check_track)
                 if inner_detector_index[ic] != inner_detector_index[jc] && cos12*cos12 >= 0.99999f0*norms[ic]*norms[jc]
                     ## Kill the farthest (prefer consecutive layers)
                     if norms[ic] > norms[jc]
-                        ci.the_doublet_id = -1
+                        cells[cell_indices_vector[ic]] = @set ci.the_doublet_id = -1
                         break
                     else
-                        cj.the_doublet_id = -1 
+                        cells[cell_indices_vector[jc]] = @set cj.the_doublet_id = -1 
                     end
                 end
             end

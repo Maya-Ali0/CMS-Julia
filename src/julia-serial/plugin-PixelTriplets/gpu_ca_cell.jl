@@ -13,6 +13,7 @@ module gpuCACELL
     using ..CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DSOAView_h:z_global,r_global
     using ..Patatrack:CircleEq, compute, dca0, curvature
     using ..histogram:bulk_fill
+    using Setfield:@set
     import ..Patatrack:Quality,bad
     export GPUCACell
     export get_outer_x,get_outer_y,get_outer_z,get_inner_x,get_inner_y,get_inner_z,get_inner_det_index
@@ -24,9 +25,9 @@ module gpuCACELL
     # using Main:push!
     # using Main:empty
 
-    mutable struct GPUCACell
-        the_outer_neighbors::CellNeighbors
-        the_tracks::CellTracks
+    struct GPUCACell
+        the_outer_neighbors::UInt32
+        the_tracks::UInt32
         the_doublet_id::Int32
         the_layer_pair_id::Int16
         the_used::UInt16
@@ -34,30 +35,30 @@ module gpuCACELL
         the_inner_r::Float32
         the_inner_hit_id::hindex_type
         the_outer_hit_id::hindex_type
-        function GPUCACell(cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,hh::Hits,layer_pair_id::Integer,doublet_id::Integer,
-            inner_hit_id::Integer,outer_hit_id::Integer)
-            z_global_inner = z_global(hh,inner_hit_id)
-            r_global_inner = r_global(hh,inner_hit_id)
-            # z_global_inner_str = @sprintf("%.7g", z_global_inner)
-            # r_global_inner_str = @sprintf("%.7g", r_global_inner)
-            # Construct the string to append to the file
-            # doublet_id -=1
-            # layer_pair_id -=1
-            # inner_hit_id -= 1
-            # outer_hit_id -= 1
+    end
+    function GPUCACell(cell_neighbors::CellNeighborsVector,cell_tracks::CellTracksVector,hh::Hits,layer_pair_id::Integer,doublet_id::Integer,
+        inner_hit_id::Integer,outer_hit_id::Integer)
+        z_global_inner = z_global(hh,inner_hit_id)
+        r_global_inner = r_global(hh,inner_hit_id)
+        # z_global_inner_str = @sprintf("%.7g", z_global_inner)
+        # r_global_inner_str = @sprintf("%.7g", r_global_inner)
+        # Construct the string to append to the file
+        # doublet_id -=1
+        # layer_pair_id -=1
+        # inner_hit_id -= 1
+        # outer_hit_id -= 1
 
-            # output_string = @sprintf("doublet_id: %d, layer_pair_id: %d, z_global_inner: %s, r_global_inner: %s, inner_hit_id: %d, outer_hit_id: %d\n",
-            # doublet_id, layer_pair_id, z_global_inner_str, r_global_inner_str, inner_hit_id, outer_hit_id)
-            # doublet_id +=1
-            # layer_pair_id +=1
-            # inner_hit_id += 1
-            # outer_hit_id += 1
-            # Open the file in append mode and write the output_string
-            
-            #write(file, output_string)
-            
-            new(cell_neighbors[1],cell_tracks[1],doublet_id,layer_pair_id,0,z_global_inner,r_global_inner,inner_hit_id,outer_hit_id)
-        end
+        # output_string = @sprintf("doublet_id: %d, layer_pair_id: %d, z_global_inner: %s, r_global_inner: %s, inner_hit_id: %d, outer_hit_id: %d\n",
+        # doublet_id, layer_pair_id, z_global_inner_str, r_global_inner_str, inner_hit_id, outer_hit_id)
+        # doublet_id +=1
+        # layer_pair_id +=1
+        # inner_hit_id += 1
+        # outer_hit_id += 1
+        # Open the file in append mode and write the output_string
+        
+        #write(file, output_string)
+        
+        GPUCACell(UInt32(1),UInt32(1),doublet_id,layer_pair_id,0,z_global_inner,r_global_inner,inner_hit_id,outer_hit_id)
     end
     print_cell(self::GPUCACell) = @printf("printing cell: %d, on layerPair: %d, innerHitId: %d, outerHitId: %d \n",
            theDoubletId,
@@ -160,32 +161,33 @@ check if oughter_neighbor vector for the other_doublet if it is empty
 if its empty, assign for it a neighbors slot within cell_neighbors by extending cell_neighbors.
 Finally push the second doublet index t to the oughter_neighbor forming the triplet
 """
-function add_outer_neighbor(other_cell::GPUCACell, t::Integer, cell_neighbors::CellNeighborsVector)
-    outer_neighbor = outer_neighbors(other_cell)
-    if isempty(outer_neighbor)
+function add_outer_neighbor(cells::Vector{GPUCACell},cell_index::Integer, t::Integer, cell_neighbors::CellNeighborsVector)
+    neighbors_index = cells[cell_index].the_outer_neighbors
+    if neighbors_index == 1
         i = extend!(cell_neighbors)
-        if i >= 1
-            reset!(cell_neighbors[i])
-            other_cell.the_outer_neighbors = cell_neighbors[i]
+        if i > 1
+            # reset!(cell_neighbors[i])
+            temp_cell = cells[cell_index]
+            cells[cell_index] = @set temp_cell.the_outer_neighbors = i
         else
             return -1
         end
     end
-    return push!(other_cell.the_outer_neighbors, UInt32(t))
+    return push!(cell_neighbors,cells[cell_index].the_outer_neighbors,UInt32(t))
 end
 
-function add_track(other_cell::GPUCACell, t::Integer, cell_tracks::CellTracksVector)
-    tracks = other_cell.the_tracks
-    if isempty(tracks)
+function add_track(cells::Vector{GPUCACell},cell_index::Integer, t::Integer, cell_tracks::CellTracksVector)
+    if cells[cell_index].the_tracks == 1
         i = extend!(cell_tracks)
         if i > 1 
-            reset!(cell_tracks[i])
-            other_cell.the_tracks = cell_tracks[i]
+            # reset!(cell_tracks[i])
+            temp_cell = cells[cell_index]
+            cells[cell_index] = @set temp_cell.the_tracks = i 
         else
             return -1
         end
     end
-    return push!(other_cell.the_tracks,t)
+    return push!(cell_tracks,cells[cell_index].the_tracks,UInt16(t))
 end
 """
 Recursively identifies ntuplets (sequences of hits) in a set of cells. This function traverses through neighboring cells to construct valid ntuplets, ensuring constraints on depth, minimum hits, and memory management.
@@ -227,12 +229,13 @@ Recursively identifies ntuplets (sequences of hits) in a set of cells. This func
 The function does not explicitly return a value but updates `found_ntuplets`, `cell_tracks`, and `quality` as a side effect of processing.
 cells is a vector of GPUCACell, cell_tracks is device_the_cell_tracks, 
 """ 
-function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0) where DEPTH
+function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0,cell_neighbors) where DEPTH
     push!(temp_ntuplet,self.the_doublet_id)
     @assert length(temp_ntuplet) <= 4
     last = true 
-    for i ∈ 1:length(self.the_outer_neighbors)  
-        other_cell = self.the_outer_neighbors[i]
+    neighbors = cell_neighbors[:,self.the_outer_neighbors]
+    for i ∈ 1:length(neighbors)
+        other_cell = neighbors[i]
         if cells[other_cell].the_doublet_id < 0 
             # if other_cell== 65098
             #     print("YES")
@@ -242,7 +245,7 @@ function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,qu
         last = false
         # print(cells[other_cell].the_inner_hit_id)
         @assert(cells[other_cell].the_inner_hit_id != self.the_inner_hit_id)
-        find_ntuplets(cells[other_cell],Val{DEPTH-1}(),cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0)
+        find_ntuplets(cells[other_cell],Val{DEPTH-1}(),cells,cell_tracks,found_ntuplets,apc,quality,temp_ntuplet,min_hits_per_ntuplet,start_at_0,cell_neighbors)
     end
     if last
         if length(temp_ntuplet) >= min_hits_per_ntuplet - 1 # number of min doublets is min_hits - 1 
@@ -256,7 +259,7 @@ function find_ntuplets(self,::Val{DEPTH},cells,cell_tracks,found_ntuplets,apc,qu
             it = bulk_fill(found_ntuplets,apc,hits,length(temp_ntuplet)+1)
             if it > 0 # no overflow of histogram
                 for c ∈ temp_ntuplet
-                    add_track(cells[c],it,cell_tracks)
+                    add_track(cells,c,it,cell_tracks)
                 end
             quality[it] = bad
             end
