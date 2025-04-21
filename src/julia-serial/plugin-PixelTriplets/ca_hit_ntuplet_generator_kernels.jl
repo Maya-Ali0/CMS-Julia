@@ -103,7 +103,7 @@ mutable struct CAHitNTupletGeneratorKernels
     counters::Counters
     function CAHitNTupletGeneratorKernels(params::Params)
         # is_outer_hit_of_cell = [OuterHitOfCell() for _ ∈ 1:15e4]
-        is_outer_hit_of_cell = OuterHitOfCellVector(0,0)
+        is_outer_hit_of_cell = OuterHitOfCellVector(MAX_CELLS_PER_HIT,24000)
         # the_cell_neighbors_container = [CellNeighbors() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellNeighbors
         the_cell_neighbors_container = CellNeighborsVector(64,MAX_NUM_OF_ACTIVE_DOUBLETS)
         # the_cell_tracks_container = [CellTracks() for _ ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS]# Vector of CellTracks
@@ -119,13 +119,13 @@ mutable struct CAHitNTupletGeneratorKernels
     end
 end
 function resetCAHitNTupletGeneratorKernels(self)
-    for idx ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS
-        reset!(self.device_the_cell_neighbors[idx])
-        reset!(self.device_the_cell_tracks[idx])
-        if idx <= 15e4
-            reset!(self.device_is_outer_hit_of_cell[idx])
-        end
-    end
+    # for idx ∈ 1:MAX_NUM_OF_ACTIVE_DOUBLETS
+    #     reset!(self.device_the_cell_neighbors[idx])
+    #     reset!(self.device_the_cell_tracks[idx])
+    #     if idx <= 15e4
+    #         reset!(self.device_is_outer_hit_of_cell[idx])
+    #     end
+    # end
     reset!(self.device_the_cell_neighbors)
     reset!(self.device_the_cell_tracks)
     self.device_n_cells[1] = 0

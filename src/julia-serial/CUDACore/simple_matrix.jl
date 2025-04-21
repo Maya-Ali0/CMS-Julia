@@ -52,6 +52,11 @@ function length(m::PreAllocMatrix{T},col::Integer) where T
     m.col_lengths[col]
 end
 
+function reset!(m::PreAllocMatrix{T}) where T
+    m.ncol = 0 
+    m.col_lengths .= 0 
+end
+
 nrows(m::PreAllocMatrix) = m.nrows
 rowlength(m::PreAllocMatrix, irow) = m.rowlengths[irow]
 # CAHitNTupletGeneratorKernels()

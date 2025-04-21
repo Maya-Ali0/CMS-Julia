@@ -2,12 +2,12 @@ using ..caConstants:MAX_CELLS_PER_HIT,OuterHitOfCellVector
 using ..gpuCACELL
 using Setfield:@set
 function fish_bone(hits,cells::Vector{GPUCACell},n_cells,is_outer_hit_of_cell::OuterHitOfCellVector,n_hits,check_track)
-    δx =  Vector{Float32}(undef,MAX_CELLS_PER_HIT)
-    δy =  Vector{Float32}(undef,MAX_CELLS_PER_HIT)
-    δz =  Vector{Float32}(undef,MAX_CELLS_PER_HIT)
-    norms =  Vector{Float32}(undef,MAX_CELLS_PER_HIT)
-    inner_detector_index =  Vector{UInt16}(undef,MAX_CELLS_PER_HIT)
-    cell_indices_vector =  Vector{UInt32}(undef,MAX_CELLS_PER_HIT)
+    δx =  MVector{MAX_CELLS_PER_HIT, Float32}(undef)
+    δy =  MVector{MAX_CELLS_PER_HIT, Float32}(undef)
+    δz =  MVector{MAX_CELLS_PER_HIT, Float32}(undef)
+    norms =  MVector{MAX_CELLS_PER_HIT, Float32}(undef)
+    inner_detector_index =  MVector{MAX_CELLS_PER_HIT, UInt16}(undef)
+    cell_indices_vector =  MVector{MAX_CELLS_PER_HIT, UInt32}(undef)
 
     for idy ∈ 1:n_hits
         cells_vector = is_outer_hit_of_cell[:,idy]
