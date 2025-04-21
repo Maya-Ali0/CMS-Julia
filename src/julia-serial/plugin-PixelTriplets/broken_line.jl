@@ -141,7 +141,7 @@ end
 #     \param B magnetic field in Gev/cm/c.
 #     \param results PreparedBrokenLineData to be filled (see description of PreparedBrokenLineData).
 #   */
-@inline function prepare_broken_line_data(hits::Matrix{Float64}, fast_fit::Vector{Float64}, B::Float64, results::PreparedBrokenLineData)
+@inline function prepare_broken_line_data(hits, fast_fit, B::Float64, results::PreparedBrokenLineData)
     n = size(hits, 2)
     d = zeros(2)
     e = zeros(2)
@@ -248,28 +248,44 @@ end
 #     \param hits the measured hits.
 #     \return (X0,Y0,R,tan(theta)).
 #     \warning sign of theta is (intentionally, for now) mistaken for negative charges.
-@inline function BL_Fast_fit(hits::Matrix{Float64}, results::Vector{Float64})
+@inline function BL_Fast_fit(hits, results)
     n = size(hits, 2)
-    a = hits[1:2, Int(n ÷ 2)+1] - hits[1:2, 1]
-    b = hits[1:2, n] - hits[1:2, Int(n ÷ 2)+1]
-    c = hits[1:2, 1] - hits[1:2, n]
 
-    tmp = 0.5 / cross2D(c, a)
-    results[1] = hits[1, 1] - (a[2] * squaredNorm(c) + c[2] * squaredNorm(a)) * tmp
-    results[2] = hits[2, 1] + (a[1] * squaredNorm(c) + c[1] * squaredNorm(a)) * tmp
+    mid = (n >> 1) + 1
 
-    results[3] = sqrt(squaredNorm(a) * squaredNorm(b) * squaredNorm(c)) / (2.0 * abs(cross2D(b, a)))
+    h11 = hits[1, 1];  h21 = hits[2, 1]
+    h1m = hits[1, mid]; h2m = hits[2, mid]
+    h1n = hits[1, n];  h2n = hits[2, n]
+   
 
-    d = hits[1:2, 1] - results[1:2]
-    e = hits[1:2, n] - results[1:2]
+    a1 = h1m - h11;  a2 = h2m - h21
+    b1 = h1n - h1m;  b2 = h2n - h2m
+    c1 = h11 - h1n;  c2 = h21 - h2n
 
-    # println("cross2D(d,e):", cross2D(d, e))
-    # println(" dot(d,e):", dot(d, e))
-    # println("atan2(cross2D(d,e), dot(d,e)): ", atan2(cross2D(d, e), dot(d, e)))
-    # println("hits[3, n-1]: ", hits[3, n])
-    # println(" hits[3, 1]: ", hits[3, 1])
-    # println("(hits[3, n-1] - hits[3, 1]): ", (hits[3, n] - hits[3, 1]))
-    results[4] = results[3] * atan2(cross2D(d, e), dot(d, e)) / (hits[3, n] - hits[3, 1])
+    ca =   c1*a2 - c2*a1           # cross2D(c, a)
+    ba =   b1*a2 - b2*a1           # cross2D(b, a)
+    nc =   c1*c1 + c2*c2           # squaredNorm(c)
+    na =   a1*a1 + a2*a2           # squaredNorm(a)
+    nb =   b1*b1 + b2*b2           # squaredNorm(b)
+
+    tmp = 0.5 / ca
+    results[1] = h11 - (a2*nc + c2*na) * tmp
+    results[2] = h21 + (a1*nc + c1*na) * tmp
+
+    results[3] = sqrt(na * nb * nc) / (2.0 * abs(ba))
+
+    cx = results[1];  cy = results[2]
+    d1 = h11 - cx;  d2 = h21 - cy
+    e1 = h1n - cx;  e2 = h2n - cy
+
+    de    = d1*e2 - d2*e1          # cross2D(d, e)
+    dotde = d1*e1 + d2*e2          # dot(d, e)
+    dz    = hits[3, n] - hits[3, 1]
+
+    results[4] = results[3] * atan2(de, dotde) / dz
+
+    return nothing
+
 end
 
 # \brief Performs the Broken Line fit in the curved track case (that is, the fit parameters are the interceptions u and the curvature correction \Delta\kappa).
@@ -287,7 +303,7 @@ end
 #     \details The function implements the steps 2 and 3 of the Broken Line fit with the curvature correction.\n
 #     The step 2 is the least square fit, done by imposing the minimum constraint on the cost function and solving the consequent linear system. It determines the fitted parameters u and \Delta\kappa and their covariance matrix.
 #     The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
-@inline function BL_Circle_fit(hits::Matrix{Float64}, hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, circle_results::circle_fit)
+@inline function BL_Circle_fit(hits, hits_ge, fast_fit, B::Float64, data::PreparedBrokenLineData, circle_results::circle_fit)
     # open("debug_output.txt", "a") do f
         n = size(hits, 2)
         circle_results.q = data.q
@@ -485,7 +501,7 @@ end
 # The step 2 is the least square fit, done by imposing the minimum constraint on the cost function and solving the consequent linear system. It determines the fitted parameters u and their covariance matrix.
 # The step 3 is the correction of the fast pre-fitted parameters for the innermost part of the track. It is first done in a comfortable coordinate system (the one in which the first hit is the origin) and then the parameters and their covariance matrix are transformed to the original coordinate system.
 # */
-@inline function BL_Line_fit(hits_ge::Matrix{Float32}, fast_fit::Vector{Float64}, B::Float64, data::PreparedBrokenLineData, line_results::line_fit)
+@inline function BL_Line_fit(hits_ge, fast_fit, B::Float64, data::PreparedBrokenLineData, line_results::line_fit)
     # open("debug_output.txt", "a") do f
         n = size(hits_ge, 2)
         radii = data.radii

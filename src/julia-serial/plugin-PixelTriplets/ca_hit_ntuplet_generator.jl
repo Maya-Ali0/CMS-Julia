@@ -92,6 +92,6 @@ function make_tuples(self::CAHitNtupletGeneratorOnGPU, hits_d::TrackingRecHit2DH
 
     launchBrokenLineKernelsOnCPU(fitter, hist_view(hits_d), n_hits(hits_d), UInt32(24 * 1024))
     
-    # classify_tuples(kernels,hits_d,tracks,kernels.device_the_cell_tracks)
+    classify_tuples(kernels,hits_d,tracks,kernels.device_the_cell_tracks)
     return tracks
 end
