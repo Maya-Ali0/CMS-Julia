@@ -1,7 +1,7 @@
 module caConstants
 export MAX_CELLS_PER_HIT, OuterHitOfCell, CellNeighbors, CellTracks, CellNeighborsVector, CellTracksVector, HitToTuple, TupleMultiplicity, OuterHitOfCellVector
 export hindex_type
-export MAX_NUM_OF_ACTIVE_DOUBLETS, MAX_NUM_OF_LAYER_PAIRS
+export MAX_NUM_OF_ACTIVE_DOUBLETS, MAX_NUM_OF_LAYER_PAIRS, MAX_NUM_OF_CONCURRENT_FITS
 using ..histogram: OneToManyAssoc
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants: MAX_NUMBER_OF_HITS
 using ..Patatrack: VecArray
@@ -15,6 +15,7 @@ const MAX_NUM_OF_ACTIVE_DOUBLETS = MAX_NUM_OF_DOUBLETS ÷ 8
 const MAX_NUM_OF_LAYER_PAIRS = 20
 const MAX_NUM_OF_LAYERS = 10
 const MAX_TUPLES = MAX_NUM_TUPLES
+const MAX_NUM_OF_CONCURRENT_FITS = 24 * 1024
 const hindex_type = UInt16
 const tindex_type = UInt16
 const CellNeighbors = VecArray{UInt32,64}

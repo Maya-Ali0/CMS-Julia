@@ -16,7 +16,7 @@ function sqr(a::T) where {T}
 end
 
 
-function cross2D(a::Vector{Float64}, b::Vector{Float64})
+function cross2D(a::AbstractVector{Float64}, b::AbstractVector{Float64})
     return a[1] * b[2] - a[2] * b[1]
 end
 

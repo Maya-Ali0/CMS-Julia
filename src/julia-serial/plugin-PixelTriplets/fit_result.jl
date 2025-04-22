@@ -2,36 +2,49 @@ module RecoPixelVertexing_PixelTrackFitting_interface_FitResult_h
 
 using StaticArrays
 export circle_fit, line_fit, helix_fit
+"""
+A fixed-size, stack-allocated circle_fit using StaticArrays
+Fields:
+  - par: 3-element parameter vector (X0, Y0, R)
+  - cov: 3×3 covariance matrix
+  - q:   particle charge (Int32)
+  - chi2: χ² value (Float64)
+"""
 mutable struct circle_fit
-    par::Vector{Float64}# parameter: (X0,Y0,R)
-    cov::Matrix{Float64}
-    # < covariance matrix: \n
-    #   |cov(X0,X0)|cov(Y0,X0)|cov( R,X0)| \n
-    #   |cov(X0,Y0)|cov(Y0,Y0)|cov( R,Y0)| \n
-    #   |cov(X0, R)|cov(Y0, R)|cov( R, R)|
-    q::Int32 #particle charge
-    chi2::Float64
+    par  :: MVector{3,Float64}
+    cov  :: MMatrix{3,3,Float64}
+    q    :: Int32
+    chi2 :: Float64
+
+    # Default constructor
     function circle_fit()
-        new(zeros(Float64, 3), zeros(Float64, 3, 3),
-            0,  # Default charge
-            0.0)  # Default chi-squared
+        new(
+            MVector{3,Float64}(0.0, 0.0, 0.0),
+            MMatrix{3,3,Float64}(
+                0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0,
+                0.0, 0.0, 0.0
+            ),
+            0,
+            0.0
+        )
     end
 end
 # Struct for line_fit with a default constructor
 mutable struct line_fit
-    par::Vector{Float64} # cotan(theta), Zip
-    cov::Matrix{Float64} # covariance matrix
-    # |cov(c_t,c_t)|cov(Zip,c_t)| 
-    # |cov(c_t,Zip)|cov(Zip,Zip)|
-    chi2::Float64         # chi-squared value
+    par  :: MVector{2,Float64}
+    cov  :: MMatrix{2,2,Float64}
+    chi2 :: Float64
 
     # Default constructor
     line_fit() = new(
-        [0.0, 0.0],                  # Default parameter vector
-        zeros(2, 2),                 # Default 2x2 covariance matrix
-        0.0                          # Default chi-squared value
+        MVector{2,Float64}(0.0, 0.0),               # Default parameter vector
+        MMatrix{2,2,Float64}(0.0, 0.0,
+                             0.0, 0.0),            # Default 2×2 covariance
+        0.0                                         # Default chi-squared
     )
 end
+
 
 # Struct for helix_fit with a default constructor
 mutable struct helix_fit

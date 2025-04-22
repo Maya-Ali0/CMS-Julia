@@ -190,27 +190,27 @@ end
     dst[6, 6] = luc20
 end
 
-function symmetrize11!(dst::Matrix{T}) where {T}
+function symmetrize11!(dst::AbstractArray{T}) where {T}
 end
 
-function symmetrize22!(dst::Matrix{T}) where {T}
+function symmetrize22!(dst::AbstractArray{T}) where {T}
     dst[1, 2] = dst[2, 1]
 end
 
-function symmetrize33!(dst::Matrix{T}) where {T}
+function symmetrize33!(dst::AbstractArray{T}) where {T}
     symmetrize22!(dst)
     dst[1, 3] = dst[3, 1]
     dst[2, 3] = dst[3, 2]
 end
 
-function symmetrize44!(dst::Matrix{T}) where {T}
+function symmetrize44!(dst::AbstractArray{T}) where {T}
     symmetrize33!(dst)
     dst[1, 4] = dst[4, 1]
     dst[2, 4] = dst[4, 2]
     dst[3, 4] = dst[4, 3]
 end
 
-function symmetrize55!(dst::Matrix{T}) where {T}
+function symmetrize55!(dst::AbstractArray{T}) where {T}
     symmetrize44!(dst)
     dst[1, 5] = dst[5, 1]
     dst[2, 5] = dst[5, 2]
@@ -218,7 +218,7 @@ function symmetrize55!(dst::Matrix{T}) where {T}
     dst[4, 5] = dst[5, 4]
 end
 
-function symmetrize66!(dst::Matrix{T}) where {T}
+function symmetrize66!(dst::AbstractArray{T}) where {T}
     symmetrize55!(dst)
     dst[1, 6] = dst[6, 1]
     dst[2, 6] = dst[6, 2]

@@ -18,8 +18,8 @@ struct TrajectoryStateSoA
    end
 end
 function copyFromCircle!(trajectory::TrajectoryStateSoA,
-   cp::Vector{Float64}, ccov::Matrix{Float64},
-   lp::Vector{Float64}, lcov::Matrix{Float64},
+   cp::AbstractVector{Float64}, ccov::AbstractArray{Float64},
+   lp::AbstractVector{Float64}, lcov::AbstractArray{Float64},
    b::Float64, i::UInt16)
 
    trajectory.state[i, :] .= Float32.([cp[1], cp[2], cp[3] * b, lp[1], lp[2]])
