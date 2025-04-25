@@ -66,7 +66,7 @@ function parse_commandline()
 end
 
 function julia_main()::Cint
-    println("Hello from julia_main()!")
+    # println("Hello from julia_main()!")
     args = parse_commandline()
 
     if args["help"]
@@ -145,32 +145,32 @@ function julia_main()::Cint
     )
     # Warm up
     # try
-        if args["warmupEvents"] > 0
-            println("Warming up...")
-            @time warm_up(ev, args["maxEvents"])
-        end
+    if args["warmupEvents"] > 0
+        println("Warming up...")
+        @time warm_up(ev, args["maxEvents"])
+    end
 
-        # Main processing
-        println("Processing...")
-        start_time = now()
-        cpu_start = time_ns()
+    # Main processing
+    println("Processing...")
+    start_time = now()
+    cpu_start = time_ns()
 
-        @time run_processor(ev)
+    @time run_processor(ev)
 
-        cpu_end = time_ns()
-        end_time = now()
+    cpu_end = time_ns()
+    end_time = now()
 
-        # Calculate timing
-        elapsed_seconds = Dates.value(end_time - start_time) / 1000
-        cpu_time = (cpu_end - cpu_start) / 1e9
+    # Calculate timing
+    elapsed_seconds = Dates.value(end_time - start_time) / 1000
+    cpu_time = (cpu_end - cpu_start) / 1e9
 
-        # Report results
-        processed_events = ev.source.numEvents[] - 1  # Adjust this based on your actual event counter
-        throughput = processed_events / elapsed_seconds
-        cpu_usage = (cpu_time / elapsed_seconds / Threads.nthreads()) * 100
+    # Report results
+    processed_events = ev.source.numEvents[] - 1  # Adjust this based on your actual event counter
+    throughput = processed_events / elapsed_seconds
+    cpu_usage = (cpu_time / elapsed_seconds / Threads.nthreads()) * 100
 
-        @printf("Processed %d events in %.6e seconds, throughput %.2f events/s, CPU usage per thread: %.1f%%\n",
-            processed_events, elapsed_seconds, throughput, cpu_usage)
+    @printf("Processed %d events in %.6e seconds, throughput %.2f events/s, CPU usage per thread: %.1f%%\n",
+        processed_events, elapsed_seconds, throughput, cpu_usage)
 
     # catch e
     #     println("\n----------\nCaught exception:")
