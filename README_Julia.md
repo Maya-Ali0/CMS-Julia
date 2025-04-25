@@ -71,20 +71,27 @@ Run for 5 minutes with 8 streams:
 
 ### Common Issues
 
-1. **Package installation fails**:
+1. **Permission denied when running ./julia-serial**:
+   ```bash
+   cd src/julia-serial
+   chmod +x julia-serial
+   ./julia-serial
+   ```
+
+2. **Package installation fails**:
    ```bash
    cd src/julia-serial
    julia --project=. -e 'using Pkg; Pkg.instantiate()'
    ```
 
-2. **Precompilation gets stuck**:
+3. **Precompilation gets stuck**:
    ```bash
    rm -rf ~/.julia/compiled/
    cd src/julia-serial
    julia --project=. -e 'using Pkg; Pkg.precompile()'
    ```
 
-3. **Data download fails**:
+4. **Data download fails**:
    ```bash
    cd src/julia-serial
    make clean
