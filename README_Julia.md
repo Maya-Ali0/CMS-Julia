@@ -23,7 +23,6 @@ This is a Julia implementation of the Patatrack benchmark for CMS pixel reconstr
 
 3. **Setup the environment**:
    ```bash
-   cd src/julia-serial
    make julia-serial
    ```
    This will:
@@ -32,7 +31,7 @@ This is a Julia implementation of the Patatrack benchmark for CMS pixel reconstr
 
 ## Running the code
 
-Run the code from the `CMS-Julia/src/julia-serial` directory:
+Run the code from the `CMS-Julia` directory:
 ```bash
 ./julia-serial.sh
 ```
@@ -40,60 +39,45 @@ Run the code from the `CMS-Julia/src/julia-serial` directory:
 ### Command Line Options
 
 ```
-Usage: ./julia-serial [--numberOfStreams NS] [--warmupEvents WE] [--maxEvents ME] [--runForMinutes RM]
+Usage: ./julia-serial.sh [--numberOfStreams NS] [--warmupEvents WE] [--maxEvents ME] [--runForMinutes RM]
        [--data PATH] [--validation] [--histogram] [--empty]
-
-Options:
-  --numberOfStreams    Number of concurrent events (default 0 = numberOfThreads)
-  --warmupEvents       Number of events to process before starting the benchmark (default 0)
-  --maxEvents          Number of events to process (default -1 for all events in the input file)
-  --runForMinutes      Continue processing the set of 1000 events until this many minutes have passed
-                       (default -1 for disabled; conflicts with --maxEvents)
-  --data               Path to the 'data' directory (default 'data' in the directory of the executable)
-  --validation         Run (rudimentary) validation at the end
-  --histogram          Produce histograms at the end
-  --empty              Ignore all producers (for testing only)
 ```
 
 ## Examples
 
 Process 100 events with validation:
 ```bash
-./julia-serial --maxEvents 100 --validation
+./julia-serial.sh --maxEvents 100 --validation
 ```
 
 Run for 5 minutes with 8 streams:
 ```bash
-./julia-serial --runForMinutes 5 --numberOfStreams 8
+./julia-serial.sh --runForMinutes 5 --numberOfStreams 8
 ```
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Permission denied when running ./julia-serial**:
+1. **Permission denied when running ./julia-serial.sh**:
    ```bash
-   cd src/julia-serial
-   chmod +x julia-serial
-   ./julia-serial
+   chmod +x julia-serial.sh
+   ./julia-serial.sh
    ```
 
 2. **Package installation fails**:
    ```bash
-   cd src/julia-serial
-   julia --project=. -e 'using Pkg; Pkg.instantiate()'
+   julia --project=src/julia-serial -e 'using Pkg; Pkg.instantiate()'
    ```
 
 3. **Precompilation gets stuck**:
    ```bash
    rm -rf ~/.julia/compiled/
-   cd src/julia-serial
-   julia --project=. -e 'using Pkg; Pkg.precompile()'
+   julia --project=src/julia-serial -e 'using Pkg; Pkg.precompile()'
    ```
 
 4. **Data download fails**:
    ```bash
-   cd src/julia-serial
    make clean
    make download_raw
    ```
@@ -106,3 +90,4 @@ cd src/julia-serial
 julia --project=. compile_app.jl
 ```
 The executable will be created in `src/julia-serial/compile/bin/julia_main.exe`.
+
