@@ -1,7 +1,7 @@
 JULIA := $(shell which julia)
 
-DATA_DIR := ../../data
-TARGET_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
+DATA_DIR := data
+TARGET_DIR := src/julia-serial
 DATA_TAR_GZ := $(DATA_DIR)/data_v2.tar.gz
 RAW_FILE := $(DATA_DIR)/raw.bin
 URL_FILE := $(DATA_DIR)/url.txt
@@ -9,7 +9,8 @@ MD5_FILE := $(DATA_DIR)/md5.txt
 
 # Main target
 julia-serial: prepare_deps download_raw
-	@echo "Setup complete. Run with ./julia-serial"
+	@echo "Setup complete. Run with ./julia-serial.sh"
+	@chmod +x julia-serial.sh
 
 # Prepare dependencies
 prepare_deps:

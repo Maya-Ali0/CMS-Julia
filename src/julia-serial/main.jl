@@ -47,7 +47,7 @@ function parse_commandline()
         "--data"
         help = "Path to data directory"
         arg_type = String
-        default = "../../data"
+        default = "data"
         "--validation"
         help = "Enable validation"
         action = :store_true
