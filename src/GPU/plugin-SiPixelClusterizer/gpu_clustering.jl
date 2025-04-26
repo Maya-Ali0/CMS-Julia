@@ -160,8 +160,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     sync_threads()
     finalize!(hist,ws)
     sync_threads()
-    return
-    #=
+    
     for i in first:blockDim().x:msize[1]-1
         if id[i] == INV_ID
             continue 
@@ -278,11 +277,11 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         cluster_id[i] = -cluster_id[i] 
     end
     sync_threads()
-    if threadIdx().x == 0
-        n_clusters_in_module[this_module_id+1] = found_clusters
+    if threadIdx().x == 1
+        n_clusters_in_module[this_module_id+1] = found_clusters[1]
         moduleId[blockIdx().x] = this_module_id
     end
-    =#
+    return
 end
 
 

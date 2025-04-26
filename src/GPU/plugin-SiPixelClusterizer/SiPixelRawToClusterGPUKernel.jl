@@ -703,9 +703,9 @@ module pixelGPUDetails
         @cuda blocks = blocks threads = threads_per_block find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         
         
-        # @cuda cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
+        @cuda blocks = blocks threads = threads_per_block cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         
-        # @cuda fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
+        @cuda fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
 
         # setNClusters!(clusters_d,clusters_d.clus_module_start_d[gpuClustering.MAX_NUM_MODULES])
         # open("fill_hits_module.txt","w") do file
@@ -725,7 +725,7 @@ module pixelGPUDetails
     clus_start: Number of clusters within each module
     
     """
-    function fill_hits_module_start(clus_start::Vector{UInt32}, module_start::Vector{UInt32})
+    function fill_hits_module_start(clus_start::U, module_start::V) where {U <: AbstractArray{UInt32}, V <: AbstractArray{UInt32}}
         @cuassert (gpuClustering.MAX_NUM_MODULES < 2048)
         @cuassert gridDim().x == 1
         @cuassert blockIdx().x == 0
