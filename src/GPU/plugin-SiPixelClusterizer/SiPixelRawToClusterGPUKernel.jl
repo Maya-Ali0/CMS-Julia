@@ -665,34 +665,49 @@ module pixelGPUDetails
                   word_fed::WordFedAppender , errors::PixelFormatterErrors , word_counter::Integer , fed_counter::Integer , use_quality_info::Bool,
                   include_errors::Bool , debug::Bool ) where {V <: AbstractVector{UInt8}}
         # @printf("decoding %s digis. Max is %i '\n'",word_counter,MAX_FED_WORDS)
+        
         digis_d = gpu_algo.digis_d
+        # put digis on GPU
         digis_d = cu(digis_d)
         if include_errors
             digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors) 
         end
         
         clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES)
+        # put clusters on GPU
         clusters_d = cu(clusters_d)
+        # put WordFedAppender struct on gpu
+
         word_fed = cu(word_fed)
+
         @assert(0 == word_counter % 2)
-        @cuda threads = 256 raw_to_digi_kernel(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
+
+        threads_per_block = 512
+        blocks = cld(word_counter, threads_per_block)
+
+        @cuda blocks = blocks threads = threads_per_block raw_to_digi_kernel(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
             digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, cu(digi_errors_d.error_d),use_quality_info,include_errors,debug)
+
         #end # end for raw to digi
         gains = cu(gains)
-        @cuda calib_digis(is_run_2,digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,gains,word_counter,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
-        @cuda count_modules(digis_d.module_ind_d,clusters_d.module_start_d,digis_d.clus_d,word_counter)
+
+        threads_per_block = 256
+        blocks = cld(max(word_counter,gpuClustering.MAX_NUM_MODULES),threads_per_block)
+        @cuda blocks = blocks threads = threads_per_block calib_digis(is_run_2,digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,gains,word_counter,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
+        @cuda blocks = blocks threads = threads_per_block count_modules(digis_d.module_ind_d,clusters_d.module_start_d,digis_d.clus_d,word_counter)
         n_modules = CUDA.@allowscalar clusters_d.module_start_d[1]
         set_n_modules_digis(digis_d,n_modules,word_counter)
+        
         threads_per_block = 256
         blocks = gpuClustering.MAX_NUM_MODULES
-        @cuda threads = 32 find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
+        @cuda blocks = blocks threads = threads_per_block find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         
         
-        @cuda cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
+        # @cuda cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         
-        @cuda fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
+        # @cuda fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
 
-        setNClusters!(clusters_d,clusters_d.clus_module_start_d[gpuClustering.MAX_NUM_MODULES])
+        # setNClusters!(clusters_d,clusters_d.clus_module_start_d[gpuClustering.MAX_NUM_MODULES])
         # open("fill_hits_module.txt","w") do file
         #     for i ∈ 1:MAX_NUM_MODULES+1
         #         write(file,string(clusters_d.clus_module_star_d[i]),'\n')

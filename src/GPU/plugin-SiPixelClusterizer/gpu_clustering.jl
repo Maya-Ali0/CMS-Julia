@@ -120,6 +120,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     max_pix_in_module = 4000
     nbins = num_cols_in_module + 2
     
+    
     # hist = CACHED_HIST[]
     HistSM = HisToContainer{Int16, 418, 4000, 9, UInt16, 1,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{UInt16,AS.Shared}}
     hist = @cuStaticSharedMem(HistSM,1)
@@ -131,7 +132,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         hist.off[j] = 0 
     end
     sync_threads()
-
+    
     @cuassert msize[1] == num_elements || (msize[1] < num_elements && id[msize[1]] != this_module_id)
     
     if (threadIdx().x == 1) && ((msize[1] - first_pixel) > max_pix_in_module)
@@ -144,6 +145,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         msize[1]+=1
     end
     sync_threads()
+    
     # fill histo
     for i ∈ first:blockDim().x:msize[1]-1
         if id[i] == INV_ID
@@ -158,7 +160,8 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     sync_threads()
     finalize!(hist,ws)
     sync_threads()
-
+    return
+    #=
     for i in first:blockDim().x:msize[1]-1
         if id[i] == INV_ID
             continue 
@@ -279,6 +282,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         n_clusters_in_module[this_module_id+1] = found_clusters
         moduleId[blockIdx().x] = this_module_id
     end
+    =#
 end
 
 

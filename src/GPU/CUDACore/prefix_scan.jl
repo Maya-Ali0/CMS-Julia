@@ -42,7 +42,7 @@ using CUDA
     """
     function block_prefix_scan(c::AbstractVector{T},size::Integer,ws::AbstractVector{U}) where {T,U}
         @assert size <= 1024
-        @assert blockDim().x % 32 == 0
+        @assert blockDim().x % 32 == 0 # Must be satisfied
         first = threadIdx().x
         mask = CUDA.vote_ballot_sync(0xffffffff,first <= size)
         

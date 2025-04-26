@@ -29,7 +29,9 @@ end
 function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}() where {T,N_BINS,SIZE,S,I,N_HISTS}
     return HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}(@cuStaticSharedMem(UInt32,N_HISTS*N_BINS+1),@cuStaticSharedMem(I,SIZE),0)
 end
-
+function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}() where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
+    HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}(Vector{UInt32}(undef, N_BINS * N_HISTS + 1), Vector{I}(undef, SIZE), 0)
+end
 
 HisToContainer{T,N_BINS,SIZE,S,I}() where {T,N_BINS,SIZE,S,I} = HisToContainer{T,N_BINS,SIZE,S,I,1}() # outer constructor with N_HISTS set to 1
 
@@ -58,39 +60,39 @@ function i_log_2(v::UInt32)::UInt32
     return 31 - leading_zeros(v)
 end
 
-size_t(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = S
-n_bins(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = N_BINS
-n_hists(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = N_HISTS
-tot_bins(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
-n_bits(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
-capacity(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = SIZE
-hist_off(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, nh::Integer) where {T,N_BINS,SIZE,S,I,N_HISTS} = N_BINS * nh
-type_I(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = I
-type_T(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = T
+size_t(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = S
+n_bins(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS
+n_hists(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS
+tot_bins(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
+n_bits(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
+capacity(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = SIZE
+hist_off(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, nh::Integer) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS * nh
+type_I(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = I
+type_T(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = T
 """
 functions given only the type but not an instance. Analogous to static members within structs in c++"
 """
-size_t(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = S
-n_bins(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = N_BINS
-n_hists(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = N_HISTS
+size_t(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = S
+n_bins(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS
+n_hists(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS
 tot_bins(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
-n_bits(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
-capacity(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = SIZE
-hist_off(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}, nh::Int) where {T,N_BINS,SIZE,S,I,N_HISTS} = N_BINS * nh
-type_I(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}) where {T,N_BINS,SIZE,S,I,N_HISTS} = I
+n_bits(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
+capacity(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = SIZE
+hist_off(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}, nh::Int) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS * nh
+type_I(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = I
 
 
 """
 Take as many bits needed to represent all bins from the Most Significant Bits of the inserted element to find the bin index
 """
-function bin(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, t::T)::unsigned(T) where {T,N_BINS,SIZE,S,I,N_HISTS}
+function bin(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, t::T)::unsigned(T) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     bits_to_represent_bins = n_bits(hist)
     shift::UInt32 = size_t(hist) - bits_to_represent_bins
     mask::UInt32 = 1 << bits_to_represent_bins - 1
     return ((t >> shift) & mask + T(1))
 end
 
-function bin(hist::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}}, t::T)::unsigned(T) where {T,N_BINS,SIZE,S,I,N_HISTS}
+function bin(hist::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}, t::T)::unsigned(T) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     bits_to_represent_bins = n_bits(hist)
     shift::UInt32 = size_t(hist) - bits_to_represent_bins
     mask::UInt32 = 1 << bits_to_represent_bins - 1
@@ -100,12 +102,12 @@ end
 """
 fills the off array with zeros. Called before counting the elements to be inserted into the histogram
 """
-zero(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = fill!(hist.off, 0)
+zero(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = fill!(hist.off, 0)
 
 """
 adds to the histogram of interest hist1 the off array of another hist
 """
-function add(hist1::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, hist2::CountersOnly) where {T,N_BINS,SIZE,S,I,N_HISTS}
+function add(hist1::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, hist2::CountersOnly) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     for i ∈ 1:tot_bins(hist1)
         hist1.off[i] += hist2.off[i]
     end
@@ -113,7 +115,7 @@ end
 """
 Increments the off array given a direct index b
 """
-function count_direct(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b::T) where {T,N_BINS,SIZE,S,I,N_HISTS}
+function count_direct(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b::T) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     @assert b <= n_bins(hist)
     hist.off[b] += 1
 end
@@ -121,7 +123,7 @@ end
 inserts index j  the value of interest to be inserted to the histogram
 decrements off so that whens all values are filled off becomes an array that determines the number of elements to the left of bin b excluding elements at b
 """
-function fill_direct(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b::T, j::I) where {T,N_BINS,SIZE,S,I,N_HISTS}
+function fill_direct(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b::T, j::I) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     @assert b <= n_bins(hist)
     w::UInt32 = hist.off[b]
     hist.off[b] -= 1
@@ -133,7 +135,7 @@ c[1] is the overall number of tracks
 c[2] is the overall number of hits
 c[1]+1 will be the index of the new track added which will hold the index c[2] + 1 , the starting index within the bins array holding the hits for that track
 """
-@inline function bulk_fill(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, apc::AbstractArray, v::AbstractArray{I}, n::Integer) where {T,N_BINS,SIZE,S,I,N_HISTS}
+@inline function bulk_fill(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, apc::AbstractArray, v::AbstractArray{I}, n::Integer) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     c = @MArray [0, 0]
     c[1] = apc[1]
     c[2] = apc[2]
@@ -150,9 +152,9 @@ c[1]+1 will be the index of the new track added which will hold the index c[2] +
     return apc[1]
 end
 
-@inline bulk_finalize(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, apc::AtomicPairCounter) where {T,N_BINS,SIZE,S,I,N_HISTS} = off[apc.m] = apc.n
+@inline bulk_finalize(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, apc::AtomicPairCounter) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = off[apc.m] = apc.n
 
-@inline function bulk_finalize_fill(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, apc) where {T,N_BINS,SIZE,S,I,N_HISTS}
+@inline function bulk_finalize_fill(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, apc) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     m::UInt32 = apc[1]
     n::UInt32 = apc[2]
     num_bins = n_bins(hist)
@@ -165,13 +167,13 @@ end
     end
 end
 
-@inline function count!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, t::T) where {T,N_BINS,SIZE,S,I,N_HISTS}
+@inline function count!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, t::T) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     b::UInt32 = bin(hist, t)
     @assert(b <= n_bins(hist))
     CUDA.atomic_add!(pointer(hist.off,b),UInt32(1))
 end
 
-@inline function fill!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, t::T, j::I) where {T,N_BINS,SIZE,S,I,N_HISTS}
+@inline function fill!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, t::T, j::I) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     b::UInt32 = bin(hist, t)
     @assert(b <= n_bins(hist))
     # w = hist.off[b]
@@ -181,7 +183,7 @@ end
     hist.bins[w] = j
 end
 
-@inline function count!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, t::T, nh) where {T,N_BINS,SIZE,S,I,N_HISTS}
+@inline function count!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, t::T, nh) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     b::UInt32 = bin(hist, t)
     @assert(b <= n_bins(hist))
     b += hist_off(hist, nh)
@@ -189,7 +191,7 @@ end
     hist.off[b] += 1
 end
 
-@inline function fill!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, t::T, j::I, nh) where {T,N_BINS,SIZE,S,I,N_HISTS}
+@inline function fill!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, t::T, j::I, nh) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     b::UInt32 = bin(hist, t)
     @assert(b <= n_bins(hist))
     b += hist_off(hist, nh)
@@ -204,23 +206,28 @@ end
     hist.bins[w] = j
 end
 
-@inline function finalize!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS},ws::AbstractVector{V}) where {T,N_BINS,SIZE,S,I,N_HISTS,V}
+@inline function finalize!(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,X,Y},ws::AbstractVector{V}) where {T,N_BINS,SIZE,S,I,N_HISTS,V,X,Y}
     @cuassert hist.off[tot_bins(hist)] == 0
     block_prefix_scan(hist.off, tot_bins(hist),ws)
+    sync_threads()
     @cuassert(hist.off[tot_bins(hist)] == hist.off[tot_bins(hist)-1])
+    # if threadIdx().x == 1
+    #     @cuprintln(hist.off[tot_bins(hist)])
+    #     @cuprintln(hist.off[tot_bins(hist)-1])
+    # end
 end
-size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = UInt32(hist.off[tot_bins(hist)])
-size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b) where {T,N_BINS,SIZE,S,I,N_HISTS} = hist.off[b+1] - hist.off[b]
-begin_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = 1
-end_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}) where {T,N_BINS,SIZE,S,I,N_HISTS} = size(hist)
-begin_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b::H) where {T,N_BINS,SIZE,S,I,N_HISTS,H<:Integer} = hist.off[b] + 1 #CHANGE HERE hist.bins[hist.off[b]+1 ]
-end_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b::H) where {T,N_BINS,SIZE,S,I,N_HISTS,H<:Integer} = hist.off[b+1] + 1 # returns first index of next bin
-val(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, b::Integer) where {T,N_BINS,SIZE,S,I,N_HISTS} = hist.bins[b]
+size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = UInt32(hist.off[tot_bins(hist)])
+size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = hist.off[b+1] - hist.off[b]
+begin_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = 1
+end_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = size(hist)
+begin_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b::H) where {T,N_BINS,SIZE,S,I,N_HISTS,H<:Integer,U,V} = hist.off[b] + 1 #CHANGE HERE hist.bins[hist.off[b]+1 ]
+end_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b::H) where {T,N_BINS,SIZE,S,I,N_HISTS,H<:Integer,U,V} = hist.off[b+1] + 1 # returns first index of next bin
+val(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b::Integer) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = hist.bins[b]
 """
 offsets[nh+1] contains the size of the data in vector V
 for nh elements in v, i need nh+1 elements for describing ranges in offsets
 """
-function count_from_vector(h::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, nh::Integer, v::Vector{T}, offsets::Vector{UInt32}) where {T,N_BINS,SIZE,S,I,N_HISTS}
+function count_from_vector(h::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, nh::Integer, v::Vector{T}, offsets::Vector{UInt32}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     for i ∈ 0:offsets[nh+1]-1
         off = searchsortedfirst(offsets, i)
         if offsets[off] == i
@@ -235,7 +242,7 @@ function count_from_vector(h::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, nh::Int
     end
 end
 
-function fill_from_vector(h::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS}, nh::Integer, v::Vector{T}, offsets::Vector{UInt32}) where {T,N_BINS,SIZE,S,I,N_HISTS}
+function fill_from_vector(h::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, nh::Integer, v::Vector{T}, offsets::Vector{UInt32}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     for i::I ∈ 0:offsets[nh+1]-1
         off = searchsortedfirst(offsets, i)
         if offsets[off] == i
