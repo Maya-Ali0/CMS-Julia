@@ -7,7 +7,7 @@ num_of_streams::Int = 0
 warm_up_events::Int = 0 # Number of events to process before starting the benchmark (default 0).
 max_events::Int = -1 # Number of events to process
 run_for_minutes::Int = -1 # Continue processing the set of 1000 events until this many minutes have passed
-validation::Bool = false #  Run (rudimentary) validation at the end.
+validation::Bool = true #  Run (rudimentary) validation at the end.
 histogram::Bool = false # prduce a histogram at the end
 empty::Bool = false # Ignore all producers (used for testing only)
 

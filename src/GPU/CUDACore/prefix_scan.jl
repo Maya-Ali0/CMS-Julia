@@ -17,7 +17,7 @@ using CUDA
         end
     end
 
-    function warp_prefix_scan(ci::AbstractVector{T},co::AbstractVector{T},i::Integer,mask::UInt32) where T
+    @inline function warp_prefix_scan(ci::AbstractVector{T},co::AbstractVector{T},i::Integer,mask::UInt32) where T
         lane_id = mod1(i,32)
         off_set = 1 
         val = ci[i]
@@ -57,10 +57,9 @@ using CUDA
     function block_prefix_scan(c::AbstractVector{T},size::Integer,ws::AbstractVector{U}) where {T,U}
         @assert size <= 1024
         @assert blockDim().x % 32 == 0 # Must be satisfied
-        first = threadIdx().x
-        mask = CUDA.vote_ballot_sync(0xffffffff,first <= size)
+        mask = CUDA.vote_ballot_sync(0xffffffff,threadIdx().x <= size)
         
-        for i ∈ first:blockDim().x:size
+        for i ∈ threadIdx().x:blockDim().x:size
             warp_prefix_scan(c,i,mask)
             lane_id = mod1(i,32)
             warp_id = (i +31) ÷ 32
@@ -78,7 +77,7 @@ using CUDA
         end
         sync_threads()
 
-        for i ∈ first+32:blockDim().x:size
+        for i ∈ threadIdx().x+32:blockDim().x:size
             warp_id = (i +31) ÷ 32
             c[i] += ws[warp_id-1]
         end
@@ -89,13 +88,12 @@ using CUDA
         
     end
 
-    function block_prefix_scan(ci::AbstractVector{T},co::AbstractVector{T},size::Integer,ws::AbstractVector{U}) where {T,U}
+    @inline function block_prefix_scan(ci::AbstractVector{T},co::AbstractVector{T},size::Integer,ws::AbstractVector{U}) where {T,U}
         @assert size <= 1024
         @assert blockDim().x % 32 == 0 # Must be satisfied
-        first = threadIdx().x
-        mask = CUDA.vote_ballot_sync(0xffffffff,first <= size)
+        mask = CUDA.vote_ballot_sync(0xffffffff,threadIdx().x <= size)
         
-        for i ∈ first:blockDim().x:size
+        for i ∈ threadIdx().x:blockDim().x:size
             warp_prefix_scan(ci,co,i,mask)
             lane_id = mod1(i,32)
             warp_id = (i +31) ÷ 32
@@ -113,15 +111,10 @@ using CUDA
         end
         sync_threads()
 
-        for i ∈ first+32:blockDim().x:size
+        for i ∈ (threadIdx().x+32):blockDim().x:size
             warp_id = (i +31) ÷ 32
             co[i] += ws[warp_id-1]
         end
-        
-        # for i in 2:size
-        #     c[i] = c[i] + c[i - 1]
-        # end
-        
     end
 
     """

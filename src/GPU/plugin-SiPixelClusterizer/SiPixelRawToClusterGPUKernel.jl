@@ -667,16 +667,16 @@ module pixelGPUDetails
         # @printf("decoding %s digis. Max is %i '\n'",word_counter,MAX_FED_WORDS)
         
         digis_d = gpu_algo.digis_d
-        # put digis on GPU
+        # # put digis on GPU
         digis_d = cu(digis_d)
         if include_errors
             digi_errors_d = SiPixelDigiErrorsSoA(pixelGPUDetails.MAX_FED_WORDS,errors) 
         end
         
         clusters_d = SiPixelClustersSoA(gpuClustering.MAX_NUM_MODULES)
-        # put clusters on GPU
+        # # put clusters on GPU
         clusters_d = cu(clusters_d)
-        # put WordFedAppender struct on gpu
+        # # put WordFedAppender struct on gpu
 
         word_fed = cu(word_fed)
 
@@ -705,9 +705,9 @@ module pixelGPUDetails
         
         @cuda blocks = blocks threads = threads_per_block cluster_charge_cut(digis_d.module_ind_d,digis_d.adc_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         
-        @cuda fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
-
-        # setNClusters!(clusters_d,clusters_d.clus_module_start_d[gpuClustering.MAX_NUM_MODULES])
+        @cuda blocks = 1 threads = 1024 fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
+        n_clusters = CUDA.@allowscalar clusters_d.clus_module_start_d[gpuClustering.MAX_NUM_MODULES]
+        setNClusters!(clusters_d,n_clusters)
         # open("fill_hits_module.txt","w") do file
         #     for i ∈ 1:MAX_NUM_MODULES+1
         #         write(file,string(clusters_d.clus_module_star_d[i]),'\n')
@@ -728,7 +728,7 @@ module pixelGPUDetails
     function fill_hits_module_start(clus_start::U, module_start::V) where {U <: AbstractArray{UInt32}, V <: AbstractArray{UInt32}}
         @cuassert (gpuClustering.MAX_NUM_MODULES < 2048)
         @cuassert gridDim().x == 1
-        @cuassert blockIdx().x == 0
+        @cuassert blockIdx().x == 1
         first = threadIdx().x
 
         @assert module_start[1] == 0
@@ -736,11 +736,11 @@ module pixelGPUDetails
             module_start[i + 1] = min(MAX_HITS_IN_MODULE, clus_start[i])
         end
         ws = @cuStaticSharedMem(UInt32,32)
-        block_prefix_scan(view(module_start,2:length(module_start)), view(module_start,2:length(module_start)),length(module_start)-1,ws)
-        block_prefix_scan(view(module_start,2:length(module_start)), view(module_start,2:length(module_start)),length(module_start)-1,ws)
+        block_prefix_scan(view(module_start,2:1025), view(module_start,2:1025),1024,ws)
+        block_prefix_scan(view(module_start,1026:length(module_start)), view(module_start,1026:length(module_start)),gpuClustering.MAX_NUM_MODULES - 1024,ws)
 
         for i ∈ first+1025:blockDim().x:(gpuClustering.MAX_NUM_MODULES + 1)
-            module_start[i] += module_start[1024]
+            module_start[i] += module_start[1025]
         end
         sync_threads()
         MAX_HITS = gpuClustering.MAX_NUM_CLUSTERS
