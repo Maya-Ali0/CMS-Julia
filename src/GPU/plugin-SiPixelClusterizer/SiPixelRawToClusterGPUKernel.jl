@@ -186,7 +186,7 @@ module pixelGPUDetails
     """
     pixel packing without adc
     """
-    function pixelToChannel(row::UInt32,col::UInt32)::UInt32
+    @inline function pixelToChannel(row::UInt32,col::UInt32)::UInt32
         the_packing::Packing = Packing()
         return (row << the_packing.column_width) | col
     end
@@ -207,9 +207,9 @@ module pixelGPUDetails
     """
     WordFedAppender() = WordFedAppender(Vector{UInt32}(undef,MAX_FED_WORDS),Vector{UInt8}(undef,MAX_FED_WORDS))
 
-    get_word(self::WordFedAppender) = return self.words
+    @inline get_word(self::WordFedAppender) = return self.words
 
-    get_fed_id(self::WordFedAppender) = return self.fed_ids
+    @inline get_fed_id(self::WordFedAppender) = return self.fed_ids
     
     """
         counter takes the values from 1 to length
@@ -249,28 +249,28 @@ module pixelGPUDetails
     """
     getters of the 32 bit word in payload
     """
-    get_link(ww::UInt32)::UInt32 = (ww >> LINK_SHIFT) & LINK_MASK
+    @inline get_link(ww::UInt32)::UInt32 = (ww >> LINK_SHIFT) & LINK_MASK
 
-    get_roc(ww::UInt32)::UInt32 = (ww >> ROC_SHIFT) & ROC_MASK
+    @inline get_roc(ww::UInt32)::UInt32 = (ww >> ROC_SHIFT) & ROC_MASK
 
-    get_adc(ww::UInt32)::UInt32 = (ww >> ADC_SHIFT) & ADC_MASK
+    @inline get_adc(ww::UInt32)::UInt32 = (ww >> ADC_SHIFT) & ADC_MASK
 
     """
     Checker for whether the pixel lies on a disk or a layer
     """
-    is_barrel(raw_id::UInt32)::Bool = 1 == ((raw_id >> 25) & 0x7)
+    @inline is_barrel(raw_id::UInt32)::Bool = 1 == ((raw_id >> 25) & 0x7)
     
     """
     getter for detectorID which constitutes the raw_id , roc_in_det index, and module_id 
     
     given as inputs the fed, link, and roc
     """
-    function get_raw_id(cabling_map::SiPixelFedCablingMapGPU , fed::UInt8 , link::UInt32 , roc::UInt32)::DetIdGPU
+    @inline function get_raw_id(cabling_map::SiPixelFedCablingMapGPU , fed::UInt8 , link::UInt32 , roc::UInt32)::DetIdGPU
         index::UInt32 = Int(fed*MAX_LINK*MAX_ROC + (link-1) * MAX_ROC + roc + 1) 
         det_id = DetIdGPU(cabling_map.raw_id[index],cabling_map.roc_in_det[index],cabling_map.module_id[index])
     end
 
-    function frame_conversion(bpix::Bool,side::Int,layer::UInt32,roc_id_in_det_unit::UInt32,local_pixel::Pixel)
+    @inline function frame_conversion(bpix::Bool,side::Int,layer::UInt32,roc_id_in_det_unit::UInt32,local_pixel::Pixel)
         slope_row = slope_col = 0
         row_offset = col_offset = 0
         g_row = g_col = 0
@@ -351,7 +351,7 @@ module pixelGPUDetails
         return global_pixel
     end
 
-    function conversion_error(fed_id::Integer, status::Integer, debug::Bool = false)::Integer
+    @inline function conversion_error(fed_id::Integer, status::Integer, debug::Bool = false)::Integer
         error_type::UInt8 = 0
     
         if debug
@@ -390,10 +390,10 @@ module pixelGPUDetails
     """
     Checkers that check the range of the local row and column of a pixel
     """
-    roc_row_col_is_valid(roc_row, roc_col)::Bool = (roc_row < NUM_ROWS_IN_ROC) & (roc_col < NUM_COL_IN_ROC)
-    dcol_is_valid(dcol,px_id) = (dcol < 26) & (2 <= px_id) & (px_id < 162)
+    @inline roc_row_col_is_valid(roc_row, roc_col)::Bool = (roc_row < NUM_ROWS_IN_ROC) & (roc_col < NUM_COL_IN_ROC)
+    @inline dcol_is_valid(dcol,px_id) = (dcol < 26) & (2 <= px_id) & (px_id < 162)
 
-    function check_roc(error_word::UInt32, fed_id::UInt8, link::UInt32, cabling_map::SiPixelFedCablingMapGPU, debug::Bool = false)::UInt8
+    @inline function check_roc(error_word::UInt32, fed_id::UInt8, link::UInt32, cabling_map::SiPixelFedCablingMapGPU, debug::Bool = false)::UInt8
 
         error_type::UInt8 = (error_word >> ROC_SHIFT) & ERROR_MASK
         
@@ -471,7 +471,7 @@ module pixelGPUDetails
 
 
 
-    function get_err_raw_id(fed_id::UInt8 , err_word::UInt32 , error_type :: UInt32 , cabling_map :: SiPixelFedCablingMapGPU, debug::Bool = false)::UInt32
+    @inline function get_err_raw_id(fed_id::UInt8 , err_word::UInt32 , error_type :: UInt32 , cabling_map :: SiPixelFedCablingMapGPU, debug::Bool = false)::UInt32
         r_id :: UInt32 = 0xffffffff
         # roc::UInt32 = 1
         # link::UInt32 = 1

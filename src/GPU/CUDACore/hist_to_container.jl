@@ -45,7 +45,7 @@ const CountersOnly{T,N_BINS,I,N_HISTS} = HisToContainer{T,N_BINS,0,I,N_HISTS}
 """
 function to find floor(log2(n)) in loglog(32)
 """
-function i_log_2(v::UInt32)::UInt32
+@inline function i_log_2(v::UInt32)::UInt32
     # b = SVector(0x2,0xC,0xF0,0xFF00,0xFFFF0000)
     # s = SVector{5,UInt32}(1,2,4,8,16)
     # r::UInt32 = 0 
@@ -60,26 +60,26 @@ function i_log_2(v::UInt32)::UInt32
     return 31 - leading_zeros(v)
 end
 
-size_t(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = S
-n_bins(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS
-n_hists(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS
-tot_bins(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
-n_bits(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
-capacity(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = SIZE
-hist_off(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, nh::Integer) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS * nh
-type_I(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = I
-type_T(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = T
+@inline size_t(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = S
+@inline n_bins(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS
+@inline n_hists(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS
+@inline tot_bins(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
+@inline n_bits(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
+@inline capacity(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = SIZE
+@inline hist_off(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, nh::Integer) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS * nh
+@inline type_I(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = I
+@inline type_T(::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = T
 """
 functions given only the type but not an instance. Analogous to static members within structs in c++"
 """
-size_t(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = S
-n_bins(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS
-n_hists(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS
-tot_bins(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
-n_bits(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
-capacity(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = SIZE
-hist_off(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}, nh::Int) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS * nh
-type_I(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = I
+@inline size_t(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = S
+@inline n_bins(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS
+@inline n_hists(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS
+@inline tot_bins(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_HISTS * N_BINS + 1 # additional "overflow" or "catch-all" bin
+@inline n_bits(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = i_log_2(UInt32(N_BINS - 1)) + 1 # in case the number of bins was a power of 2 
+@inline capacity(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = SIZE
+@inline hist_off(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}, nh::Int) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = N_BINS * nh
+@inline type_I(::Type{HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = I
 
 
 """
@@ -102,7 +102,7 @@ end
 """
 fills the off array with zeros. Called before counting the elements to be inserted into the histogram
 """
-zero(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = fill!(hist.off, 0)
+@inline zero(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = fill!(hist.off, 0)
 
 """
 adds to the histogram of interest hist1 the off array of another hist
@@ -216,13 +216,13 @@ end
     #     @cuprintln(hist.off[tot_bins(hist)-1])
     # end
 end
-size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = UInt32(hist.off[tot_bins(hist)])
-size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = hist.off[b+1] - hist.off[b]
-begin_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = 1
-end_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = size(hist)
-begin_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b::H) where {T,N_BINS,SIZE,S,I,N_HISTS,H<:Integer,U,V} = hist.off[b] + 1 #CHANGE HERE hist.bins[hist.off[b]+1 ]
-end_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b::H) where {T,N_BINS,SIZE,S,I,N_HISTS,H<:Integer,U,V} = hist.off[b+1] + 1 # returns first index of next bin
-val(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b::Integer) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = hist.bins[b]
+@inline size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = UInt32(hist.off[tot_bins(hist)])
+@inline size(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = hist.off[b+1] - hist.off[b]
+@inline begin_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = 1
+@inline end_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = size(hist)
+@inline begin_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b::H) where {T,N_BINS,SIZE,S,I,N_HISTS,H<:Integer,U,V} = hist.off[b] + 1 #CHANGE HERE hist.bins[hist.off[b]+1 ]
+@inline end_h(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b::H) where {T,N_BINS,SIZE,S,I,N_HISTS,H<:Integer,U,V} = hist.off[b+1] + 1 # returns first index of next bin
+@inline val(hist::HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}, b::Integer) where {T,N_BINS,SIZE,S,I,N_HISTS,U,V} = hist.bins[b]
 """
 offsets[nh+1] contains the size of the data in vector V
 for nh elements in v, i need nh+1 elements for describing ranges in offsets
