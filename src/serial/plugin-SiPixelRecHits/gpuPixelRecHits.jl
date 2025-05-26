@@ -11,7 +11,6 @@ using ..PixelGPU_h
 using ..SOA_h
 using ..DataFormatsMathAPPROX_ATAN2_H
 using ..CUDA
-
 export getHits
 """ getHits function
 
@@ -38,6 +37,8 @@ function getHits(cpeParams::ParamsOnGPU,
                   phits::TrackingRecHit2DHeterogeneous)
 
           hits = phits
+          digis = pdigis
+          clusters = pclusters
 
           # Obtain thread and block indices
           tx = threadIdx().x
@@ -65,6 +66,140 @@ function getHits(cpeParams::ParamsOnGPU,
                end
           end
 
+          InvId = 9999
+          MaxHitsInIter = PixelGPU_h.MaxHitsInIter
+
+
+          clusParamSM = ClusParamsT{160,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{Int32,AS.Shared},CuDeviceVector{Float32,AS.Shared},CuDeviceVector{Int16,AS.Shared}}
+
+          clusParams = @cuStaticSharedMem(clusParamSM,1)
+          clusParams[1] = clusParamSM()
+          clusParams_d = clusParams[1]
+
+          me = module_id(clusters)[bx]
+          nclus = clus_in_module(clusters)[UInt32(me + 1)]
+
+          if nclus == 0
+               return
+          end
+
+          endClus = nclus
+
+          for startClus in 1:MaxHitsInIter:(endClus)
+               first = module_start(clusters)[bx + 1]
+
+               nClusInIter = min(MaxHitsInIter, endClus - startClus + 1)
+               lastClus = startClus - 1 + nClusInIter
+               
+               @assert nClusInIter <= nclus
+               @assert nClusInIter > 0
+               @assert lastClus <= nclus
+               @assert nclus > MaxHitsInIter || (1 == startClus && nClusInIter == nclus && lastClus == nclus)
+
+               for ic = tx:bd:nClusInIter
+                    clusParams_d.minRow[ic] = UInt32(typemax(UInt32))
+                    clusParams_d.maxRow[ic] = zero(UInt32)
+                    clusParams_d.minCol[ic] = UInt32(typemax(UInt32))
+                    clusParams_d.maxCol[ic] = zero(UInt32)
+                    clusParams_d.charge[ic] = zero(UInt32)
+                    clusParams_d.Q_f_X[ic] = zero(UInt32)
+                    clusParams_d.Q_l_X[ic] = zero(UInt32)
+                    clusParams_d.Q_f_Y[ic] = zero(UInt32)
+                    clusParams_d.Q_l_Y[ic] = zero(UInt32)
+               end
+
+               first = first + tx - 1
+
+               sync_threads()
+
+
+               for i = first:bd:numElements
+                    id = module_ind(digis)[i]
+
+                    if id == InvId
+                        continue
+                    end
+
+                    if id != me
+                        break
+                    end
+
+                    cl = clus(digis)[i]
+                    
+                    if cl < startClus || cl > lastClus
+                        continue
+                    end
+                    
+                    x = xx(digis)[i]
+                    
+                    y = yy(digis)[i]
+                    
+                    cl = cl - startClus + 1
+                    @assert cl >= 1 
+                    @assert cl <= MaxHitsInIter  # will verify later
+                    
+ 
+                    CUDA.atomic_min!(pointer(clusParams_d.minRow, cl), UInt32(x))
+                    CUDA.atomic_max!(pointer(clusParams_d.maxRow, cl), UInt32(x))
+                    CUDA.atomic_min!(pointer(clusParams_d.minCol, cl), UInt32(y))
+                    CUDA.atomic_max!(pointer(clusParams_d.maxCol, cl), UInt32(y))
+                end
+
+                sync_threads()
+
+                pixmx = typemax(UInt16)
+
+                for i = first:bd:numElements
+                    id = module_ind(digis)[i]
+
+                    if id == InvId
+                        continue
+                    end
+
+                    if id != me
+                        break
+                    end
+
+                    cl = clus(digis)[i]
+                    
+                    if cl < startClus || cl > lastClus
+                        continue
+                    end
+                    
+                    x = xx(digis)[i]
+                    
+                    y = yy(digis)[i]
+                    
+                    cl = cl - startClus + 1
+                    @assert cl >= 1 
+                    @assert cl <= MaxHitsInIter  # will verify later
+                    ch = min(adc(digis)[i], pixmx)
+
+                    CUDA.atomic_add!(pointer(clusParams_d.charge, cl), Int32(ch))
+                    if clusParams_d.minRow[cl] == x
+                         CUDA.atomic_add!(pointer(clusParams_d.Q_f_X, cl), Int32(ch))
+                    end
+                    if clusParams_d.maxRow[cl] == x
+                         CUDA.atomic_add!(pointer(clusParams_d.Q_l_X, cl), Int32(ch))
+                    end
+                    if clusParams_d.minCol[cl] == y
+                         CUDA.atomic_add!(pointer(clusParams_d.Q_f_Y, cl), Int32(ch))
+                    end
+                    if clusParams_d.maxCol[cl] == y
+                         CUDA.atomic_add!(pointer(clusParams_d.Q_l_Y, cl), Int32(ch))
+                    end
+                end
+
+                sync_threads()
+
+
+
+
+
+
+
+          end
+
 
           @cuprint(pclusters.nClusters_h,"\n")
           return nothing
@@ -72,273 +207,25 @@ function getHits(cpeParams::ParamsOnGPU,
           # digis = pdigis
           # clusters = pclusters
 
+          # clusParams = @cuStaticSharedMem(ClusParamsT{160},1)
+          # clusParams[1] = ClusParamsT{160}()
+          # clusParams_d = clusParams[1]
 
 
+     #     InvId = 9999
+     #     MaxHitsInIter = PixelGPU_h.MaxHitsInIter
 
-        InvId = 9999
-        MaxHitsInIter = PixelGPU_h.MaxHitsInIter
+     #     clusParams = ClusParamsT{100000}() #160 ?? 
 
-        clusParams = ClusParamsT{100000}() #160 ?? 
+     #    firstModule = 1
+     # #    write(file, "firstModule: $firstModule\n")
 
-        firstModule = 1
-     #    write(file, "firstModule: $firstModule\n")
-
-        endModule = module_start(clusters, 1)
+     #    endModule = module_start(clusters, 1)
         #print(endModule)
      #    write(file, "endModule: $endModule\n")
      #    write(file, "##############################################\n")
      #    write(file, "FOR module 1 to $(endModule )\n")
 
-#         for mod in firstModule:endModule
-#             #write(file, "me = $(module_id(clusters, mod))\n")
-#             me = module_id(clusters, mod)
-#             nclus = clus_in_module(clusters, UInt32(me + 1))
-#             #write(file, "nclus = $(nclus)\n")
-            
-#             if 0 == nclus
-#                 continue
-#             end
-            
-#         endClus = nclus
-
-#         #write(file, "FOR startClus 1 to $(nclus) incrementing by $MaxHitsInIter\n")
-
-#             for startClus in 1:MaxHitsInIter:(endClus)
-#                 first = module_start(clusters, mod + 1)
-#                #  write(file, "first: $first\n")
-
-
-#                 nClusInIter = min(MaxHitsInIter, nclus - startClus + 1)
-#                #  write(file, "nClusInIter: $nClusInIter\n")
-#                 lastClus = startClus - 1 + nClusInIter
-#                #  write(file, "lastClus: $lastClus\n")
-#                 @assert nClusInIter <= nclus
-#                 @assert nClusInIter > 0
-#                 @assert lastClus <= nclus
-#                 @assert nclus > MaxHitsInIter || (1 == startClus && nClusInIter == nclus && lastClus == nclus)
-                
-#                #  write(file, "##############################################\n")
-#                #  write(file, "FOR ic 1 to $(nClusInIter )\n")
-
-#                 for ic in 1:nClusInIter
-#                     clusParams.minRow[ic] = UInt32(typemax(UInt32))
-#                     #write(file, "clusParams.minRow[$ic] = $(clusParams.minRow[ic])\n")
-                    
-#                     clusParams.maxRow[ic] = zero(UInt32)
-#                     #write(file, "clusParams.maxRow[$ic] = $(clusParams.maxRow[ic])\n")
-                    
-#                     clusParams.minCol[ic] = UInt32(typemax(UInt32))
-#                     #write(file, "clusParams.minCol[$ic] = $(clusParams.minCol[ic])\n")
-                    
-#                     clusParams.maxCol[ic] = zero(UInt32)
-#                     #write(file, "clusParams.maxCol[$ic] = $(clusParams.maxCol[ic])\n")
-                    
-#                     clusParams.charge[ic] = zero(UInt32)
-#                     #write(file, "clusParams.charge[$ic] = $(clusParams.charge[ic])\n")
-                    
-#                     clusParams.Q_f_X[ic] = zero(UInt32)
-#                     #write(file, "clusParams.Q_f_X[$ic] = $(clusParams.Q_f_X[ic])\n")
-                    
-#                     clusParams.Q_l_X[ic] = zero(UInt32)
-#                     #write(file, "clusParams.Q_l_X[$ic] = $(clusParams.Q_l_X[ic])\n")
-                    
-#                     clusParams.Q_f_Y[ic] = zero(UInt32)
-#                     #write(file, "clusParams.Q_f_Y[$ic] = $(clusParams.Q_f_Y[ic])\n")
-                    
-#                     clusParams.Q_l_Y[ic] = zero(UInt32)
-#                     #write(file, "clusParams.Q_l_Y[$ic] = $(clusParams.Q_l_Y[ic])\n")
-#                 end
-                
-#                 #write(file,"FOR i in $first to $numElements \n")
-
-#                 for i in first:numElements
-#                     id = module_ind(digis, i)
-#                     #write(file, "id = $id\n")
-#                     if id == InvId
-#                         continue
-#                     end
-#                     if id != me
-#                         break
-#                     end
-#                     cl = clus(digis, i)
-#                     #write(file, "cl = $cl\n")
-                    
-#                     if cl < startClus || cl > lastClus
-#                         continue
-#                     end
-                    
-#                     x = xx(digis, i)
-#                     #write(file, "x = $x\n")
-                    
-#                     y = yy(digis, i)
-#                     #write(file, "y = $y\n")
-                    
-#                     cl = cl - startClus + 1
-#                     @assert cl >= 1 
-#                     @assert cl <= MaxHitsInIter  # will verify later
-                    
-#                     if clusParams.minRow[cl] > x
-#                         clusParams.minRow[cl] = x
-#                     end
-#                     #write(file, "clusParams.minRow[$cl] = $(clusParams.minRow[cl])\n")
-                    
-#                     if clusParams.maxRow[cl] < x
-#                         clusParams.maxRow[cl] = x
-#                     end
-#                     #write(file, "clusParams.maxRow[$cl] = $(clusParams.maxRow[cl])\n")
-                    
-#                     if clusParams.minCol[cl] > y
-#                         clusParams.minCol[cl] = y
-#                     end
-#                     #write(file, "clusParams.minCol[$cl] = $(clusParams.minCol[cl])\n")
-                    
-#                     if clusParams.maxCol[cl] < y
-#                         clusParams.maxCol[cl] = y
-#                     end
-#                     #write(file, "clusParams.maxCol[$cl] = $(clusParams.maxCol[cl])\n")
-#                 end
-
-#                 pixmx = typemax(UInt16)
-#            #     write(file,"##################################\n")
-#            #     write(file,"pixmx: $pixmx\n")
-#            #     write(file,"FOR i IN $first to $numElements\n")
-#                 for i in first:numElements
-#                     id = module_ind(digis, i)
-#                #     write(file, "id = $id\n")
-                    
-#                     if id == InvId
-#                         continue
-#                     end
-                    
-#                     if id != me
-#                         break
-#                     end
-                    
-#                     cl = clus(digis, i)
-#                #     write(file, "cl = $cl\n")
-                    
-#                     if cl < startClus || cl > lastClus
-#                         continue
-#                     end
-                    
-#                     cl = cl - startClus + 1
-#                     @assert cl >= 1 
-#                     @assert cl <= MaxHitsInIter
-                    
-#                     x = xx(digis, i)
-#                #     write(file, "x = $x\n")
-                    
-#                     y = yy(digis, i)
-#                #     write(file, "y = $y\n")
-                    
-
-#                     # write(file, "$(adc(digis,i))\n")
-
-#                     ch = min(adc(digis, i), pixmx)
-#                     # write(file, "ch = $ch\n")
-                    
-#                     clusParams.charge[cl] = clusParams.charge[cl] + ch
-#                #     write(file, "clusParams.charge[$cl] = $(clusParams.charge[cl])\n")
-                    
-#                     if clusParams.minRow[cl] == x
-#                         clusParams.Q_f_X[cl] = clusParams.Q_f_X[cl] + ch
-#                     end
-#                #     write(file, "clusParams.Q_f_X[$cl] = $(clusParams.Q_f_X[cl])\n")
-                    
-#                     if clusParams.maxRow[cl] == x
-#                         clusParams.Q_l_X[cl] = clusParams.Q_l_X[cl] + ch
-#                     end
-#                #     write(file, "clusParams.Q_l_X[$cl] = $(clusParams.Q_l_X[cl])\n")
-                    
-#                     if clusParams.minCol[cl] == y
-#                         clusParams.Q_f_Y[cl] = clusParams.Q_f_Y[cl] + ch
-#                     end
-#                #     write(file, "clusParams.Q_f_Y[$cl] = $(clusParams.Q_f_Y[cl])\n")
-                    
-#                     if clusParams.maxCol[cl] == y
-#                         clusParams.Q_l_Y[cl] = clusParams.Q_l_Y[cl] + ch
-#                     end
-#                #     write(file, "clusParams.Q_l_Y[$cl] = $(clusParams.Q_l_Y[cl])\n")
-#                 end
-
-#                 #write(file,"###########################################\n")
-
-#                 first = clus_module_start(clusters, UInt32(me + 1)) + startClus
-#                 #write(file, "first = $first\n")
-
-#                 # exit(404)
-#                 #write(file, "FOR ic in 1 to $nClusInIter\n")
-#                 for ic in 1:nClusInIter
-#                     #write(file,"########################################// $ic \n")
-#                     h = UInt32(first - 1 + ic)
-#                     #write(file,"h is: $h\n")
-#                     if (h > max_hits())
-#                         break
-#                     end
-
-#                     @assert h <= n_hits(hits)
-#                     @assert h <= clus_module_start(clusters, UInt32(me + 2))
-#                     # println(h)
-#                #     write(file,"n_hits = $(n_hits(hits))\n")
-#                #     write(file,"clus_module_start = $(clus_module_start(clusters, UInt32(me + 2)))\n")
-
-
-#                     position_corr(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic));
-#                     errorFromDB(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams, UInt32(ic));
-                    
-#                     charge(hits, h, clusParams.charge[ic])
-#                #     write(file, "clusParams.charge[$ic] = $(clusParams.charge[ic])\n")
-
-#                     detector_index(hits, h, me)
-#                #     write(file, "detector_index[$h] = $(me)\n")
-
-
-#                     xl = x_local(hits, h, clusParams.xpos[ic])
-#                #     write(file, "clusParams.xpos[$ic] = $(clusParams.xpos[ic])\n")
-
-#                     yl = y_local(hits, h, clusParams.ypos[ic])
-#                #     write(file, "clusParams.ypos[$ic] = $(clusParams.ypos[ic])\n")
-
-#                     cluster_size_x(hits, h, clusParams.xsize[ic])
-#                     # write(file, "clusParams.xsize[$h] = $(clusParams.xsize[ic])\n")
-
-#                     cluster_size_y(hits, h, clusParams.ysize[ic])
-#                     # write(file, "clusParams.ysize[$h] = $(clusParams.ysize[ic])\n")
-
-#                     xerr_local(hits, h, clusParams.xerr[ic] * clusParams.xerr[ic])
-#                #     write(file, "clusParams.xerr[$ic] = $(clusParams.xerr[ic] * clusParams.xerr[ic])\n")
-
-#                     yerr_local(hits, h, clusParams.yerr[ic] * clusParams.yerr[ic])
-#                #     write(file, "clusParams.ysize[$ic] = $(clusParams.yerr[ic] * clusParams.yerr[ic])\n")
-
-
-#                     xg::Float32 = 0
-#                     yg::Float32 = 0 
-#                     zg::Float32 = 0
-                    
-#                     frame = detParams(cpeParams, UInt32(me + 1)).frame
-#                     # println(xg," ", yg," ", zg)
-#                     xg, yg, zg = toGlobal_Special(frame, xl, yl)
-#                #     write(file,"bs.x = $(bs.x)\n")
-#                     xg = xg - bs.x
-#                     yg = yg - bs.y
-#                     zg = zg - bs.z
-
-#                #     write(file, "xg = $xg\n")
-#                #     write(file, "yg = $yg\n")
-#                #     write(file, "zg = $zg\n")
-                
-#                     set_x_global(hits, h, xg)
-#                     set_y_global(hits, h, yg)
-#                     set_z_global(hits, h, zg) 
-
-#                     r_global(hits,h,sqrt(xg * xg + yg * yg))
-#                     i_phi(hits, h, unsafe_atan2s(yg, xg,7))
-#                #     write(file,"unsafe_atan2s($yg,$xg,7) = $(unsafe_atan2s(yg, xg,7))\n")
-#                 end
-#             end
-
-#         end
      #    close(file)
 end 
 

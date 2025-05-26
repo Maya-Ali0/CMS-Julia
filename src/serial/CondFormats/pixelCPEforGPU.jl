@@ -5,6 +5,7 @@ using ..SOA_h
 using ..CUDADataFormatsSiPixelClusterInterfaceGPUClusteringConstants.pixelGPUConstants
 using ..Printf
 using ..Adapt
+using ..CUDA
 
 
 export CommonParams, DetParams, LayerGeometry, ParamsOnGPU, ClusParamsT, averageGeometry, MaxHitsInIter, commonParams, detParams, position_corr, errorFromDB, layerGeometry
@@ -208,35 +209,42 @@ const MaxHitsInIter = MAX_HITS_IN_ITER()
 
 """
 
-struct ClusParamsT{N}
-    minRow::Vector{UInt32}
-    maxRow::Vector{UInt32}
-    minCol::Vector{UInt32}
-    maxCol::Vector{UInt32}
+struct ClusParamsT{N,u <: AbstractVector{UInt32},v <: AbstractVector{Int32},x <: AbstractVector{Float32},z <: AbstractVector{Int16}}
+    minRow::u
+    maxRow::u
+    minCol::u
+    maxCol::u
 
-    Q_f_X::Vector{Int32}
-    Q_l_X::Vector{Int32}
-    Q_f_Y::Vector{Int32}
-    Q_l_Y::Vector{Int32}
+    Q_f_X::v
+    Q_l_X::v
+    Q_f_Y::v
+    Q_l_Y::v
 
-    charge::Vector{Int32}
+    charge::v
 
-    xpos::Vector{Float32}
-    ypos::Vector{Float32}
+    xpos::x
+    ypos::x
 
-    xerr::Vector{Float32}
-    yerr::Vector{Float32}
+    xerr::x
+    yerr::x
 
-    xsize::Vector{Int16}
-    ysize::Vector{Int16}
-
-    function ClusParamsT{N}() where N
-        return new(zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),zeros(UInt32,N),
-        zeros(Int32,N),zeros(Int32,N),zeros(Int32,N),zeros(Int32,N),zeros(Int32,N),
-        zeros(Float32,N),zeros(Float32,N),zeros(Float32,N),zeros(Float32,N),zeros(Int16,N),zeros(Int16,N))
-    end
-
+    xsize::z
+    ysize::z
 end
+
+function ClusParamsT{N,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{Int32,AS.Shared},CuDeviceVector{Float32,AS.Shared},CuDeviceVector{Int16,AS.Shared}}() where N
+    return ClusParamsT{N,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{Int32,AS.Shared},CuDeviceVector{Float32,AS.Shared},CuDeviceVector{Int16,AS.Shared}}(@cuStaticSharedMem(UInt32,N),@cuStaticSharedMem(UInt32,N),@cuStaticSharedMem(UInt32,N),@cuStaticSharedMem(UInt32,N),@cuStaticSharedMem(Int32,N),@cuStaticSharedMem(Int32,N),@cuStaticSharedMem(Int32,N),@cuStaticSharedMem(Int32,N),@cuStaticSharedMem(Int32,N),
+    @cuStaticSharedMem(Float32,N),@cuStaticSharedMem(Float32,N),@cuStaticSharedMem(Float32,N),@cuStaticSharedMem(Float32,N),@cuStaticSharedMem(Int16,N),@cuStaticSharedMem(Int16,N))
+end
+
+# function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}() where {T,N_BINS,SIZE,S,I,N_HISTS}
+#     return HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}(@cuStaticSharedMem(UInt32,N_HISTS*N_BINS+1),@cuStaticSharedMem(I,SIZE),0)
+# end
+
+# ClusParamsT{160,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{Int32,AS.Shared},CuDeviceVector{Float32,AS.Shared},CuDeviceVector{Int16,AS.Shared}}
+
+Adapt.@adapt_structure ClusParamsT
+
 
 """
 ### computeAnglesFromDet
