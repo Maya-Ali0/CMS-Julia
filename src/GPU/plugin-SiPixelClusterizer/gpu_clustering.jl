@@ -40,7 +40,7 @@ const INV_ID::UInt16 = 9999 # must be > MaxNumModules
 * (`module_start`) that stores the starting of the pixel index within a module for each module within the `id` array.
 *
 * @param id A constant array of type `UInt16` containing module IDs.
-* @param module_start An output array of type `UInt32` where the starting index of each module will be stored.
+* @param module_start An output array of type `UInt32` where the starting index of the first pixel in each module will be stored. module index -> index of first digi in module
 * @param cluster_id An output array of type `UInt32` where each element is initially set to its own index (potentially used for cluster identification later).
 * @param num_elements The number of elements (digis) in the `id` array.
 * InvId refers to Invalid pixel 
@@ -55,6 +55,7 @@ function count_modules(id::T, module_start::U, cluster_id::V, num_elements::Inte
         if id[i] == INV_ID 
             continue
         end
+        #digi belongs to a valid module
         j = i - 1
         while j >= 1 && id[j] == INV_ID # find the first value to the left that is valid
             j -= 1
@@ -63,7 +64,7 @@ function count_modules(id::T, module_start::U, cluster_id::V, num_elements::Inte
             loc = CUDA.atomic_add!(pointer(module_start),UInt32(1)) + 1
             # module_start[1] = min(module_start[1] + 1, MAX_NUM_MODULES)
             # loc = module_start[1] + 1
-            module_start[loc+1] = i
+            module_start[loc+1] = i 
             # if loc <= length(module_start)
                 
             # else
@@ -93,46 +94,56 @@ end
 * @remarks InvId refers to an invalid pixel ID.
 """
 function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, cluster_id, num_elements)
+
+
+
     if (blockIdx().x > module_start[1]) 
         return
     end       
-    # julia is 1 indexed
-    # first_module = 1
-    # end_module = module_start[1]
-    #Hist{T, N, M, K, U} = HisToContainer{T, N, M, K, U} # was on line 120 question why did it cause a lot of memory allocation
+
     
     first_pixel = module_start[blockIdx().x + 1] # access index of starting pixel within module
     this_module_id = id[first_pixel] # get module id
     @cuassert this_module_id < MAX_NUM_MODULES
     first = first_pixel + (threadIdx().x - 1) 
     msize =  @cuStaticSharedMem(Int32, 1)
-    msize[1] = num_elements
-    sync_threads() # ?
+    
+    if threadIdx().x == 1 
+        msize[1] = num_elements
+    end
+
+    sync_threads() 
+
     for i ∈ first:blockDim().x:num_elements
         if id[i] == INV_ID 
             continue
         end
         if id[i] != this_module_id
-            CUDA.atomic_min!(pointer(msize), Int32(i)) # Min update for shared mem
+            CUDA.atomic_min!(pointer(msize), Int32(i)) # first boundary pixel index that does not belong to the current module
             break
         end
     end
+
     max_pix_in_module = 4000
     nbins = num_cols_in_module + 2
     
     
-    # hist = CACHED_HIST[]
     HistSM = HisToContainer{Int16, 418, 4000, 9, UInt16, 1,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{UInt16,AS.Shared}}
-    hist = @cuStaticSharedMem(HistSM,1)
-    hist[1] = HistSM()
-    hist = hist[1]
+    # hist = @cuStaticSharedMem(HistSM,1)
+    
+    off = @cuStaticSharedMem(UInt32,419)
+    bins = @cuStaticSharedMem(UInt16,4000)
+    hist = HistSM(off,bins,0)
+
+    sync_threads()
+    # hist = hist[1]
     ws = @cuStaticSharedMem(UInt32,32)
-    # zero(hist)
+    
     for j ∈ threadIdx().x:blockDim().x:tot_bins(HistSM)
         hist.off[j] = 0 
     end
     sync_threads()
-    
+    # either I hit the last module (num_elements) || I did not and hence msize[1] contains a pixel index that is not in the current module
     @cuassert msize[1] == num_elements || (msize[1] < num_elements && id[msize[1]] != this_module_id)
     
     if (threadIdx().x == 1) && ((msize[1] - first_pixel) > max_pix_in_module)
@@ -141,11 +152,12 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     end
     sync_threads()
     @cuassert msize[1] - first_pixel <= max_pix_in_module
-    if (threadIdx().x == 1) && (msize[1] == num_elements) && (id[msize[1]] == this_module_id)
+    
+    if (threadIdx().x == 1) && (msize[1] == num_elements) && (id[msize[1]] == this_module_id) # used to maintain the idea that msize is a strict pixel boundary index
         msize[1]+=1
     end
+
     sync_threads()
-    
     # fill histo
     for i ∈ first:blockDim().x:msize[1]-1
         if id[i] == INV_ID
@@ -153,12 +165,17 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         end
         count!(hist, Int16(y[i]))
     end
+
     sync_threads()
+
     if threadIdx().x <= 32
         ws[threadIdx().x] = 0 
     end
+
     sync_threads()
+
     finalize!(hist,ws)
+
     sync_threads()
     
     for i in first:blockDim().x:msize[1]-1
@@ -167,22 +184,22 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         end
         fill!(hist, Int16(y[i]), type_I(hist)((i - first_pixel))) # m
     end
-    # println(hist)
     
-    # max_iter = size(hist) # number of digis added to hist
+    # Each thread is assigned to process the neighbors of 16 digis
     max_iter = 16
     max_neighbours = 10
     
     # nearest neighbour 
-    nn = @MArray zeros(Int, max_iter, max_neighbours) # m
-    nnn = @MVector zeros(Int, max_iter) # m
+    nn = @MArray zeros(Int32, max_iter, max_neighbours) # m
+    nnn = @MVector zeros(Int32, max_iter) # m
+
     sync_threads()
     # fill NN
-    # testing = 0 
-    k::UInt32 = 1
-    for j ∈ 0:blockDim().x:size(hist)-1 # j is the index of the digi within the hist
+    k::UInt32 = 1 # index of current digi
+
+    for j ∈ threadIdx().x-1:blockDim().x:size(hist)-1 # j is the index of the digi within the hist (0, number of digis in module - 1)
         @cuassert k <= max_iter
-        p = begin_h(hist) + j
+        p = begin_h(hist) + j # p index of bins array within hist
         i = val(hist,p) + first_pixel # index of 32bit word (digi)
         @cuassert id[i] != INV_ID
         @cuassert id[i] == this_module_id
@@ -197,13 +214,10 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             if y[m] - y[i] > 1
                 break
             end
-            if abs(x[m] - x[i]) > 1
+            if abs(Int16(x[m]) - Int16(x[i])) > 1
                 p += 1
                 continue
             end
-            # if this_module_id == 510 && i == 15187
-            #     testing = k 
-            # end
             nnn[k] += 1
             l = nnn[k]
             @cuassert l <= max_neighbours
@@ -216,7 +230,7 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     n_loops = 0
     while sync_threads_or(more)
         if n_loops % 2 == 1
-            for j ∈ 0:blockDim().x:size(hist)-1
+            for j ∈ threadIdx().x-1:blockDim().x:size(hist)-1
                 p = begin_h(hist) + j
                 i = val(hist, p) + first_pixel
                 m = cluster_id[i]
@@ -227,15 +241,15 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
             end
         else
             more = false
-            k = 1
-            for j ∈ 0:blockDim().x:size(hist)-1 
-                p = begin_h(hist) + j 
-                i::Int = val(hist, p) + first_pixel
+            k = 1 # index of current digi
+            for j ∈ threadIdx().x-1:blockDim().x:size(hist)-1 # (0 , number of digis in module -1)
+                p = begin_h(hist) + j
+                i::Int32 = val(hist, p) + first_pixel
                 for kk ∈ 1:nnn[k]
                     l = nn[k, kk]
                     m = l + first_pixel
                     @cuassert m != i
-                    new = CUDA.atomic_min!(pointer(cluster_id,m),cluster_id[i])
+                    new = CUDA.atomic_min!(pointer(cluster_id,m),cluster_id[i]) # update neighbors cluster id to minimum of cluster ids
                     if new != cluster_id[i]
                         more = true
                     end
@@ -246,8 +260,11 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
         end
         n_loops += 1
     end
+
     found_clusters = @cuStaticSharedMem(UInt32,1)
-    found_clusters[1] = 0 
+    if threadIdx().x == 1
+        found_clusters[1] = 0
+    end 
     sync_threads()
     
     for i ∈ first:blockDim().x:msize[1]-1
@@ -278,8 +295,8 @@ function find_clus(id, x, y, module_start, n_clusters_in_module, moduleId, clust
     end
     sync_threads()
     if threadIdx().x == 1
-        n_clusters_in_module[this_module_id+1] = found_clusters[1]
-        moduleId[blockIdx().x] = this_module_id
+        n_clusters_in_module[this_module_id+1] = found_clusters[1] # map from module ids which are one indexed to num of clusters
+        moduleId[blockIdx().x] = this_module_id # map from block index to processed module
     end
     return
 end

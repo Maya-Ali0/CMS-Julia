@@ -677,29 +677,30 @@ module pixelGPUDetails
         # # put clusters on GPU
         clusters_d = cu(clusters_d)
         # # put WordFedAppender struct on gpu
-
+        
         word_fed = cu(word_fed)
 
         @assert(0 == word_counter % 2)
 
         threads_per_block = 512
         blocks = cld(word_counter, threads_per_block)
-
+        
         @cuda blocks = blocks threads = threads_per_block raw_to_digi_kernel(cabling_map,mod_to_unp,word_counter,get_word(word_fed),get_fed_id(word_fed),digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,
             digis_d.pdigi_d, digis_d.raw_id_arr_d, digis_d.module_ind_d, cu(digi_errors_d.error_d),use_quality_info,include_errors,debug)
-
-        #end # end for raw to digi
+        
         gains = cu(gains)
 
         threads_per_block = 256
         blocks = cld(max(word_counter,gpuClustering.MAX_NUM_MODULES),threads_per_block)
         @cuda blocks = blocks threads = threads_per_block calib_digis(is_run_2,digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,digis_d.adc_d,gains,word_counter,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
         @cuda blocks = blocks threads = threads_per_block count_modules(digis_d.module_ind_d,clusters_d.module_start_d,digis_d.clus_d,word_counter)
-        n_modules = CUDA.@allowscalar clusters_d.module_start_d[1]
-        set_n_modules_digis(digis_d,n_modules,word_counter)
         
+        n_modules = CUDA.@allowscalar clusters_d.module_start_d[1]
+        
+        set_n_modules_digis(digis_d,n_modules,word_counter)
         threads_per_block = 256
         blocks = gpuClustering.MAX_NUM_MODULES
+        
         @cuda blocks = blocks threads = threads_per_block find_clus(digis_d.module_ind_d,digis_d.xx_d,digis_d.yy_d,clusters_d.module_start_d,clusters_d.clus_in_module_d,clusters_d.module_id_d,digis_d.clus_d,word_counter)
         
         
@@ -708,17 +709,6 @@ module pixelGPUDetails
         @cuda blocks = 1 threads = 1024 fill_hits_module_start(clusters_d.clus_in_module_d,clusters_d.clus_module_start_d)
         n_clusters = CUDA.@allowscalar clusters_d.clus_module_start_d[gpuClustering.MAX_NUM_MODULES]
         setNClusters!(clusters_d,n_clusters)
-        # open("fill_hits_module.txt","w") do file
-        #     for i ∈ 1:MAX_NUM_MODULES+1
-        #         write(file,string(clusters_d.clus_module_star_d[i]),'\n')
-        #     end
-        # end
-        # open("testingNumClusters.txt","a") do file
-        #     for i ∈ 1:2000
-        #         write(file,string(clusters_d.clus_in_module_d[i]),'\n')
-        #     end
-        # end
-        
         return (digis_d,clusters_d)
     end
     """
@@ -737,8 +727,9 @@ module pixelGPUDetails
         end
         ws = @cuStaticSharedMem(UInt32,32)
         block_prefix_scan(view(module_start,2:1025), view(module_start,2:1025),1024,ws)
+        sync_threads()
         block_prefix_scan(view(module_start,1026:length(module_start)), view(module_start,1026:length(module_start)),gpuClustering.MAX_NUM_MODULES - 1024,ws)
-
+        sync_threads()
         for i ∈ first+1025:blockDim().x:(gpuClustering.MAX_NUM_MODULES + 1)
             module_start[i] += module_start[1025]
         end

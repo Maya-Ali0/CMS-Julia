@@ -26,9 +26,9 @@ struct HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U <: AbstractArray{UInt32},V <: 
     #     new(U(undef, N_BINS * N_HISTS + 1), V(undef, SIZE), 0)
     # end
 end
-function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}() where {T,N_BINS,SIZE,S,I,N_HISTS}
-    return HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}(@cuStaticSharedMem(UInt32,N_HISTS*N_BINS+1),@cuStaticSharedMem(I,SIZE),0)
-end
+# @inline function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}() where {T,N_BINS,SIZE,S,I,N_HISTS}
+#     return HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,CuDeviceVector{UInt32,AS.Shared},CuDeviceVector{I,AS.Shared}}(@cuStaticSharedMem(UInt32,N_HISTS*N_BINS+1),@cuStaticSharedMem(I,SIZE),0)
+# end
 function HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}() where {T,N_BINS,SIZE,S,I,N_HISTS,U,V}
     HisToContainer{T,N_BINS,SIZE,S,I,N_HISTS,U,V}(Vector{UInt32}(undef, N_BINS * N_HISTS + 1), Vector{I}(undef, SIZE), 0)
 end

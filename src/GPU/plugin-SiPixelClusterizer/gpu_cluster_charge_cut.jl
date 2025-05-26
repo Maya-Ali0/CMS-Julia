@@ -11,7 +11,7 @@ module gpuClusterCharge
     function cluster_charge_cut(id, adc, module_start, n_clusters_in_module, module_id, cluster_id, num_elements)
 
         # check number of blocks match number of modules
-        if blockIdx().x > module_start[1] 
+        if blockIdx().x > module_start[1]
             return
         end
         # Access first pixel of module
@@ -23,7 +23,7 @@ module gpuClusterCharge
         # module ids are zero indexed
         @cuassert this_module_id < MAX_NUM_MODULES
         @cuassert this_module_id == module_id[blockIdx().x]
-        
+
         # acces number of clusters in the module
         n_clus = n_clusters_in_module[this_module_id+1]
 
@@ -105,9 +105,8 @@ module gpuClusterCharge
 
         # apply block prefix scan on new_clus_id to obtain the new cluster ids
         block_prefix_scan(new_clus_id,n_clus,ws)
-
+        sync_threads()
         @cuassert(n_clus >= new_clus_id[n_clus])
-
         # if number of clusters did not change, return as no need to reassign cluster ids
         if n_clus == new_clus_id[n_clus]
             return
