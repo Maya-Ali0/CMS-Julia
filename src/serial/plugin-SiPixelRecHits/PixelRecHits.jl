@@ -28,10 +28,10 @@ function setHitsLayerStart(hitsModuleStart::Vector{UInt32}, cpeParams::ParamsOnG
     end
 end
 
-function f(a::TrackingRecHit2DHeterogeneous)
-    @cuprint(a.m_hitsModuleStart[1])
-    return nothing
-end
+# function f(a::TrackingRecHit2DHeterogeneous)
+#     @cuprint(a.m_hitsModuleStart[1])
+#     return nothing
+# end
 
 function makeHits(digis_d::SiPixelDigisSoA,
                   clusters_d::SiPixelClustersSoA,
@@ -39,8 +39,6 @@ function makeHits(digis_d::SiPixelDigisSoA,
                   cpeParams::ParamsOnGPU)
     nHits = nClusters(clusters_d)
 
-    n16 = 4
-    n32 = 9
 
     hits_d = TrackingRecHit2DHeterogeneous(nHits, cpeParams, clus_module_start(clusters_d))
     # print(typeof(hits_d.m_store32))
@@ -50,11 +48,16 @@ function makeHits(digis_d::SiPixelDigisSoA,
     # print(typeof(hits_d))
     threadsPerBlock::Int32 = 128;
     num_blocks::UInt32 = n_modules(digis_d)
-    print(num_blocks)
+    # print(num_blocks)
 
     if (num_blocks != 0)
         @cuda blocks=num_blocks threads=threadsPerBlock getHits(cpeParams, bs_d, digis_d, n_digis(digis_d), clusters_d, hits_d)
     end
+
+    println(nHits)
+
+    hits_h_16 = Array(hits_d.m_store16)
+    hits_h_32 = Array(hits_d.m_store32)
 
     # if (nHits != 0)
     #     setHitsLayerStart(clus_module_start(clusters_d), cpeParams, hits_layer_start(hits_d))
@@ -72,29 +75,18 @@ function makeHits(digis_d::SiPixelDigisSoA,
     #     println(counter, " ", x, " ", i_phi(histView(hits_d))[x])
     #     counter+=1
     # end
-    # open("rechits.txt", "w") do file
-    #     hits = histView(hits_d)
-    #     nHits = length(hits.m_xl) 
+    open("rechits.txt", "w") do file
     
+        for i in 1:4*nHits
 
-        # for i in 1:length(phi_binner(hits_d).bins)
-        #     write(file, @sprintf("%i", phi_binner(hits_d).bins[i]-1), "\n")
-            # write(file, "m_xl: ", @sprintf("%.4f", hits.m_xl[i]), "\n")
-            # write(file, "m_yl: ", @sprintf("%.4f", hits.m_yl[i]), "\n")
-            # write(file, "m_xerr: ", @sprintf("%.4f", hits.m_xerr[i]), "\n")
-            # write(file, "m_yerr: ", @sprintf("%.4f", hits.m_yerr[i]), "\n")
-            # write(file, "m_xg: ", @sprintf("%.4f", hits.m_xg[i]), "\n")
-            # write(file, "m_yg: ", @sprintf("%.4f", hits.m_yg[i]), "\n")
-            # write(file, "m_zg: ", @sprintf("%.4f", hits.m_zg[i]), "\n")
-            # write(file, "m_rg: ", @sprintf("%.4f", hits.m_rg[i]), "\n")
-            # write(file, "m_iphi: ", string(hits.m_iphi[i]), "\n")
-            # write(file, "m_charge: ", string(hits.m_charge[i]), "\n")
-            # write(file, "m_xsize: ", string(hits.m_xsize[i]), "\n")
-            # write(file, "m_ysize: ", string(hits.m_ysize[i]), "\n")
-            # write(file, "m_detInd: ", string(hits.m_det_ind[i]), "\n")  # Assuming m_det_ind is an integer
-            # write(file, "\n")  
+            write(file, "val: ", string(hits_h_16[i]), "\n")  # Assuming m_det_ind is an integer
+            # write(file, "\n") 
+        end
+
+        # for i in 1:(9*nHits + 11)
+
         # end
-    # end    
+    end    
     return hits_d
 end
 

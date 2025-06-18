@@ -29,6 +29,12 @@ export getHits
     - `phits` is updated with the calculated hit positions, charges, sizes, and errors.
 
 """
+
+function max_hits()
+     return UInt32(48 * 1024)
+ end
+
+
 function getHits(cpeParams::ParamsOnGPU, 
                    bs::BeamSpotPOD,
                   pdigis::SiPixelDigisSoA,
@@ -111,6 +117,7 @@ function getHits(cpeParams::ParamsOnGPU,
                first = first + tx - 1
 
                sync_threads()
+          
 
 
                for i = first:bd:numElements
@@ -192,43 +199,71 @@ function getHits(cpeParams::ParamsOnGPU,
 
                 sync_threads()
 
+                first = clus_module_start(clusters)[UInt32(me + 1)] + startClus
+          
+               
+
+                for ic = tx:bd:nClusInIter
+                    h = UInt32(first - 1 + ic)
+
+                    if (h > max_hits())
+                         break
+                    end
+
+                    @assert h <= n_hits(hits)
+                    @assert h <= clus_module_start(clusters)[UInt32(me + 2)]
+
+                    position_corr(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams_d, UInt32(ic));
+                    errorFromDB(commonParams(cpeParams), detParams(cpeParams,UInt32(me + 1)), clusParams_d, UInt32(ic));
+                    
+                    charge_access(hits,h,clusParams_d.charge[ic])
+
+                    detector_index(hits, h, me)
+
+                    xl = x_local(hits, h, clusParams_d.xpos[ic])
+                    yl = y_local(hits, h, clusParams_d.ypos[ic])
+                    
+
+                    cluster_size_x(hits, h, clusParams_d.xsize[ic])
+                    cluster_size_y(hits, h, clusParams_d.ysize[ic])
+
+                    xerr_local(hits, h, clusParams_d.xerr[ic] * clusParams_d.xerr[ic])
+                    yerr_local(hits, h, clusParams_d.yerr[ic] * clusParams_d.yerr[ic])
 
 
+                    xg::Float32 = 0
+                    yg::Float32 = 0 
+                    zg::Float32 = 0
+                    
+                    frame = detParams(cpeParams, UInt32(me + 1)).frame
+                    xg, yg, zg = toGlobal_Special(frame, xl, yl)
 
+                    xg = xg - bs.x
+                    yg = yg - bs.y
+                    zg = zg - bs.z
 
+                
+                    set_x_global(hits, h, xg)
+                    set_y_global(hits, h, yg)
+                    set_z_global(hits, h, zg)
 
+                    r_global(hits,h,sqrt(xg * xg + yg * yg))
+                    i_phi(hits, h, unsafe_atan2s(yg, xg,7))
+
+                end
+                sync_threads()
 
           end
 
 
-          @cuprint(pclusters.nClusters_h,"\n")
+          # @cuprint(pclusters.nClusters_h,"\n")
           return nothing
-          # hits = phits
-          # digis = pdigis
-          # clusters = pclusters
 
-          # clusParams = @cuStaticSharedMem(ClusParamsT{160},1)
-          # clusParams[1] = ClusParamsT{160}()
-          # clusParams_d = clusParams[1]
-
-
-     #     InvId = 9999
-     #     MaxHitsInIter = PixelGPU_h.MaxHitsInIter
-
-     #     clusParams = ClusParamsT{100000}() #160 ?? 
-
-     #    firstModule = 1
-     # #    write(file, "firstModule: $firstModule\n")
-
-     #    endModule = module_start(clusters, 1)
-        #print(endModule)
-     #    write(file, "endModule: $endModule\n")
-     #    write(file, "##############################################\n")
-     #    write(file, "FOR module 1 to $(endModule )\n")
-
-     #    close(file)
 end 
 
 
     
 end
+
+
+

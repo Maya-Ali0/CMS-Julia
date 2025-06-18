@@ -1,6 +1,6 @@
 module CUDADataFormats_TrackingRecHit_interface_TrackingRecHit2DHeterogeneous_h
 
-export TrackingRecHit2DHeterogeneous, hist_view, ParamsOnGPU, hits_layer_start, phi_binner, iphi, Hist, average_geometry
+export TrackingRecHit2DHeterogeneous, hist_view, ParamsOnGPU, hits_layer_start, phi_binner, iphi, Hist, average_geometry, charge, charge_access, detector_index, x_local, y_local, cluster_size_x, cluster_size_y, xerr_local, yerr_local, set_x_global, set_y_global, set_z_global, r_global, i_phi
 export n_hits
 
 # Import necessary types and functions from other modules
@@ -33,7 +33,7 @@ using ..PixelGPU_h
     
 
 
-struct TrackingRecHit2DHeterogeneous{U <: AbstractVector{UInt16},H <: AbstractVector{Float32},V <: AbstractVector{Float32}, X <: AbstractVector{DetParams}, Y <: AbstractVector{UInt32}, Z <: AbstractVector{UInt8}, w <:AbstractVector{UInt32},a <: AbstractArray{UInt32},b <: AbstractArray{UInt16}}
+struct TrackingRecHit2DHeterogeneous{U <: AbstractVector{Int16},H <: AbstractVector{Float32},V <: AbstractVector{Float32}, X <: AbstractVector{DetParams}, Y <: AbstractVector{UInt32}, Z <: AbstractVector{UInt8}, w <:AbstractVector{UInt32},a <: AbstractArray{UInt32},b <: AbstractArray{UInt16}}
     n16::UInt32
     n32::UInt32
     m_store16::U # UInt16 unique_ptr<uint16_t[]>
@@ -103,7 +103,7 @@ function TrackingRecHit2DHeterogeneous(nHits::UInt32, cpe_params::ParamsOnGPU{w,
 
     # Initialize storage 
     
-    m_store16 = Vector{UInt16}(undef,n16*nHits)
+    m_store16 = Vector{Int16}(undef,n16*nHits)
     m_store32 = Vector{Float32}(undef,n32*nHits + 11)
 
 
@@ -113,7 +113,7 @@ function TrackingRecHit2DHeterogeneous(nHits::UInt32, cpe_params::ParamsOnGPU{w,
 
     # Define local functions to access storage
     function get16(i)
-        return  1 + (i+1)*nHits
+        return  1 + (i)*nHits
     end
     function get32(i) 
         return 1 + (i)*nHits
@@ -138,19 +138,91 @@ function TrackingRecHit2DHeterogeneous(nHits::UInt32, cpe_params::ParamsOnGPU{w,
     m_ysize::UInt32 = get16(3)
 
     # Return a new instance of TrackingRecHit2DHeterogeneous
-    return TrackingRecHit2DHeterogeneous{Vector{UInt16},Vector{Float32},v,w,r,z,typeof(hitsModuleStart),Vector{UInt32},Vector{UInt16}}(n16, n32, m_store16, m_store32, m_xl, m_yl, m_xerr, m_yerr, m_xg, m_yg, m_zg, m_rg, m_charge, m_hitsLayerStart, m_iphi, m_detInd, m_xsize, m_ysize, m_HistStore, m_AverageGeometryStore, nHits, hitsModuleStart, cpe_params)
+    return TrackingRecHit2DHeterogeneous{Vector{Int16},Vector{Float32},v,w,r,z,typeof(hitsModuleStart),Vector{UInt32},Vector{UInt16}}(n16, n32, m_store16, m_store32, m_xl, m_yl, m_xerr, m_yerr, m_xg, m_yg, m_zg, m_rg, m_charge, m_hitsLayerStart, m_iphi, m_detInd, m_xsize, m_ysize, m_HistStore, m_AverageGeometryStore, nHits, hitsModuleStart, cpe_params)
 end
 
 
 
+function charge_access(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store32[x.m_charge + h - 1] = val
+
+end
+
+function detector_index(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store16[x.m_detInd + h - 1] = val
+
+end
 
 
+function x_local(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store32[x.m_xl + h - 1] = val
+
+end
+
+function y_local(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store32[x.m_yl + h - 1] = val
+
+end
 
 
+function cluster_size_x(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store16[x.m_xsize + h - 1] = val
+
+end
+
+function cluster_size_y(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store16[x.m_ysize + h - 1] = val
+
+end
+
+function xerr_local(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store32[x.m_xerr + h - 1] = val
+
+end
+
+function yerr_local(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store32[x.m_yerr + h - 1] = val
+
+end
 
 
+function set_x_global(x::TrackingRecHit2DHeterogeneous, h, val)
 
+    x.m_store32[x.m_xg + h - 1] = val
 
+end
+
+function set_y_global(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store32[x.m_yg + h - 1] = val
+
+end
+
+function set_z_global(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store32[x.m_zg + h - 1] = val
+
+end
+
+function r_global(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store32[x.m_rg + h - 1] = val
+
+end
+
+function i_phi(x::TrackingRecHit2DHeterogeneous, h, val)
+
+    x.m_store16[x.m_iphi + h - 1] = val
+
+end
 
 
 
@@ -225,6 +297,8 @@ phi_binner(hit::TrackingRecHit2DHeterogeneous) = hit.m_hist
     - `hit.m_iphi`: The vector of phi indices.
 """
 iphi(hit::TrackingRecHit2DHeterogeneous) = hit.m_iphi
+
+charge(self::TrackingRecHit2DSOAView) = self.m_charge
 
 
 end

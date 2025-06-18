@@ -18,6 +18,7 @@ struct SiPixelRecHitCUDA <: EDProducer
         tBeamSpot= consumes(reg, BeamSpotPOD)
         token = consumes(reg, SiPixelClustersSoA)
         tokenDigi = consumes(reg, SiPixelDigisSoA)
+
         tokenHit = produces(reg, TrackingRecHit2DHeterogeneous)
         new(tBeamSpot, token, tokenDigi, tokenHit)
     end
@@ -32,6 +33,9 @@ function produce(self::SiPixelRecHitCUDA,iEvent::Event, es::EventSetup)
     fcpe = get(es, PixelCPEFast{CUDA.CuArray{Main.Patatrack.PixelGPU_h.DetParams, 1, CUDA.DeviceMemory}, CUDA.CuArray{UInt32, 1, CUDA.DeviceMemory}, CUDA.CuArray{UInt8, 1, CUDA.DeviceMemory}, CUDA.CuArray{Float32, 1, CUDA.DeviceMemory}})
     #Temporary fix
     clusters = get(iEvent, self.token)
+    
+    println(nClusters(clusters))
+
     clusters = cu(clusters)
 
     digis = get(iEvent, self.tokenDigi)
@@ -40,6 +44,7 @@ function produce(self::SiPixelRecHitCUDA,iEvent::Event, es::EventSetup)
     bs = get(iEvent, self.tBeamSpot)
     
     nHits = nClusters(clusters)
+    # println(nHits)
     # println(nHits, "id: $(iEvent.eventId)")
     if nHits >= max_hits()
         println("Clusters/Hits Overflow ",nHits," >= ", TrackingRecHit2DSOAView::maxHits())
@@ -50,3 +55,4 @@ end
 
 
 add_plugin_module("SiPixelRecHitCUDA",x -> SiPixelRecHitCUDA(x))
+

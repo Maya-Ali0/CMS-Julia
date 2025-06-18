@@ -19,7 +19,7 @@ mutable struct Source
 end
 
 function produce(src::Source, streamId::Int, reg::ProductRegistry)
-    if src.numEvents.value > 1000
+    if src.numEvents.value > 1
         return nothing
     end
 
