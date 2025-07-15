@@ -33,7 +33,6 @@ es::EventSetup = EventSetup()
 dataDir::String = (@__DIR__) * "/data/"
 
 # EP = EventProcessor(ed_modules,es_modules,dataDir)
-
 ev = EventProcessor(num_of_streams,ed_modules,es_modules,dataDir);
 println("Warming up")
 @time warm_up(ev)
@@ -41,8 +40,8 @@ println("Warmup done")
 println("running")
 @time run_processor(ev)
 
+# Profile.print(format = :flat)
 end
-
 
 
 number_of_streams = parse(Int, ARGS[1]) # First argument as number of events

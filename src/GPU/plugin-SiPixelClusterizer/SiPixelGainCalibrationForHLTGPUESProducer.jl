@@ -43,7 +43,7 @@ function readGain(io::IOStream,es::EventSetup)
     read!(io,v_pedestals)
 
     gain = SiPixelGainForHLTonGPU(v_pedestals,range_and_cols,_min_ped,_max_ped,_min_gain,_max_gain,ped_precision,gain_precision,_number_of_rows_averaged_over,_n_bins_to_use_for_encoding,_dead_flag,_noisy_flag)
-    put!(es,SiPixelGainCalibrationForHLTGPU(gain))
+    put!(es,SiPixelGainCalibrationForHLTGPU(cu(gain)))
 end
 
 

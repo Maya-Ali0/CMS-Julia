@@ -2,7 +2,6 @@ struct SimpleVector{T, A <: AbstractVector{T},S <: AbstractVector{UInt32}}
     m_size::S
     m_capacity::Int32
     m_data::A
-    
 end
 function SimpleVector{T,A,S}(capacity::Integer) where {T ,A <: AbstractVector{T}, S <: AbstractVector{UInt32}}
     return SimpleVector(S([0]),Int32(capacity),A(undef,capacity))
@@ -51,4 +50,7 @@ set_data(self::SimpleVector{T},data::Vector{T}) where T <: AbstractVector  = sel
 
 using Adapt
 
-Adapt.@adapt_structure SimpleVector
+function Adapt.adapt_structure(to,x::SimpleVector{T,A,S}) where {T,A,S}
+        capacity = x.m_capacity
+        SimpleVector(adapt(to,x.m_size),adapt(to,x.m_capacity),adapt(to,CuVector{T}(undef,0)))
+end

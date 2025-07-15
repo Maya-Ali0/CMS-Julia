@@ -1,5 +1,6 @@
 module CUDADataFormatsSiPixelDigiInterfaceSiPixelDigisSoA
 export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_ind, clus, xx, yy, adc
+using CUDA
   # Structure to hold SiPixel digis data  
   mutable struct SiPixelDigisSoA{U <: AbstractVector{Int32},V <: AbstractVector{UInt16},W <: AbstractVector{UInt32}}
       pdigi_d::W      # Digis data
@@ -147,5 +148,9 @@ export n_modules, SiPixelDigisSoA, digiView, n_digis, DeviceConstView, module_in
       return self.raw_id_arr_d
   end
   using Adapt
-  Adapt.@adapt_structure SiPixelDigisSoA
+  # Adapt.@adapt_structure SiPixelDigisSoA
+  function Adapt.adapt_structure(to,x::SiPixelDigisSoA)
+    max_fed_words = length(x.xx_d)
+    SiPixelDigisSoA(CuVector{UInt32}(undef,max_fed_words),CuVector{UInt32}(undef,max_fed_words),CuVector{UInt16}(undef,max_fed_words),CuVector{UInt16}(undef,max_fed_words),CuVector{UInt16}(undef,max_fed_words),CuVector{UInt16}(undef,max_fed_words),CuVector{Int32}(undef,max_fed_words),x.n_modules_h,x.n_digis_h)
+  end
 end

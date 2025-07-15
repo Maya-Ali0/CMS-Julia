@@ -51,7 +51,7 @@ mutable struct SiPixelRawToClusterCUDA <: EDProducer
 end
 
 
-function produce(self:: SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup)
+function produce(self::SiPixelRawToClusterCUDA,event::Event, iSetup::EventSetup)
     hgpu_map = get(iSetup,SiPixelFedCablingMapGPUWrapper)   
     # if(has_quality(hgpu_map) != self.use_quality)
     #     error_message = "use_quality of the module ($self.use_quality) differs from SiPixelFedCablingMapGPUWrapper. Please fix your configuration."

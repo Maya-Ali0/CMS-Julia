@@ -58,5 +58,10 @@ module cudaDataFormatsSiPixelDigiInterfaceSiPixelDigiErrorsSoA
         return self.error_d
     end
     using Adapt
-    Adapt.@adapt_structure SiPixelDigiErrorsSoA
+    function Adapt.adapt_structure(to,x::SiPixelDigiErrorsSoA)
+        capacity = x.data_d.m_capacity
+        SiPixelDigiErrorsSoA(SimpleVector{PixelErrorCompact,CuVector{PixelErrorCompact},CuVector{UInt32}}(capacity),
+        SimpleVector{PixelErrorCompact,CuVector{PixelErrorCompact},CuVector{UInt32}}(capacity),
+        x.formatterErrors_h)
+    end
 end
